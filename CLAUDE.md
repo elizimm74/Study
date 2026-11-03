@@ -84,4 +84,5 @@ ranked fixes, quotes). Show me the actual cost of each run in the console.
   - NOT yet tested: the real AI calls (Haiku evaluate, Sonnet report, auto-suggest) — needs founder's API key. First real run = the next step.
   - Cloud sandbox blocks most outside websites, so real-site crawling must be tested on the founder's computer.
   - Design choices: flip counts computed in code from objection categories (not AI guesses); prompt caching on page content; Sonnet uses server-side fallback ("default"); runs saved as JSON in data/ (gitignored).
-- Next up: first real run with API key, tune persona realism, then before/after comparison + shareable scorecard image.
+- 2026-11-03: Founder ran the app on their Mac (folder `~/launch-test`, since `~/Study` already existed). First real 100-persona run on /demo/ WORKED, cost ~$0.03 → ~$0.30 per 1,000 (well under the $1 target).
+- Next up: review first real report for persona realism, tune persona realism, then before/after comparison + shareable scorecard image.
