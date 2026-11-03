@@ -1,0 +1,87 @@
+# CLAUDE.md — Project memory
+
+## How to work with me (the founder)
+- I'm a high school founder. I've built mobile apps but never a website, and I only know basic coding.
+- Act as my **technical cofounder**: explain what you're doing in plain English as you go.
+- **Ask before installing anything** (npm packages, browsers, CLIs, etc.) — say what it is and why.
+- Make sure I understand the code well enough to explain it myself: keep code simple, comment the "why", and walk me through new files.
+- Propose a plan and wait for my OK before writing code for a new milestone.
+- Keep the Anthropic API key in `.env.local` and **NEVER commit it**.
+
+=== PRODUCT BRIEF ===
+
+### WHAT IT IS
+A website that lets small founders test their product on simulated AI customers
+before launch. The user pastes a URL, picks a target audience, and hundreds to
+thousands of AI personas "review" the landing page, pricing and signup. Each
+persona says buy / maybe / no, gives their main objection, what would change
+their mind, and a one-line quote. The user gets a report with ranked fixes.
+
+### TARGET USERS
+Indie hackers and small founders launching web products (both consumer and
+business products). Marketed mainly on X, so a shareable scorecard image
+matters ("380 of 1,000 would buy, biggest blocker: pricing").
+
+### AUDIENCE PICKER
+- Auto-suggest: read the page and pre-fill the likely target audience; the
+  user tweaks it.
+- Consumer fields: age range (with optional weighting), gender split, country +
+  urban/suburban/rural, occupation (categories or free text), income bracket,
+  mindset (early adopter, price-sensitive, skeptical, busy, impulse buyer),
+  tech comfort (low/med/high), what they use now (competitor or workaround).
+- Business fields (auto-enabled when the page looks B2B): role, who decides
+  (can buy themselves vs needs approval), company size, industry.
+- Presets: Gen Z students, Solo SaaS founders, Busy moms, Small business owners.
+
+### PERSONA ENGINE ("hybrid" approach, keep costs low)
+1. Crawl once: a headless browser (Playwright) visits the landing page, then
+   follows the flow to pricing and signup, capturing text + screenshots.
+2. Generate personas IN CODE by sampling attributes from the audience settings,
+   so they're realistically varied (not 1,000 copies of one stereotype).
+3. Evaluate personas in batches of ~25 per AI call using Claude Haiku 5.5
+   (model id: claude-haiku-5-5), returning strict JSON per persona: verdict,
+   objection, what would change their mind, quote, and which funnel step
+   lost them (hero / pricing / signup).
+4. Prompt personas to be realistically skeptical; most real visitors don't buy.
+5. Aggregate results IN CODE (counts, segment breakdowns, objection clusters).
+6. Use Claude Sonnet 5.5 (model id: claude-sonnet-5-5) only for the final
+   report: ranked fixes (by how many personas each would flip) and rewritten
+   headline/pricing copy.
+Target cost: ~$1 per 1,000-persona run. Never send all raw verdicts to Sonnet.
+
+### THE REPORT
+Headline buy score, segment heatmap (buy rate by age/income/occupation/
+mindset), funnel drop-off (hero / pricing / signup), top objections grouped
+with %, ranked fixes with flip counts + rewritten copy, 10 best quotes (all
+browsable), before/after comparison on re-runs, shareable scorecard image.
+
+### PLANNED PRICING (not built yet)
+Free: 1 run x 100 personas. Launch Pack $49 one-time: 3 x 1,000.
+Pro $79/mo: 15 x 1,000 + 2 x 10,000. Scale $249/mo: 10 x 10,000 + ad testing.
+Deep run add-on: $20 per 10,000-persona run.
+
+### STACK
+Next.js (TypeScript) + Tailwind, hosted on Vercel, code on GitHub.
+Supabase later for database + logins, Stripe later for payments.
+Anthropic SDK for AI calls. Keep the API key in .env.local and NEVER commit it.
+
+### OUT OF SCOPE FOR NOW
+Payments, logins, 10k runs, ad/creative testing, mobile app testing, team
+accounts, analytics integrations.
+
+=== MILESTONE 1 ===
+A site running on my computer where I can: paste a URL, use the audience
+picker (manual fields + auto-suggest), run 100 personas through the hybrid
+engine, and see the report page (score, segments, funnel drop-off, objections,
+ranked fixes, quotes). Show me the actual cost of each run in the console.
+
+## Progress log
+- Milestone 1: plan (10 steps) approved by founder, including installing next/react/tailwind/typescript, @anthropic-ai/sdk, playwright, zod.
+- Founder has no GitHub account or Anthropic API key yet (signing up). Code is only in the temporary cloud container until it's pushed to GitHub.
+- Repo: github.com/elizimm74/Study (public). Product name is changing; working name "Launch Test" lives in `src/lib/config.ts`.
+- Milestone 1 prototype BUILT (all 10 steps). See README.md for the file map and how to run.
+  - Tested in the cloud: crawler (on /demo/ fake site), persona generator, aggregation, report UI. Pages type-check and lint clean.
+  - NOT yet tested: the real AI calls (Haiku evaluate, Sonnet report, auto-suggest) — needs founder's API key. First real run = the next step.
+  - Cloud sandbox blocks most outside websites, so real-site crawling must be tested on the founder's computer.
+  - Design choices: flip counts computed in code from objection categories (not AI guesses); prompt caching on page content; Sonnet uses server-side fallback ("default"); runs saved as JSON in data/ (gitignored).
+- Next up: first real run with API key, tune persona realism, then before/after comparison + shareable scorecard image.

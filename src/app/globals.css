@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Light theme only for the prototype; dark mode can come later. */
+body {
+  background: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
