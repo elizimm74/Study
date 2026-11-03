@@ -78,7 +78,7 @@ ranked fixes, quotes). Show me the actual cost of each run in the console.
 ## Progress log
 - Milestone 1: plan (10 steps) approved by founder, including installing next/react/tailwind/typescript, @anthropic-ai/sdk, playwright, zod.
 - Founder has no GitHub account or Anthropic API key yet (signing up). Code is only in the temporary cloud container until it's pushed to GitHub.
-- Repo: github.com/elizimm74/Study (public). Product name is changing; working name "Launch Test" lives in `src/lib/config.ts`.
+- Repo: github.com/elizimm74/Study (public). Product name: **Crawler** (set in `src/lib/config.ts`).
 - Milestone 1 prototype BUILT (all 10 steps). See README.md for the file map and how to run.
   - Tested in the cloud: crawler (on /demo/ fake site), persona generator, aggregation, report UI. Pages type-check and lint clean.
   - NOT yet tested: the real AI calls (Haiku evaluate, Sonnet report, auto-suggest) — needs founder's API key. First real run = the next step.
