@@ -6,13 +6,14 @@ import { aggregate, type Stats } from "./aggregate";
 import { writeAdvice, type Advice } from "./report";
 import { logRunCost } from "./cost";
 import { loadJson, newId, saveJson } from "./storage";
-import type { Audience, CallCost, Crawl, Persona, Verdict } from "./types";
+import type { Audience, CallCost, Crawl, Persona, ProductProfile, Verdict } from "./types";
 
 export type Run = {
   id: string;
   crawlId: string;
   url: string;
   createdAt: string;
+  profile: ProductProfile;
   audience: Audience;
   seed: number;
   status: "running" | "done" | "error";
@@ -38,13 +39,19 @@ export async function getRun(id: string): Promise<Run | null> {
 
 // Starts a run and returns its id right away; the work continues in the
 // background while the browser checks progress every second.
-export function startRun(crawl: Crawl, audience: Audience, count: number): string {
+export function startRun(
+  crawl: Crawl,
+  profile: ProductProfile,
+  audience: Audience,
+  count: number,
+): string {
   const seed = Math.floor(Math.random() * 1e9);
   const run: Run = {
     id: newId(),
     crawlId: crawl.id,
     url: crawl.url,
     createdAt: new Date().toISOString(),
+    profile,
     audience,
     seed,
     status: "running",
@@ -62,7 +69,7 @@ export function startRun(crawl: Crawl, audience: Audience, count: number): strin
 async function execute(run: Run, crawl: Crawl) {
   try {
     run.stage = "Personas are reviewing your site";
-    const { verdicts, costs } = await evaluatePersonas(crawl, run.personas, (done, total) => {
+    const { verdicts, costs } = await evaluatePersonas(crawl, run.profile, run.personas, (done, total) => {
       run.progress = { done, total };
     });
     run.verdicts = verdicts;
@@ -72,7 +79,7 @@ async function execute(run: Run, crawl: Crawl) {
     run.stats = aggregate(run.audience, run.personas, verdicts);
 
     run.stage = "Writing your fixes";
-    const { advice, cost } = await writeAdvice(crawl, run.stats);
+    const { advice, cost } = await writeAdvice(crawl, run.profile, run.stats);
     run.advice = advice;
     run.costs.push(cost);
 

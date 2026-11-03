@@ -4,13 +4,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AudiencePicker from "@/components/AudiencePicker";
+import ProfileEditor from "@/components/ProfileEditor";
 import { DEFAULT_AUDIENCE } from "@/lib/presets";
-import type { Audience } from "@/lib/types";
+import type { Audience, ProductProfile } from "@/lib/types";
 
 type CrawlInfo = {
   id: string;
   url: string;
-  pages: { step: string; url: string; title: string; chars: number; screenshot: string | null; note?: string }[];
+  pages: { step: string; url: string; title: string; screenshots: string[]; note?: string }[];
 };
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
   const [busy, setBusy] = useState<null | "analyzing" | "starting">(null);
   const [error, setError] = useState<string | null>(null);
   const [crawl, setCrawl] = useState<CrawlInfo | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProductProfile | null>(null);
   const [suggested, setSuggested] = useState<Audience | null>(null);
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE);
 
@@ -37,13 +38,13 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setCrawl(data.crawl);
-      setSummary(data.summary ?? null);
+      setProfile(data.profile);
       if (data.audience) {
         setSuggested(data.audience);
         setAudience(data.audience);
       } else {
         setSuggested(null);
-        setError(`Couldn't auto-suggest an audience (${data.suggestError}). Pick a preset or fill it in below.`);
+        setError(`Couldn't auto-fill the profile and audience (${data.suggestError}). Fill them in below.`);
       }
     } catch (err) {
       setError((err as Error).message);
@@ -53,14 +54,14 @@ export default function Home() {
   }
 
   async function startRun() {
-    if (!crawl) return;
+    if (!crawl || !profile) return;
     setBusy("starting");
     setError(null);
     try {
       const res = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crawlId: crawl.id, audience }),
+        body: JSON.stringify({ crawlId: crawl.id, audience, profile }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -98,15 +99,14 @@ export default function Home() {
         <>
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">What we captured</h2>
-            {summary && <p className="text-slate-600">{summary}</p>}
             <div className="grid gap-4 sm:grid-cols-3">
               {(["hero", "pricing", "signup"] as const).map((step) => {
                 const p = crawl.pages.find((x) => x.step === step);
                 return (
                   <div key={step} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                    {p?.screenshot ? (
+                    {p?.screenshots[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.screenshot} alt={`${step} page`} className="aspect-[16/10] w-full object-cover object-top" />
+                      <img src={p.screenshots[0]} alt={`${step} page`} className="aspect-[16/10] w-full object-cover object-top" />
                     ) : (
                       <div className="flex aspect-[16/10] items-center justify-center bg-slate-100 text-sm text-slate-400">
                         not found
@@ -121,6 +121,18 @@ export default function Home() {
               })}
             </div>
           </section>
+
+          {profile && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">What we understood</h2>
+              <p className="text-sm text-slate-500">
+                Every persona reads this. Fix anything that&apos;s wrong before you run.
+              </p>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <ProfileEditor profile={profile} onChange={setProfile} />
+              </div>
+            </section>
+          )}
 
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Who should review it?</h2>

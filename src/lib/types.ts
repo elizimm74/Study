@@ -15,14 +15,10 @@ export type Mindset = (typeof MINDSETS)[number];
 export const TECH_LEVELS = ["low", "medium", "high"] as const;
 export type TechComfort = (typeof TECH_LEVELS)[number];
 
-export const INCOME_BRACKETS = [
-  "under $25k",
-  "$25k-50k",
-  "$50k-100k",
-  "$100k-200k",
-  "$200k+",
-] as const;
-export type IncomeBracket = (typeof INCOME_BRACKETS)[number];
+// How much they can comfortably spend right now. Simpler than salary
+// brackets, and it fits students and people with irregular income too.
+export const BUDGETS = ["tight", "okay", "comfortable"] as const;
+export type Budget = (typeof BUDGETS)[number];
 
 export const COMPANY_SIZES = [
   "just me",
@@ -47,7 +43,7 @@ export type Audience = {
   countries: string[];
   areaMix: { urban: number; suburban: number; rural: number };
   occupations: string[];
-  incomes: IncomeBracket[];
+  budgets: Budget[];
   mindsets: Mindset[];
   techComfort: TechComfort[];
   currentSolutions: string[]; // competitors or workarounds they use today
@@ -66,8 +62,15 @@ export type CrawledPage = {
   url: string;
   title: string;
   text: string; // visible text, trimmed
-  screenshotFile: string | null; // file name inside the crawl folder
+  screenshotFiles: string[]; // e.g. ["hero-1.jpg", "hero-2.jpg"] (top of page first)
   note?: string; // e.g. "pricing is a section on the landing page"
+  // Facts measured IN CODE (not guessed by AI), used for the product profile.
+  signals: {
+    formFields: number; // visible inputs the visitor would have to fill in
+    asksForCard: boolean; // card number / CVC fields on the page
+    socialLogin: boolean; // "Continue with Google / Apple / GitHub"
+    pricesSeen: string[]; // things like "$12.99/month"
+  };
 };
 
 export type Crawl = {
@@ -75,6 +78,18 @@ export type Crawl = {
   url: string;
   createdAt: string;
   pages: CrawledPage[];
+  costs: CallCost[]; // AI calls made while crawling (choosing what to click)
+};
+
+// What the product IS, written by Haiku after the crawl. The founder can
+// edit it before a run, and every persona reads it.
+export type ProductProfile = {
+  whatItIs: string;
+  whoItsFor: string;
+  mainPromise: string;
+  prices: string[];
+  proof: string[]; // testimonials, logos, numbers like "10,000 users"
+  friction: string[]; // things that slow people down: "card required", "waitlist only"
 };
 
 // ---------- Personas and their verdicts ----------
@@ -86,7 +101,7 @@ export type Persona = {
   country: string;
   area: "urban" | "suburban" | "rural";
   occupation: string;
-  income: IncomeBracket;
+  budget: Budget;
   mindset: Mindset;
   techComfort: TechComfort;
   currentSolution: string;

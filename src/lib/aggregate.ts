@@ -64,7 +64,7 @@ export function aggregate(audience: Audience, personas: Persona[], verdicts: Ver
   // ----- Segments (the heatmap) -----
   const segmentFns: Record<string, (p: Persona) => string | undefined> = {
     age: (p) => ageBucket(p.age),
-    income: (p) => p.income,
+    budget: (p) => p.budget,
     occupation: (p) => p.occupation,
     mindset: (p) => p.mindset,
     "tech comfort": (p) => p.techComfort,

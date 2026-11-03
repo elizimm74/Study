@@ -85,4 +85,9 @@ ranked fixes, quotes). Show me the actual cost of each run in the console.
   - Cloud sandbox blocks most outside websites, so real-site crawling must be tested on the founder's computer.
   - Design choices: flip counts computed in code from objection categories (not AI guesses); prompt caching on page content; Sonnet uses server-side fallback ("default"); runs saved as JSON in data/ (gitignored).
 - 2026-11-03: Founder ran the app on their Mac (folder `~/launch-test`, since `~/Study` already existed). First real 100-persona run on /demo/ WORKED, cost ~$0.03 → ~$0.30 per 1,000 (well under the $1 target).
-- Next up: review first real report for persona realism, tune persona realism, then before/after comparison + shareable scorecard image.
+- Founder tested rork.com (not their product, just a test site). Feedback: crawler needed to be smarter about navigating and understanding the product.
+- Smarter crawler DONE: cookie pop-ups closed, scrolls to load content, 2 screenshots per page, Haiku picks which link/button to click (word matching as backup), handles buttons, new tabs, pop-ups and same-page sections. Code measures facts (form fields, card required, social login, prices). Tested on public/demo/tricky.html.
+- Product profile DONE: understand-site call returns profile (what it is, who for, promise, prices, proof, friction) + audience. The founder edits it on the home page; personas and the Sonnet report read it.
+- Income brackets replaced by budget: tight / okay / comfortable (founder's idea).
+- IDEA for Milestone 3: "Try the product" — one AI agent actually uses the app (e.g. types a prompt into a vibe-coding tool), records screenshots, personas review the recording. Only for products the founder owns, or ones that need no login. Logins are currently out of scope per the brief.
+- Next up: founder tests the smarter crawler on real sites; then Milestone 2 (re-run on the same personas, before/after, honest score range, scorecard image).

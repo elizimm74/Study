@@ -9,7 +9,14 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { anthropic, assertNotRefused, SONNET } from "./ai";
 import { costOfCall } from "./cost";
 import type { Stats } from "./aggregate";
-import { FUNNEL_STEPS, OBJECTION_CATEGORIES, type CallCost, type Crawl } from "./types";
+import { profileToText } from "./suggest";
+import {
+  FUNNEL_STEPS,
+  OBJECTION_CATEGORIES,
+  type CallCost,
+  type Crawl,
+  type ProductProfile,
+} from "./types";
 
 const AdviceSchema = z.object({
   summary: z.string(),
@@ -36,6 +43,7 @@ export type Advice = Omit<z.infer<typeof AdviceSchema>, "fixes"> & { fixes: Fix[
 
 export async function writeAdvice(
   crawl: Crawl,
+  profile: ProductProfile,
   stats: Stats,
 ): Promise<{ advice: Advice; cost: CallCost }> {
   const page = (step: string, max: number) =>
@@ -77,6 +85,7 @@ export async function writeAdvice(
         content:
           `You are a sharp conversion-rate expert advising a small founder.\n` +
           `Simulated customers reviewed their site. Here is the site and the aggregated results.\n\n` +
+          `PRODUCT PROFILE:\n${profileToText(profile)}\n\n` +
           `LANDING PAGE:\n${page("hero", 2500)}\n\nPRICING:\n${page("pricing", 1500)}\n\n` +
           `RESULTS (JSON):\n${JSON.stringify(summary, null, 1)}\n\n` +
           `Write:\n` +

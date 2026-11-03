@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PRESETS } from "@/lib/presets";
 import {
   COMPANY_SIZES,
-  INCOME_BRACKETS,
+  BUDGETS,
   MINDSETS,
   TECH_LEVELS,
   type Audience,
@@ -95,8 +95,8 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
         </Field>
       </div>
 
-      <Field label="Income">
-        <Chips options={INCOME_BRACKETS} selected={audience.incomes} onToggle={(v) => set("incomes", toggle(audience.incomes, v))} />
+      <Field label="Budget" hint="how much they can comfortably spend">
+        <Chips options={BUDGETS} selected={audience.budgets} onToggle={(v) => set("budgets", toggle(audience.budgets, v))} />
       </Field>
       <Field label="Mindset">
         <Chips options={MINDSETS} selected={audience.mindsets} onToggle={(v) => set("mindsets", toggle(audience.mindsets, v))} />

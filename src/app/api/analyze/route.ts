@@ -1,9 +1,10 @@
 // POST /api/analyze  { url }
-// Crawls the site, then asks Haiku to guess the audience.
+// Crawls the site, then asks Haiku what the product is and who it's for.
 import { NextResponse } from "next/server";
 import { crawlSite } from "@/lib/crawl";
-import { suggestAudience } from "@/lib/suggest";
+import { understandSite, EMPTY_PROFILE } from "@/lib/suggest";
 import { logRunCost } from "@/lib/cost";
+import type { Crawl } from "@/lib/types";
 
 export const runtime = "nodejs"; // Playwright needs full Node.js
 export const maxDuration = 120;
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please enter a valid website address." }, { status: 400 });
   }
 
-  let crawl;
+  let crawl: Crawl;
   try {
     crawl = await crawlSite(cleanUrl);
   } catch (err) {
@@ -26,16 +27,18 @@ export async function POST(req: Request) {
     );
   }
 
-  // If the AI guess fails (e.g. no API key yet), still return the crawl so
-  // the user can fill in the audience by hand.
+  // If the AI step fails (e.g. no API key yet), still return the crawl so
+  // the user can fill in the profile and audience by hand.
   try {
-    const { audience, summary, cost } = await suggestAudience(crawl);
-    logRunCost(`analyze ${crawl.id}`, [cost]);
-    return NextResponse.json({ crawl: publicCrawl(crawl), audience, summary });
+    const { profile, audience, cost } = await understandSite(crawl);
+    logRunCost(`analyze ${crawl.id}`, [...crawl.costs, cost]);
+    return NextResponse.json({ crawl: publicCrawl(crawl), profile, audience });
   } catch (err) {
-    console.error("[analyze] suggestion failed:", (err as Error).message);
+    console.error("[analyze] understanding failed:", (err as Error).message);
+    if (crawl.costs.length) logRunCost(`analyze ${crawl.id}`, crawl.costs);
     return NextResponse.json({
       crawl: publicCrawl(crawl),
+      profile: EMPTY_PROFILE,
       audience: null,
       suggestError: (err as Error).message,
     });
@@ -55,7 +58,7 @@ function normalizeUrl(input?: string) {
 }
 
 // Send the browser only what it needs to display (not the full page text).
-function publicCrawl(crawl: Awaited<ReturnType<typeof crawlSite>>) {
+function publicCrawl(crawl: Crawl) {
   return {
     id: crawl.id,
     url: crawl.url,
@@ -63,8 +66,7 @@ function publicCrawl(crawl: Awaited<ReturnType<typeof crawlSite>>) {
       step: p.step,
       url: p.url,
       title: p.title,
-      chars: p.text.length,
-      screenshot: p.screenshotFile ? `/api/screenshot/${crawl.id}/${p.screenshotFile}` : null,
+      screenshots: p.screenshotFiles.map((f) => `/api/screenshot/${crawl.id}/${f}`),
       note: p.note,
     })),
   };

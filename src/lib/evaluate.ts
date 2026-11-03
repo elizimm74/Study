@@ -13,11 +13,13 @@ import { anthropic, assertNotRefused, HAIKU } from "./ai";
 import { costOfCall } from "./cost";
 import { describePersona } from "./personas";
 import { screenshotPath } from "./storage";
+import { profileToText, signalsToText } from "./suggest";
 import {
   OBJECTION_CATEGORIES,
   type CallCost,
   type Crawl,
   type Persona,
+  type ProductProfile,
   type Verdict,
 } from "./types";
 
@@ -45,7 +47,7 @@ You will see the site (screenshots + text of the landing page, pricing and signu
 Be realistic, not polite:
 - Most real visitors do NOT buy. A typical landing page converts only a few percent of visitors. "maybe" means genuinely interested but unconvinced; "buy" means they would pay or sign up today.
 - Judge only what is actually on the page. Vague claims, missing prices, no social proof, or a confusing signup are real reasons to leave.
-- Use the persona's details: income and mindset drive price sensitivity; tech comfort drives how hard setup feels; what they use now sets the bar to switch; business personas who need approval are slower to say yes.
+- Use the persona's details: budget and mindset drive price sensitivity (a tight budget means every subscription hurts); tech comfort drives how hard setup feels; what they use now sets the bar to switch; business personas who need approval are slower to say yes.
 - If the product is irrelevant to the persona, they leave at the hero with objection category "not for me".
 
 For each persona return:
@@ -61,10 +63,11 @@ type Progress = (done: number, total: number) => void;
 
 export async function evaluatePersonas(
   crawl: Crawl,
+  profile: ProductProfile,
   personas: Persona[],
   onProgress: Progress,
 ): Promise<{ verdicts: Verdict[]; costs: CallCost[] }> {
-  const siteContent = await buildSiteContent(crawl);
+  const siteContent = await buildSiteContent(crawl, profile);
   const batches: Persona[][] = [];
   for (let i = 0; i < personas.length; i += BATCH_SIZE) {
     batches.push(personas.slice(i, i + BATCH_SIZE));
@@ -92,31 +95,37 @@ export async function evaluatePersonas(
 }
 
 // Screenshots + page text, built once and reused (and cached) for every batch.
-async function buildSiteContent(crawl: Crawl): Promise<Anthropic.ContentBlockParam[]> {
+async function buildSiteContent(
+  crawl: Crawl,
+  profile: ProductProfile,
+): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
   for (const page of crawl.pages) {
-    if (!page.screenshotFile) continue;
-    try {
-      const data = await fs.readFile(screenshotPath(crawl.id, page.screenshotFile));
-      blocks.push(
-        { type: "text", text: `Screenshot of the ${page.step} page:` },
-        {
-          type: "image",
-          source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") },
-        },
-      );
-    } catch {
-      // Missing screenshot is fine; the text below still describes the page.
+    for (const [i, file] of page.screenshotFiles.entries()) {
+      try {
+        const data = await fs.readFile(screenshotPath(crawl.id, file));
+        blocks.push(
+          { type: "text", text: `Screenshot of the ${page.step} page${i > 0 ? " (scrolled down)" : ""}:` },
+          {
+            type: "image",
+            source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") },
+          },
+        );
+      } catch {
+        // Missing screenshot is fine; the text below still describes the page.
+      }
     }
   }
   const stepsFound = crawl.pages.map((p) => p.step);
   const missing = (["pricing", "signup"] as const).filter((s) => !stepsFound.includes(s));
   const text =
+    `=== PRODUCT PROFILE (checked by the founder) ===\n${profileToText(profile)}\n\n` +
     crawl.pages
       .map(
         (p) =>
           `=== ${p.step.toUpperCase()} PAGE: ${p.url} ===\n` +
           (p.note ? `(${p.note})\n` : "") +
+          signalsToText(p.signals) +
           p.text,
       )
       .join("\n\n") +
