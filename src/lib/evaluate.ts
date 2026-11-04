@@ -19,10 +19,16 @@ import {
   OBJECTION_CATEGORIES,
   type CallCost,
   type Crawl,
+  type Journey,
   type Persona,
   type ProductProfile,
+  type Reputation,
   type Verdict,
 } from "./types";
+
+// Optional extras from Milestone 3.
+export type Extras = { runId: string; journey?: Journey; reputation?: Reputation };
+const MAX_JOURNEY_SHOTS = 6; // a few key moments, to keep cost down
 
 const BATCH_SIZE = 25;
 const PARALLEL = 4; // how many AI calls at the same time
@@ -32,7 +38,7 @@ const BatchSchema = z.object({
     z.object({
       persona_id: z.string(),
       verdict: z.enum(["buy", "maybe", "no"]),
-      lost_at: z.enum(["hero", "pricing", "signup", "none"]),
+      lost_at: z.enum(["hero", "pricing", "product", "signup", "none"]),
       objection_category: z.enum(OBJECTION_CATEGORIES),
       objection: z.string(),
       would_change_mind: z.string(),
@@ -56,10 +62,12 @@ Be realistic, not polite:
 - Use the persona's details: budget and mindset drive price sensitivity; tech comfort drives how hard setup feels; what they use now sets the bar to switch; business personas who need approval are slower to say yes.
 - If the product is irrelevant to the persona, they leave at the hero with objection category "not for me".
 - Each batch also includes RESEARCH NOTES about how people like these personas really behave. Follow them.
+- Sometimes an EXPLORER JOURNEY is included: a tester actually used the product (screenshots of key moments + a step log). Treat it as what this persona would experience if they tried the product: did it deliver the promise quickly? Was it confusing? Impatient or low-tech personas suffer most from friction there. Use lost_at "product" when trying the product is what lost them. Without a journey, never use "product".
+- Sometimes REAL REVIEWS from the web are included. Personas who would look up reviews (skeptical people, teens checking comments) are influenced by them.
 
 For each persona return:
 - verdict: buy / maybe / no
-- lost_at: the funnel step where they gave up or got stuck (hero, pricing, signup). Use "none" ONLY for "buy".
+- lost_at: the funnel step where they gave up or got stuck (hero, pricing, product, signup). Use "none" ONLY for "buy".
 - objection_category: the single best match; use "none" ONLY for "buy".
 - objection: their main objection in one sentence (for converters: their small remaining doubt).
 - would_change_mind: the one specific change to the site that would win them (or keep them).
@@ -73,8 +81,10 @@ export async function evaluatePersonas(
   profile: ProductProfile,
   personas: Persona[],
   onProgress: Progress,
+  extras?: Extras,
 ): Promise<{ verdicts: Verdict[]; costs: CallCost[] }> {
-  const siteContent = await buildSiteContent(crawl, profile);
+  const siteContent = await buildSiteContent(crawl, profile, extras);
+  const hasJourney = Boolean(extras?.journey?.steps.length);
   const batches: Persona[][] = [];
   for (let i = 0; i < personas.length; i += BATCH_SIZE) {
     batches.push(personas.slice(i, i + BATCH_SIZE));
@@ -85,7 +95,7 @@ export async function evaluatePersonas(
   let done = 0;
 
   const runBatch = async (batch: Persona[], index: number) => {
-    const result = await evaluateBatch(siteContent, batch, `evaluate batch ${index + 1}`);
+    const result = await evaluateBatch(siteContent, batch, `evaluate batch ${index + 1}`, hasJourney);
     verdicts.push(...result.verdicts);
     costs.push(...result.costs);
     done += batch.length;
@@ -105,8 +115,20 @@ export async function evaluatePersonas(
 async function buildSiteContent(
   crawl: Crawl,
   profile: ProductProfile,
+  extras?: Extras,
 ): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
+  const addImage = async (file: string, label: string) => {
+    try {
+      const data = await fs.readFile(file);
+      blocks.push(
+        { type: "text", text: label },
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") } },
+      );
+    } catch {
+      // A missing screenshot is fine; the text still describes it.
+    }
+  };
   for (const page of crawl.pages) {
     const files = page.screenshotFiles.map((f, i) => ({
       file: f,
@@ -115,19 +137,17 @@ async function buildSiteContent(
     if (page.mobileScreenshotFile) {
       files.push({ file: page.mobileScreenshotFile, label: `Screenshot of the ${page.step} page on a PHONE:` });
     }
-    for (const { file, label } of files) {
-      try {
-        const data = await fs.readFile(screenshotPath(crawl.id, file));
-        blocks.push(
-          { type: "text", text: label },
-          {
-            type: "image",
-            source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") },
-          },
-        );
-      } catch {
-        // Missing screenshot is fine; the text below still describes the page.
-      }
+    for (const { file, label } of files) await addImage(screenshotPath(crawl.id, file), label);
+  }
+
+  // Milestone 3: key moments from the explorer actually using the product.
+  const journey = extras?.journey;
+  if (journey?.steps.length) {
+    for (const step of pickKeySteps(journey)) {
+      await addImage(
+        screenshotPath(extras!.runId, step.screenshot),
+        `EXPLORER step ${step.n} (inside the product): ${step.observation}`,
+      );
     }
   }
   const stepsFound = crawl.pages.map((p) => p.step);
@@ -148,7 +168,7 @@ async function buildSiteContent(
       : "");
 
   // cache_control marks the end of the part that's the same for every batch.
-  blocks.push({ type: "text", text, cache_control: { type: "ephemeral" } });
+  blocks.push({ type: "text", text: text + journeyText(journey) + reviewsText(extras?.reputation), cache_control: { type: "ephemeral" } });
   return blocks;
 }
 
@@ -156,6 +176,7 @@ async function evaluateBatch(
   siteContent: Anthropic.ContentBlockParam[],
   batch: Persona[],
   label: string,
+  hasJourney: boolean,
 ): Promise<{ verdicts: Verdict[]; costs: CallCost[] }> {
   const costs: CallCost[] = [];
   const byId = new Map(batch.map((p) => [p.id, p]));
@@ -191,7 +212,7 @@ async function evaluateBatch(
 
       for (const r of response.parsed_output?.results ?? []) {
         if (!byId.has(r.persona_id) || found.has(r.persona_id)) continue;
-        found.set(r.persona_id, normalize(r));
+        found.set(r.persona_id, normalize(r, hasJourney));
       }
     } catch (err) {
       console.error(`[${label}] attempt ${attempt} failed:`, (err as Error).message);
@@ -206,16 +227,51 @@ async function evaluateBatch(
 }
 
 // Fix small contradictions so the math later is clean.
-function normalize(r: z.infer<typeof BatchSchema>["results"][number]): Verdict {
+function normalize(r: z.infer<typeof BatchSchema>["results"][number], hasJourney: boolean): Verdict {
   const isBuy = r.verdict === "buy";
+  // A non-buyer must have stopped somewhere; default to the last step.
+  // "product" only makes sense if the explorer actually tried the product.
+  let lostAt = r.lost_at === "none" ? "signup" : r.lost_at;
+  if (lostAt === "product" && !hasJourney) lostAt = "signup";
   return {
     personaId: r.persona_id,
     verdict: r.verdict,
-    // A non-buyer must have stopped somewhere; default to the last step.
-    lostAt: isBuy ? "none" : r.lost_at === "none" ? "signup" : r.lost_at,
+    lostAt: isBuy ? "none" : lostAt,
     objectionCategory: isBuy ? "none" : r.objection_category === "none" ? "unclear value" : r.objection_category,
     objection: r.objection,
     wouldChangeMind: r.would_change_mind,
     quote: r.quote,
   };
+}
+
+// Up to 6 screenshots spread across the journey, always including the last.
+function pickKeySteps(journey: Journey) {
+  const steps = journey.steps;
+  if (steps.length <= MAX_JOURNEY_SHOTS) return steps;
+  const picked = new Set<number>();
+  for (let i = 0; i < MAX_JOURNEY_SHOTS; i++) {
+    picked.add(Math.round((i * (steps.length - 1)) / (MAX_JOURNEY_SHOTS - 1)));
+  }
+  return [...picked].sort((a, b) => a - b).map((i) => steps[i]);
+}
+
+function journeyText(journey?: Journey) {
+  if (!journey?.steps.length) return "";
+  const log = journey.steps
+    .map((s) => `${s.n}. Saw: ${s.observation} -> ${s.action}${s.friction ? ` [friction: ${s.friction}]` : ""}`)
+    .join("\n");
+  return (
+    `\n\n=== EXPLORER JOURNEY: a tester tried the product ===\nTask: ${journey.task}\n` +
+    `Result: ${journey.status} after ${journey.steps.length} steps (${journey.seconds}s)\n` +
+    `Summary: ${journey.summary}\nBiggest friction: ${journey.frictionPoints.join("; ") || "none noted"}\nSteps:\n${log}`
+  );
+}
+
+function reviewsText(rep?: Reputation) {
+  if (!rep) return "";
+  if (!rep.found) return "\n\n=== REAL REVIEWS FROM THE WEB ===\nNo independent reviews found (the product may be new).";
+  return (
+    `\n\n=== REAL REVIEWS FROM THE WEB ===\n${rep.summary}\n` +
+    `People praise: ${rep.praise.join("; ") || "-"}\nPeople complain about: ${rep.complaints.join("; ") || "-"}`
+  );
 }

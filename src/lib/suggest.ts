@@ -30,6 +30,7 @@ const UnderstandSchema = z.object({
   prices: z.array(z.string()),
   proof: z.array(z.string()),
   friction: z.array(z.string()),
+  tryTask: z.string(),
   // --- suggested audience ---
   mode: z.enum(["consumer", "business"]),
   ageMin: z.number(),
@@ -87,7 +88,9 @@ export async function understandSite(
           `- prices: every price or plan you can see (empty list if none shown).\n` +
           `- proof: testimonials, customer logos, user counts, ratings (empty list if none).\n` +
           `- friction: things that slow a visitor down or add doubt, e.g. "no price shown", "credit card required for trial", ` +
-          `"waitlist only, can't try it yet", "7 form fields", "no reviews". Use the MEASURED facts.\n\n` +
+          `"waitlist only, can't try it yet", "7 form fields", "no reviews". Use the MEASURED facts.\n` +
+          `- tryTask: one short, concrete first task a new user would try IN the product to see if it's good, ` +
+          `e.g. "Find a birthday card template and open it" or "Describe a habit tracker app and see what it builds".\n\n` +
           `PART 2 — Most likely target customer. Fill in every field.\n` +
           `- mode: "business" if buyers purchase for a company/team (B2B), else "consumer".\n` +
           `- Percentages in each group should add up to about 100.\n` +
@@ -110,6 +113,7 @@ export async function understandSite(
     prices: s.prices,
     proof: s.proof,
     friction: s.friction,
+    tryTask: s.tryTask,
   };
   const audience: Audience = {
     mode: s.mode,
@@ -144,6 +148,7 @@ export const EMPTY_PROFILE: ProductProfile = {
   prices: [],
   proof: [],
   friction: [],
+  tryTask: "",
 };
 
 // Turns the profile into a few readable lines for the AI prompts.

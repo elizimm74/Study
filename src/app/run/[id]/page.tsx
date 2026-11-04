@@ -3,9 +3,16 @@
 // then shows the report.
 import { use, useEffect, useState } from "react";
 import Report from "@/components/Report";
+import JourneyView from "@/components/JourneyView";
 import type { Run } from "@/lib/pipeline";
+import type { Journey } from "@/lib/types";
 
-type Progress = { status: "running"; stage: string; progress: { done: number; total: number } };
+type Progress = {
+  status: "running";
+  stage: string;
+  progress: { done: number; total: number };
+  journey?: Journey; // live explorer steps
+};
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -37,6 +44,28 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
 
   if (data.status === "running") {
     const pct = Math.round((data.progress.done / Math.max(1, data.progress.total)) * 100);
+    // While the explorer works, show it live.
+    if (data.stage.startsWith("The explorer")) {
+      // Before the first step arrives, show an empty journey ("Opening the product…").
+      const journey: Journey = data.journey ?? {
+        task: "",
+        access: "public",
+        status: "running",
+        summary: "",
+        frictionPoints: [],
+        steps: [],
+        seconds: 0,
+      };
+      return (
+        <div className="space-y-4">
+          <p className="text-lg font-medium">
+            <span className="mr-2 inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-rose-500" />
+            Live: the explorer is trying your product
+          </p>
+          <JourneyView runId={id} journey={journey} live />
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
         <p className="text-lg font-medium">{data.stage}…</p>

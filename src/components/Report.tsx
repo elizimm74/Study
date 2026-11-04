@@ -4,6 +4,7 @@
 import { useState } from "react";
 import type { Run } from "@/lib/pipeline";
 import type { QuoteItem } from "@/lib/aggregate";
+import JourneyView from "@/components/JourneyView";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -32,6 +33,51 @@ export default function Report({ run }: { run: Run }) {
           <p className="mt-3 text-xs text-slate-400">Run cost: ${run.totalCostUsd.toFixed(4)}</p>
         )}
       </section>
+
+      {/* ---------- Milestone 3: product test + reviews ---------- */}
+      {run.journey && run.journey.steps.length > 0 && (
+        <Section title="Product test" subtitle="An AI explorer used the product like a first-time user. Click a step to see that screen.">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <JourneyView runId={run.id} journey={run.journey} />
+          </div>
+        </Section>
+      )}
+      {run.reputation && (
+        <Section title="What people say online">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
+            <p className="text-slate-700">{run.reputation.summary}</p>
+            {run.reputation.found && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="font-medium text-emerald-700">Praise</p>
+                  <ul className="list-disc pl-5 text-slate-600">
+                    {run.reputation.praise.map((x, i) => <li key={i}>{x}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-rose-700">Complaints</p>
+                  <ul className="list-disc pl-5 text-slate-600">
+                    {run.reputation.complaints.map((x, i) => <li key={i}>{x}</li>)}
+                  </ul>
+                </div>
+              </div>
+            )}
+            {run.reputation.sources.length > 0 && (
+              <p className="text-xs text-slate-400">
+                Sources:{" "}
+                {run.reputation.sources.map((src, i) => (
+                  <span key={src.url}>
+                    {i > 0 && " · "}
+                    <a href={src.url} target="_blank" rel="noreferrer" className="underline hover:text-slate-600">
+                      {src.title.slice(0, 50)}
+                    </a>
+                  </span>
+                ))}
+              </p>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* ---------- Ranked fixes ---------- */}
       <Section title="Ranked fixes" subtitle="Sorted by how many 'maybe' personas each fix speaks to. Counts come from the real objections, not AI guesses.">
@@ -87,7 +133,9 @@ export default function Report({ run }: { run: Run }) {
             {stats.funnel.map((f) => (
               <div key={f.step}>
                 <div className="flex justify-between text-sm">
-                  <span className="capitalize">{f.step === "hero" ? "Landing page" : f.step}</span>
+                  <span className="capitalize">
+                    {f.step === "hero" ? "Landing page" : f.step === "product" ? "Trying the product" : f.step}
+                  </span>
                   <span className="text-slate-500">
                     {f.reached} reached{f.lost ? ` · ${f.lost} left here` : ""}
                   </span>

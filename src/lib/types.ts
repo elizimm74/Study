@@ -103,6 +103,54 @@ export type ProductProfile = {
   prices: string[];
   proof: string[]; // testimonials, logos, numbers like "10,000 users"
   friction: string[]; // things that slow people down: "card required", "waitlist only"
+  tryTask: string; // a first thing a new user would try, e.g. "Find a birthday card template"
+};
+
+// ---------- Milestone 3: trying the product ----------
+
+// How the explorer is allowed in. It never sneaks past other sites' logins.
+//  public:  only parts anyone can use without an account
+//  account: the founder's own TEST account (never saved, never shown to the AI)
+//  preview: a link where the founder turned the login off
+export type ExploreAccess = "public" | "account" | "preview";
+
+export type ExploreSettings = {
+  enabled: boolean;
+  task: string; // what the explorer should try to do
+  access: ExploreAccess;
+  startUrl: string; // where to begin (the site, the app, or the preview link)
+  reputation: boolean; // also search the web for real reviews
+};
+
+// Kept only in memory for one run. NEVER saved to disk or sent to the AI.
+export type Credentials = { email: string; password: string };
+
+export type JourneyStep = {
+  n: number;
+  url: string;
+  screenshot: string; // file name, e.g. "explore-03.jpg" (what the explorer saw)
+  observation: string; // what a first-time user notices on this screen
+  action: string; // what it did next, in plain words
+  friction?: string; // anything confusing or slow on this screen
+  model: string; // which AI decided this step (Haiku normally, Sonnet when stuck)
+};
+
+export type Journey = {
+  task: string;
+  access: ExploreAccess;
+  status: "running" | "completed" | "stuck" | "blocked" | "out of steps" | "error";
+  summary: string;
+  frictionPoints: string[];
+  steps: JourneyStep[];
+  seconds: number;
+};
+
+export type Reputation = {
+  found: boolean;
+  summary: string;
+  praise: string[];
+  complaints: string[];
+  sources: { title: string; url: string }[]; // read from the search results by code
 };
 
 // ---------- Personas and their verdicts ----------
@@ -129,7 +177,8 @@ export type Persona = {
   industry?: string;
 };
 
-export const FUNNEL_STEPS = ["hero", "pricing", "signup"] as const;
+// "product" = trying the product itself (only when the explorer ran).
+export const FUNNEL_STEPS = ["hero", "pricing", "product", "signup"] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 
 export const OBJECTION_CATEGORIES = [

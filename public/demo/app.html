@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>CardMaker – app</title>
+<style>body{font-family:system-ui;padding:32px}button,input{font:inherit;padding:8px;margin:4px}.r{border:1px solid #ddd;padding:12px;margin:8px 0;border-radius:8px}</style></head>
+<body><h1>CardMaker</h1>
+<p><input id="q" placeholder="Search templates"><button onclick="search()">Search</button></p>
+<div id="results"></div>
+<p><button onclick="document.title='BOUGHT'">Buy Pro – $9</button> <a href="https://example.com/">Our partner site</a></p>
+<p><input type="email" placeholder="Your email for updates"></p>
+<script>
+function search(){const q=document.getElementById('q').value;document.getElementById('results').innerHTML=
+['Birthday balloons','Birthday cake','Thank you'].filter(t=>t.toLowerCase().includes(q.toLowerCase()))
+.map(t=>`<div class="r">${t} <button onclick="location.href='editor.html?t=${encodeURIComponent(t)}'">Open ${t}</button></div>`).join('')||'No results';}
+</script></body></html>

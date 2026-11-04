@@ -15,6 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       status: run.status,
       stage: run.stage,
       progress: run.progress,
+      journey: run.journey, // the explorer's steps so far, for the live view
     });
   }
   return NextResponse.json(run);

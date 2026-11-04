@@ -5,8 +5,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AudiencePicker from "@/components/AudiencePicker";
 import ProfileEditor from "@/components/ProfileEditor";
+import ExplorePanel from "@/components/ExplorePanel";
 import { DEFAULT_AUDIENCE } from "@/lib/presets";
-import type { Audience, ProductProfile } from "@/lib/types";
+import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
 type CrawlInfo = {
   id: string;
@@ -23,6 +24,16 @@ export default function Home() {
   const [profile, setProfile] = useState<ProductProfile | null>(null);
   const [suggested, setSuggested] = useState<Audience | null>(null);
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE);
+  const [explore, setExplore] = useState<ExploreSettings>({
+    enabled: false,
+    task: "",
+    access: "public",
+    startUrl: "",
+    reputation: false,
+  });
+  // The test account stays in this page's memory and is sent only to start the run.
+  const [credentials, setCredentials] = useState<Credentials>({ email: "", password: "" });
+  const [ownsProduct, setOwnsProduct] = useState(false);
 
   async function analyze(e: React.FormEvent) {
     e.preventDefault(); // stop the browser from reloading the page
@@ -39,6 +50,7 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error);
       setCrawl(data.crawl);
       setProfile(data.profile);
+      setExplore((e) => ({ ...e, task: data.profile?.tryTask || e.task, startUrl: data.crawl.url }));
       if (data.audience) {
         setSuggested(data.audience);
         setAudience(data.audience);
@@ -61,7 +73,14 @@ export default function Home() {
       const res = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crawlId: crawl.id, audience, profile }),
+        body: JSON.stringify({
+          crawlId: crawl.id,
+          audience,
+          profile,
+          explore,
+          credentials: explore.enabled && explore.access === "account" ? credentials : undefined,
+          ownsProduct,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -139,12 +158,29 @@ export default function Home() {
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <AudiencePicker audience={audience} onChange={setAudience} suggested={suggested} />
             </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">
+              Try the product <span className="text-sm font-normal text-indigo-600">new</span>
+            </h2>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <ExplorePanel
+                settings={explore}
+                onChange={setExplore}
+                credentials={credentials}
+                onCredentials={setCredentials}
+                ownsProduct={ownsProduct}
+                onOwnsProduct={setOwnsProduct}
+              />
+            </div>
+            {error && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{error}</p>}
             <button
               onClick={startRun}
               disabled={busy !== null}
               className="w-full rounded-lg bg-indigo-600 px-5 py-3 font-medium text-white disabled:opacity-50"
             >
-              {busy === "starting" ? "Starting…" : "Run 100 personas"}
+              {busy === "starting" ? "Starting…" : explore.enabled ? "Try the product + run 100 personas" : "Run 100 personas"}
             </button>
           </section>
         </>

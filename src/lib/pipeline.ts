@@ -1,12 +1,26 @@
 // Runs the whole engine in order and keeps track of progress.
-//   personas (code) -> evaluate (Haiku) -> aggregate (code) -> advice (Sonnet)
+//   [explorer tries the product + reputation search]  (optional, at the same time)
+//   -> personas (code) -> evaluate (Haiku) -> aggregate (code) -> advice (Sonnet)
 import { generatePersonas } from "./personas";
 import { evaluatePersonas } from "./evaluate";
 import { aggregate, type Stats } from "./aggregate";
 import { writeAdvice, type Advice } from "./report";
+import { exploreProduct } from "./explore";
+import { checkReputation } from "./reputation";
 import { logRunCost } from "./cost";
 import { loadJson, newId, saveJson } from "./storage";
-import type { Audience, CallCost, Crawl, Persona, ProductProfile, Verdict } from "./types";
+import type {
+  Audience,
+  CallCost,
+  Crawl,
+  Credentials,
+  ExploreSettings,
+  Journey,
+  Persona,
+  ProductProfile,
+  Reputation,
+  Verdict,
+} from "./types";
 
 export type Run = {
   id: string;
@@ -15,6 +29,7 @@ export type Run = {
   createdAt: string;
   profile: ProductProfile;
   audience: Audience;
+  explore?: ExploreSettings; // never includes the test account details
   seed: number;
   status: "running" | "done" | "error";
   stage: string; // human-readable, shown on the progress screen
@@ -22,6 +37,8 @@ export type Run = {
   error?: string;
   personas: Persona[];
   verdicts: Verdict[];
+  journey?: Journey; // what the explorer did inside the product
+  reputation?: Reputation | null;
   stats?: Stats;
   advice?: Advice;
   costs: CallCost[];
@@ -44,6 +61,8 @@ export function startRun(
   profile: ProductProfile,
   audience: Audience,
   count: number,
+  explore?: ExploreSettings,
+  credentials: Credentials | null = null, // passed along in memory only
 ): string {
   const seed = Math.floor(Math.random() * 1e9);
   const run: Run = {
@@ -53,6 +72,7 @@ export function startRun(
     createdAt: new Date().toISOString(),
     profile,
     audience,
+    explore: explore?.enabled ? explore : undefined,
     seed,
     status: "running",
     stage: "Creating personas",
@@ -62,24 +82,53 @@ export function startRun(
     costs: [],
   };
   liveRuns.set(run.id, run);
-  void execute(run, crawl); // "void" = start it, don't wait for it
+  void execute(run, crawl, credentials); // "void" = start it, don't wait for it
   return run.id;
 }
 
-async function execute(run: Run, crawl: Crawl) {
+async function execute(run: Run, crawl: Crawl, credentials: Credentials | null) {
   try {
+    // 1) Optional: try the product and check reviews AT THE SAME TIME (faster).
+    if (run.explore) {
+      run.stage = "The explorer is trying your product";
+      const settings = run.explore;
+      const [explored, rep] = await Promise.all([
+        settings.task.trim()
+          ? exploreProduct(run.id, settings, credentials, (j) => {
+              run.journey = { ...j, steps: [...j.steps] }; // copy, for the live view
+            })
+          : Promise.resolve(null),
+        settings.reputation ? checkReputation(run.url, run.profile) : Promise.resolve(null),
+      ]);
+      if (explored) {
+        run.journey = explored.journey;
+        run.costs.push(...explored.costs);
+      }
+      if (rep) {
+        run.reputation = rep.reputation;
+        run.costs.push(...rep.costs);
+      }
+    }
+
+    // 2) Personas review everything they'd see.
     run.stage = "Personas are reviewing your site";
-    const { verdicts, costs } = await evaluatePersonas(crawl, run.profile, run.personas, (done, total) => {
-      run.progress = { done, total };
-    });
+    const { verdicts, costs } = await evaluatePersonas(
+      crawl,
+      run.profile,
+      run.personas,
+      (done, total) => {
+        run.progress = { done, total };
+      },
+      { runId: run.id, journey: run.journey, reputation: run.reputation ?? undefined },
+    );
     run.verdicts = verdicts;
     run.costs.push(...costs);
 
     run.stage = "Crunching the numbers";
-    run.stats = aggregate(run.audience, run.personas, verdicts);
+    run.stats = aggregate(run.audience, run.personas, verdicts, Boolean(run.journey?.steps.length));
 
     run.stage = "Writing your fixes";
-    const { advice, cost } = await writeAdvice(crawl, run.profile, run.stats);
+    const { advice, cost } = await writeAdvice(crawl, run.profile, run.stats, run.journey, run.reputation ?? undefined);
     run.advice = advice;
     run.costs.push(cost);
 

@@ -32,6 +32,15 @@ Open http://localhost:3000. To test without a real product, use one of the fake 
 - `http://localhost:3000/demo/index.html`: a meal-planning app with normal links
 - `http://localhost:3000/demo/tricky.html`: a cookie banner, a "Plans" button, and a waitlist pop-up
 - `http://localhost:3000/demo/loginwall.html`: "Get started" leads to a log-in page first
+- `http://localhost:3000/demo/app.html`: a fake app for **Try the product**. Task: "Search for a birthday template and open it". It also has traps: a Buy button, an outside link, and an email box.
+- `http://localhost:3000/demo/app-login.html`: test-account mode. Email `tester@example.com`, password `S3cret-Pass!` (fake, for testing only)
+
+## Try the product (Milestone 3)
+Tick **"Have an AI explorer actually use the product"** on the home page. The explorer:
+- clicks around like a first-time user, and you can watch it live
+- runs on Haiku, and hands off to Sonnet only when it gets stuck. That costs about 2-5¢.
+- **never** clicks buy/pay/delete/send, never types card numbers, stays on the product's site, and stops at captchas
+- in test-account mode, types the password itself, so the AI only ever sees `{{PASSWORD}}`. The account is never saved.
 
 The **cost of each run** is printed in the terminal where `npm run dev` is running.
 
@@ -48,6 +57,10 @@ The **cost of each run** is printed in the terminal where `npm run dev` is runni
 | `src/lib/crawl.ts` | Step 1: invisible browser closes cookie pop-ups, scrolls, lets Haiku pick what to click, then clicks through landing → pricing → signup/waitlist (links, buttons or pop-ups) |
 | `src/lib/suggest.ts` | One Haiku call: product profile + suggested audience |
 | `src/lib/personas.ts` | Step 2: generate varied personas in code (free) |
+| `src/lib/explore.ts` | Milestone 3: the explorer agent that actually uses the product, plus all its safety rules |
+| `src/lib/reputation.ts` | Optional: searches the web for real reviews (Sonnet + web search, then Haiku tidies the result) |
+| `src/components/ExplorePanel.tsx` | "Try the product" settings card |
+| `src/components/JourneyView.tsx` | Live view and report timeline of what the explorer did |
 | `src/lib/behavior.ts` | Research rules (teens, budgets, signups) + simulated visit: device, where they came from, patience. Sources: `docs/persona-research.md` |
 | `src/lib/evaluate.ts` | Steps 3-4: personas review the site, 25 per Haiku call |
 | `src/lib/aggregate.ts` | Step 5: counts, segments, funnel, objections (free) |

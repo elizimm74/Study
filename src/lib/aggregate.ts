@@ -51,7 +51,12 @@ export function ageBucket(age: number) {
   return "65+";
 }
 
-export function aggregate(audience: Audience, personas: Persona[], verdicts: Verdict[]): Stats {
+export function aggregate(
+  audience: Audience,
+  personas: Persona[],
+  verdicts: Verdict[],
+  triedProduct = false, // true when the explorer ran, adds a "product" funnel step
+): Stats {
   const personaById = new Map(personas.map((p) => [p.id, p]));
   const rows = verdicts
     .map((v) => ({ v, p: personaById.get(v.personaId)! }))
@@ -99,7 +104,8 @@ export function aggregate(audience: Audience, personas: Persona[], verdicts: Ver
   // ----- Funnel drop-off -----
   let reached = total;
   const funnel: Stats["funnel"] = [];
-  for (const step of ["hero", "pricing", "signup"] as const) {
+  const steps = triedProduct ? (["hero", "pricing", "product", "signup"] as const) : (["hero", "pricing", "signup"] as const);
+  for (const step of steps) {
     const lost = rows.filter((r) => r.v.lostAt === step).length;
     funnel.push({ step, reached, lost });
     reached -= lost;

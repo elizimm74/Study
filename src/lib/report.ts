@@ -15,7 +15,9 @@ import {
   OBJECTION_CATEGORIES,
   type CallCost,
   type Crawl,
+  type Journey,
   type ProductProfile,
+  type Reputation,
 } from "./types";
 
 const AdviceSchema = z.object({
@@ -45,7 +47,17 @@ export async function writeAdvice(
   crawl: Crawl,
   profile: ProductProfile,
   stats: Stats,
+  journey?: Journey,
+  reputation?: Reputation,
 ): Promise<{ advice: Advice; cost: CallCost }> {
+  // Short versions only: Sonnet never gets the raw data.
+  const tried = journey?.steps.length
+    ? `PRODUCT TEST (a tester tried "${journey.task}"): ${journey.status} in ${journey.steps.length} steps. ` +
+      `${journey.summary} Friction: ${journey.frictionPoints.join("; ") || "none noted"}\n\n`
+    : "";
+  const reviews = reputation?.found
+    ? `REAL REVIEWS: ${reputation.summary} Praise: ${reputation.praise.join("; ")}. Complaints: ${reputation.complaints.join("; ")}.\n\n`
+    : "";
   const page = (step: string, max: number) =>
     crawl.pages.find((p) => p.step === step)?.text.slice(0, max) ?? "(not found)";
 
@@ -86,6 +98,8 @@ export async function writeAdvice(
           `You are a sharp conversion-rate expert advising a small founder.\n` +
           `Simulated customers reviewed their site. Here is the site and the aggregated results.\n\n` +
           `PRODUCT PROFILE:\n${profileToText(profile)}\n\n` +
+          tried +
+          reviews +
           `LANDING PAGE:\n${page("hero", 2500)}\n\nPRICING:\n${page("pricing", 1500)}\n\n` +
           `RESULTS (JSON):\n${JSON.stringify(summary, null, 1)}\n\n` +
           `Write:\n` +
