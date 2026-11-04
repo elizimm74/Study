@@ -2,6 +2,7 @@
 // Each persona gets every attribute drawn at random from the audience
 // settings, so 100 personas come out varied instead of 100 copies.
 import type { Audience, Persona } from "./types";
+import { simulateVisit } from "./behavior";
 
 // A "seeded" random number generator: the same seed always produces the same
 // personas. That makes runs repeatable, which matters for before/after tests.
@@ -49,7 +50,11 @@ export function generatePersonas(audience: Audience, count: number, seed: number
   const b = audience.business;
   const personas: Persona[] = [];
   for (let i = 0; i < count; i++) {
+    // (device/arrivedFrom/patience are filled in just below)
     const p: Persona = {
+      device: "laptop",
+      arrivedFrom: "",
+      patience: "",
       id: `P${String(i + 1).padStart(3, "0")}`,
       age: age(),
       gender: weighted(audience.genderSplit),
@@ -67,6 +72,8 @@ export function generatePersonas(audience: Audience, count: number, seed: number
       p.companySize = pick(b.companySizes, "2-10");
       p.industry = pick(b.industries, "general");
     }
+    // Simulate the visit itself: device, where they came from, patience.
+    Object.assign(p, simulateVisit(p, rand));
     personas.push(p);
   }
   return personas;
@@ -82,6 +89,9 @@ export function describePersona(p: Persona): string {
     `${p.mindset}`,
     `tech comfort ${p.techComfort}`,
     `currently uses: ${p.currentSolution}`,
+    `visiting on a ${p.device}`,
+    `came from ${p.arrivedFrom}`,
+    `patience ${p.patience}`,
   ];
   if (p.role) {
     parts.push(

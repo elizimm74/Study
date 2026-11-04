@@ -25,6 +25,19 @@ export const DEFAULT_AUDIENCE: Audience = {
 };
 
 export const PRESETS: Record<string, Audience> = {
+  "High school teens": {
+    ...DEFAULT_AUDIENCE,
+    ageMin: 14,
+    ageMax: 17,
+    ageSkew: "even",
+    genderSplit: { female: 49, male: 47, nonbinary: 4 },
+    areaMix: { urban: 30, suburban: 55, rural: 15 },
+    occupations: ["high school student", "student athlete", "part-time job (food or retail)", "babysitter", "gamer", "aspiring creator"],
+    budgets: ["tight", "okay"],
+    mindsets: ["impulse buyer", "skeptical", "price-sensitive", "early adopter", "busy"],
+    techComfort: ["medium", "high", "low"],
+    currentSolutions: ["TikTok / YouTube", "a free app", "asking friends", "nothing"],
+  },
   "Gen Z students": {
     ...DEFAULT_AUDIENCE,
     ageMin: 16,

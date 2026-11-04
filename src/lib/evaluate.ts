@@ -14,6 +14,7 @@ import { costOfCall } from "./cost";
 import { describePersona } from "./personas";
 import { screenshotPath } from "./storage";
 import { profileToText, signalsToText } from "./suggest";
+import { rulesFor } from "./behavior";
 import {
   OBJECTION_CATEGORIES,
   type CallCost,
@@ -41,22 +42,28 @@ const BatchSchema = z.object({
 });
 
 // The instructions that make personas behave like real, skeptical visitors.
+// This part is the same for every batch, so it gets cached (cheaper).
 const SYSTEM_PROMPT = `You simulate real people visiting a product's website for the first time.
-You will see the site (screenshots + text of the landing page, pricing and signup pages, in that order) and a list of personas. For EACH persona, stay fully in character and decide honestly whether they would buy.
+You will see the site (screenshots + text of the landing page, pricing and signup pages, in that order), a product profile, and a list of personas. For EACH persona, stay fully in character and decide honestly what they would do.
+
+What you are deciding:
+- The product profile says the site's GOAL (for example "sign up", "join the waitlist", "buy"). verdict "buy" means the persona would complete THAT goal today. "maybe" means genuinely interested but unconvinced. "no" means they leave.
+- The signup / log-in page is the moment of decision. Real visitors can NOT see inside a product before signing up, so never mark someone down just because they couldn't see the app itself. Decide from what they saw so far, and judge the signup step only on how easy and trustworthy it looks (number of fields, card required, "continue with Google", log-in vs create-account confusion).
 
 Be realistic, not polite:
-- Most real visitors do NOT buy. A typical landing page converts only a few percent of visitors. "maybe" means genuinely interested but unconvinced; "buy" means they would pay or sign up today.
-- Judge only what is actually on the page. Vague claims, missing prices, no social proof, or a confusing signup are real reasons to leave.
-- Use the persona's details: budget and mindset drive price sensitivity (a tight budget means every subscription hurts); tech comfort drives how hard setup feels; what they use now sets the bar to switch; business personas who need approval are slower to say yes.
+- Most real visitors do not convert. Judge only what is actually on the pages. Vague claims, missing prices, no proof, or a confusing signup are real reasons to leave.
+- Each persona has a simulated VISIT: their device (phone users see the phone screenshot of the landing page), where they came from (someone sent by a friend arrives warmer than someone clicking an ad), and their patience. A persona with ~10 seconds of patience only takes in the first screen and leaves at the hero unless it hooks them right away.
+- Use the persona's details: budget and mindset drive price sensitivity; tech comfort drives how hard setup feels; what they use now sets the bar to switch; business personas who need approval are slower to say yes.
 - If the product is irrelevant to the persona, they leave at the hero with objection category "not for me".
+- Each batch also includes RESEARCH NOTES about how people like these personas really behave. Follow them.
 
 For each persona return:
 - verdict: buy / maybe / no
 - lost_at: the funnel step where they gave up or got stuck (hero, pricing, signup). Use "none" ONLY for "buy".
 - objection_category: the single best match; use "none" ONLY for "buy".
-- objection: their main objection in one sentence (for buyers: their small remaining doubt).
+- objection: their main objection in one sentence (for converters: their small remaining doubt).
 - would_change_mind: the one specific change to the site that would win them (or keep them).
-- quote: one short, natural sentence in their own voice, as if overheard. No marketing speak.
+- quote: one short, natural sentence in their own voice, as if overheard. Match their age: a 15-year-old talks like a 15-year-old, casually. No marketing speak.
 Return one result per persona, using their exact persona_id.`;
 
 type Progress = (done: number, total: number) => void;
@@ -101,11 +108,18 @@ async function buildSiteContent(
 ): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
   for (const page of crawl.pages) {
-    for (const [i, file] of page.screenshotFiles.entries()) {
+    const files = page.screenshotFiles.map((f, i) => ({
+      file: f,
+      label: `Screenshot of the ${page.step} page${i > 0 ? " (scrolled down)" : ""} on a laptop:`,
+    }));
+    if (page.mobileScreenshotFile) {
+      files.push({ file: page.mobileScreenshotFile, label: `Screenshot of the ${page.step} page on a PHONE:` });
+    }
+    for (const { file, label } of files) {
       try {
         const data = await fs.readFile(screenshotPath(crawl.id, file));
         blocks.push(
-          { type: "text", text: `Screenshot of the ${page.step} page${i > 0 ? " (scrolled down)" : ""}:` },
+          { type: "text", text: label },
           {
             type: "image",
             source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") },
@@ -163,7 +177,10 @@ async function evaluateBatch(
               ...siteContent,
               {
                 type: "text",
-                text: `Personas (${todo.length}):\n` + todo.map(describePersona).join("\n"),
+                text:
+                  `RESEARCH NOTES:\n${rulesFor(todo).map((r) => `- ${r}`).join("\n")}\n\n` +
+                  `Personas (${todo.length}):\n` +
+                  todo.map(describePersona).join("\n"),
               },
             ],
           },

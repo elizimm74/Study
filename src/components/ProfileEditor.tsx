@@ -2,7 +2,7 @@
 // "What we understood": the product profile the AI wrote after crawling.
 // The founder can fix anything wrong before the personas see it.
 import { useState } from "react";
-import type { ProductProfile } from "@/lib/types";
+import { GOALS, type Goal, type ProductProfile } from "@/lib/types";
 
 type Props = { profile: ProductProfile; onChange: (p: ProductProfile) => void };
 
@@ -15,6 +15,22 @@ export default function ProfileEditor({ profile, onChange }: Props) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
+      <label className="block md:col-span-2">
+        <span className="mb-1 block text-sm font-medium">
+          Goal <span className="font-normal text-slate-400">(what counts as a win on this site)</span>
+        </span>
+        <select
+          value={profile.goal}
+          onChange={(e) => onChange({ ...profile, goal: e.target.value as Goal })}
+          className={boxCls + " md:w-64"}
+        >
+          {GOALS.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </label>
       <TextBox label="What it is" value={profile.whatItIs} onChange={(v) => setText("whatItIs", v)} />
       <TextBox label="Who it's for" value={profile.whoItsFor} onChange={(v) => setText("whoItsFor", v)} />
       <TextBox label="Main promise" value={profile.mainPromise} onChange={(v) => setText("mainPromise", v)} />

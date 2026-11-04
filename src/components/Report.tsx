@@ -18,7 +18,7 @@ export default function Report({ run }: { run: Run }) {
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <p className="text-sm text-slate-500 truncate">{run.url}</p>
         <p className="mt-2 text-4xl font-bold tracking-tight">
-          {stats.buy} of {stats.total} would buy
+          {stats.buy} of {stats.total} would {run.profile?.goal ?? "buy"}
         </p>
         {top && (
           <p className="mt-1 text-slate-600">
@@ -26,7 +26,7 @@ export default function Report({ run }: { run: Run }) {
             {pct(top.pctOfNonBuyers)} of non-buyers)
           </p>
         )}
-        <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} />
+        <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} goal={run.profile?.goal ?? "buy"} />
         <p className="mt-4 text-slate-700">{advice.summary}</p>
         {run.totalCostUsd !== undefined && (
           <p className="mt-3 text-xs text-slate-400">Run cost: ${run.totalCostUsd.toFixed(4)}</p>
@@ -173,7 +173,7 @@ function heat(rate: number): React.CSSProperties {
   };
 }
 
-function VerdictBar({ buy, maybe, no }: { buy: number; maybe: number; no: number }) {
+function VerdictBar({ buy, maybe, no, goal }: { buy: number; maybe: number; no: number; goal: string }) {
   const total = Math.max(1, buy + maybe + no);
   return (
     <div className="mt-4">
@@ -183,7 +183,7 @@ function VerdictBar({ buy, maybe, no }: { buy: number; maybe: number; no: number
         <div className="bg-slate-300" style={{ width: pct(no / total) }} />
       </div>
       <div className="mt-1 flex gap-4 text-xs text-slate-500">
-        <span><span className="text-emerald-600">●</span> buy {buy}</span>
+        <span><span className="text-emerald-600">●</span> would {goal} {buy}</span>
         <span><span className="text-amber-400">●</span> maybe {maybe}</span>
         <span><span className="text-slate-300">●</span> no {no}</span>
       </div>

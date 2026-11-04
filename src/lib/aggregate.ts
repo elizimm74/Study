@@ -70,6 +70,9 @@ export function aggregate(audience: Audience, personas: Persona[], verdicts: Ver
     "tech comfort": (p) => p.techComfort,
     area: (p) => p.area,
     gender: (p) => p.gender,
+    device: (p) => p.device,
+    "came from": (p) => p.arrivedFrom,
+    patience: (p) => p.patience,
   };
   if (audience.mode === "business") {
     segmentFns.role = (p) => p.role;

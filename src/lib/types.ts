@@ -63,6 +63,7 @@ export type CrawledPage = {
   title: string;
   text: string; // visible text, trimmed
   screenshotFiles: string[]; // e.g. ["hero-1.jpg", "hero-2.jpg"] (top of page first)
+  mobileScreenshotFile?: string; // landing page as a phone shows it ("hero-m.jpg")
   note?: string; // e.g. "pricing is a section on the landing page"
   // Facts measured IN CODE (not guessed by AI), used for the product profile.
   signals: {
@@ -70,6 +71,7 @@ export type CrawledPage = {
     asksForCard: boolean; // card number / CVC fields on the page
     socialLogin: boolean; // "Continue with Google / Apple / GitHub"
     pricesSeen: string[]; // things like "$12.99/month"
+    loginOnly: boolean; // this is a LOG-IN page (for existing users), not a sign-up page
   };
 };
 
@@ -83,7 +85,18 @@ export type Crawl = {
 
 // What the product IS, written by Haiku after the crawl. The founder can
 // edit it before a run, and every persona reads it.
+export const GOALS = [
+  "sign up",
+  "start a free trial",
+  "join the waitlist",
+  "buy",
+  "book a demo",
+  "download the app",
+] as const;
+export type Goal = (typeof GOALS)[number];
+
 export type ProductProfile = {
+  goal: Goal; // what "converting" means for this site
   whatItIs: string;
   whoItsFor: string;
   mainPromise: string;
@@ -105,6 +118,10 @@ export type Persona = {
   mindset: Mindset;
   techComfort: TechComfort;
   currentSolution: string;
+  // The simulated visit (see behavior.ts)
+  device: "phone" | "laptop";
+  arrivedFrom: string;
+  patience: string;
   // Only filled in when audience.mode === "business"
   role?: string;
   canBuyAlone?: boolean;

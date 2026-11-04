@@ -10,7 +10,7 @@
 //                       (falls back to simple word matching without AI)
 //  5. follow():    click it and see what happened: new page, pop-up, or
 //                  a section further down the same page
-import { chromium, type Page } from "playwright";
+import { chromium, devices, type Browser, type Page } from "playwright";
 import fs from "fs/promises";
 import path from "path";
 import { z } from "zod";
@@ -44,6 +44,7 @@ export async function crawlSite(url: string): Promise<Crawl> {
     await prepare(page);
     pages.push(await capture(page, id, "hero", { tiles: 2 }));
     const heroUrl = page.url(); // after any redirects
+    pages[0].mobileScreenshotFile = await capturePhone(browser, heroUrl, id);
     const heroText = pages[0].text;
 
     // 2) Decide what a visitor would click
@@ -86,7 +87,21 @@ export async function crawlSite(url: string): Promise<Crawl> {
       const result = await follow(page, heroUrl, signupTarget);
       if (result.kind === "page") {
         await prepare(page);
-        pages.push(await capture(page, id, "signup", { tiles: 1 }));
+        let signupPage = await capture(page, id, "signup", { tiles: 1 });
+        // Landed on "Log in" (for existing users)? Look for "Create account".
+        if (signupPage.signals.loginOnly) {
+          const create = guessByWords(await listClickables(page)).signup;
+          if (create && (await follow(page, heroUrl, create)).kind !== "nothing") {
+            await prepare(page);
+            signupPage = await capture(page, id, "signup", {
+              tiles: 1,
+              note: "The button led to a log-in page first; the create-account page was one more click away.",
+            });
+          } else {
+            signupPage.note = "Only a log-in page was found. New visitors may not see how to create an account.";
+          }
+        }
+        pages.push(signupPage);
       } else if (result.kind === "popup") {
         pages.push(
           await capture(page, id, "signup", {
@@ -160,6 +175,25 @@ async function prepare(page: Page) {
 
 // ---------- capturing what's on screen ----------
 
+// The landing page as a phone shows it. Teens are almost always on phones.
+async function capturePhone(browser: Browser, url: string, crawlId: string) {
+  // Scale 2 (not the iPhone's 3) keeps the image smaller, which keeps AI cost down.
+  const context = await browser.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 2 });
+  try {
+    const phone = await context.newPage();
+    await visit(phone, url);
+    await prepare(phone);
+    const file = "hero-m.jpg";
+    await phone.screenshot({ path: screenshotPath(crawlId, file), type: "jpeg", quality: 70 });
+    return file;
+  } catch (err) {
+    console.warn("[crawl] phone screenshot failed:", (err as Error).message.split("\n")[0]);
+    return undefined;
+  } finally {
+    await context.close();
+  }
+}
+
 async function capture(
   page: Page,
   crawlId: string,
@@ -226,9 +260,21 @@ async function measure(page: Page, text: string): Promise<CrawledPage["signals"]
       const socialLogin = Array.from(document.querySelectorAll("button, a, [role=button]")).some((el) =>
         socialRe.test((el as HTMLElement).innerText || el.getAttribute("aria-label") || ""),
       );
-      return { formFields: inputs.length, asksForCard, socialLogin };
+      // Is this a LOG-IN page (for existing users)? Look at the page's main
+      // heading, title and submit button, not small links like
+      // "Don't have an account? Sign up".
+      const hasPassword = inputs.some((el) => el.getAttribute("type") === "password");
+      const main = [
+        document.title,
+        ...Array.from(document.querySelectorAll("h1, h2, button[type=submit], input[type=submit]")).map(
+          (el) => (el as HTMLElement).innerText || (el as HTMLInputElement).value || "",
+        ),
+      ].join(" | ");
+      const saysLogin = /log ?in|sign ?in|welcome back/i.test(main);
+      const saysSignup = /sign ?up|create (an |your )?account|register|get started|join/i.test(main);
+      return { formFields: inputs.length, asksForCard, socialLogin, loginOnly: hasPassword && saysLogin && !saysSignup };
     })
-    .catch(() => ({ formFields: 0, asksForCard: false, socialLogin: false }));
+    .catch(() => ({ formFields: 0, asksForCard: false, socialLogin: false, loginOnly: false }));
 
   const prices = text.match(/[$€£]\s?\d[\d,.]*(\s?\/\s?(mo|month|yr|year|user|seat|week))?/gi) ?? [];
   return { ...found, pricesSeen: [...new Set(prices)].slice(0, 8) };

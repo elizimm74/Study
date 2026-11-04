@@ -10,6 +10,7 @@ import { costOfCall } from "./cost";
 import {
   COMPANY_SIZES,
   BUDGETS,
+  GOALS,
   MINDSETS,
   TECH_LEVELS,
   type Audience,
@@ -22,6 +23,7 @@ import {
 // The exact JSON shape we require back. The API is forced to follow it.
 const UnderstandSchema = z.object({
   // --- product profile ---
+  goal: z.enum(GOALS),
   whatItIs: z.string(),
   whoItsFor: z.string(),
   mainPromise: z.string(),
@@ -77,6 +79,8 @@ export async function understandSite(
           `Here is what a visitor sees on a product's website.\n\n${pageText}\n\n` +
           (missing.length ? `No ${missing.join(" or ")} page could be found.\n\n` : "") +
           `PART 1 — Product profile. Be factual; only use what's on the pages.\n` +
+          `- goal: the main action the site wants a new visitor to take right now (its main button). ` +
+          `Use "buy" only if visitors pay immediately; a free account is "sign up".\n` +
           `- whatItIs: one plain sentence, like you'd explain it to a friend.\n` +
           `- whoItsFor: one sentence.\n` +
           `- mainPromise: the main benefit the page claims.\n` +
@@ -99,6 +103,7 @@ export async function understandSite(
   if (!s) throw new Error("The site summary came back in the wrong format.");
 
   const profile: ProductProfile = {
+    goal: s.goal,
     whatItIs: s.whatItIs,
     whoItsFor: s.whoItsFor,
     mainPromise: s.mainPromise,
@@ -132,6 +137,7 @@ export async function understandSite(
 
 // Used when there's no API key: an empty profile the founder can fill in.
 export const EMPTY_PROFILE: ProductProfile = {
+  goal: "sign up",
   whatItIs: "",
   whoItsFor: "",
   mainPromise: "",
@@ -144,6 +150,7 @@ export const EMPTY_PROFILE: ProductProfile = {
 export function profileToText(p: ProductProfile): string {
   const list = (items: string[]) => (items.length ? items.join("; ") : "none shown");
   return [
+    `Goal (what counts as converting): ${p.goal}`,
     `What it is: ${p.whatItIs || "(not given)"}`,
     `Who it's for: ${p.whoItsFor || "(not given)"}`,
     `Main promise: ${p.mainPromise || "(not given)"}`,
@@ -160,6 +167,7 @@ export function signalsToText(s: CrawledPage["signals"]): string {
     s.asksForCard ? "asks for a credit card" : "",
     s.socialLogin ? "offers 'continue with Google/Apple/etc.'" : "",
     s.pricesSeen.length ? `prices visible: ${s.pricesSeen.join(", ")}` : "",
+    s.loginOnly ? "this is a LOG-IN page for existing users" : "",
   ].filter(Boolean);
   return facts.length ? `[MEASURED: ${facts.join("; ")}]\n` : "";
 }
