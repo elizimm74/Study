@@ -320,8 +320,8 @@ async function summarize(journey: Journey, log: string[], costs: CallCost[]) {
           role: "user",
           content:
             `A tester tried a product. Task: "${journey.task}". Result: ${journey.status}.\nSteps:\n${steps}\n${log.slice(-2).join("\n")}\n\n` +
-            `summary: 2-3 plain sentences on what trying the product was like for a first-time user and whether the task was achieved.\n` +
-            `frictionPoints: the 1-5 most important problems, most serious first (empty if none).`,
+            `summary: 1-2 short plain sentences: what trying the product was like and whether the task was achieved.\n` +
+            `frictionPoints: the 1-3 most important problems, most serious first, max 15 words each (empty if none). No repeats.`,
         },
       ],
     });

@@ -103,12 +103,14 @@ export async function writeAdvice(
           `LANDING PAGE:\n${page("hero", 2500)}\n\nPRICING:\n${page("pricing", 1500)}\n\n` +
           `RESULTS (JSON):\n${JSON.stringify(summary, null, 1)}\n\n` +
           `Write:\n` +
-          `- summary: 2 sentences on the biggest problem.\n` +
-          `- fixes: 4-6 specific, concrete changes, most impactful first. For each, list which objection categories it addresses (only categories present in the results) and the funnel step it fixes.\n` +
-          `- headlineOptions: 3 rewritten hero headlines that answer the top objections.\n` +
-          `- subheadline: one rewritten subheadline.\n` +
-          `- pricingCopy: a rewritten pricing section blurb (2-4 sentences).\n` +
-          `Write in plain language. Be specific to THIS product, not generic advice.`,
+          `- summary: ONE sentence (max 30 words): the single biggest problem and what to do about it.\n` +
+          `- fixes: 3-5 specific changes, most impactful first, with no overlap between them. title: max 8 words. ` +
+          `problem: max 20 words. change: ONE concrete action, max 30 words. For each, list which objection categories it addresses ` +
+          `(only categories present in the results) and the funnel step it fixes.\n` +
+          `- headlineOptions: 3 rewritten hero headlines (max 10 words each) that answer the top objections.\n` +
+          `- subheadline: one rewritten subheadline (max 20 words).\n` +
+          `- pricingCopy: a rewritten pricing blurb (max 2 sentences).\n` +
+          `Be short and blunt, in plain language. Be specific to THIS product, not generic advice.`,
       },
     ],
   });
