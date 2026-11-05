@@ -1,4 +1,4 @@
-// The frame around every page: <html>, <body>, the top bar.
+// The frame around every page: <html>, <body>, the floating top bar.
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
@@ -11,8 +11,8 @@ import { AUTH_ENABLED } from "@/lib/supabase/config";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: "Test your landing page on 100 AI customers before you launch.",
+  title: `${APP_NAME}: test your startup on 100 AI customers`,
+  description: "Paste your site. 100 AI customers try it and tell you why they'd leave, before your launch does.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -21,47 +21,55 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <header className="border-b border-slate-200">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-            <Link href="/" className="flex items-center gap-1.5 text-lg font-extrabold lowercase tracking-tight">
+        {/* Floating pill header */}
+        <header className="sticky top-3 z-50 px-3">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-slate-200/80 bg-white/75 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(10,10,11,0.15)] backdrop-blur-xl">
+            <Link href="/" className="display flex items-center gap-1.5 text-xl lowercase">
               <span className="text-indigo-600">✱</span>
               {APP_NAME}
             </Link>
-            <nav className="flex items-center gap-4 text-sm font-semibold">
+            <nav className="flex items-center gap-1 text-sm font-medium">
               {user ? (
                 <>
-                  <Link href="/tests" className="hover:text-indigo-600">
-                    My tests
-                  </Link>
-                  <Link href="/app" className="rounded-full bg-slate-900 px-4 py-2 text-white hover:bg-indigo-600">
+                  <NavLink href="/tests">My tests</NavLink>
+                  <form action="/auth/signout" method="post">
+                    <button className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900">Sign out</button>
+                  </form>
+                  <Link href="/app" className="ml-1 rounded-full bg-slate-900 px-4 py-1.5 text-white hover:bg-indigo-600">
                     New test
                   </Link>
-                  <form action="/auth/signout" method="post">
-                    <button className="text-slate-400 hover:text-slate-900">Sign out</button>
-                  </form>
                 </>
               ) : AUTH_ENABLED ? (
                 <>
-                  <Link href="/#pricing" className="hidden hover:text-indigo-600 sm:inline">
+                  <NavLink href="/#how" className="hidden sm:inline-block">
+                    How it works
+                  </NavLink>
+                  <NavLink href="/#pricing" className="hidden sm:inline-block">
                     Pricing
-                  </Link>
-                  <Link href="/signin" className="hover:text-indigo-600">
-                    Sign in
-                  </Link>
-                  <Link href="/signup" className="rounded-full bg-slate-900 px-4 py-2 text-white hover:bg-indigo-600">
+                  </NavLink>
+                  <NavLink href="/signin">Sign in</NavLink>
+                  <Link href="/signup" className="ml-1 rounded-full bg-slate-900 px-4 py-1.5 text-white hover:bg-indigo-600">
                     Start free
                   </Link>
                 </>
               ) : (
-                <Link href="/app" className="rounded-full bg-slate-900 px-4 py-2 text-white hover:bg-indigo-600">
+                <Link href="/app" className="rounded-full bg-slate-900 px-4 py-1.5 text-white hover:bg-indigo-600">
                   Open app
                 </Link>
               )}
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 pb-16 pt-10">{children}</main>
       </body>
     </html>
+  );
+}
+
+function NavLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`rounded-full px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 ${className}`}>
+      {children}
+    </Link>
   );
 }

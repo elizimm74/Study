@@ -36,8 +36,11 @@ export async function middleware(request: NextRequest) {
   }
   if (!user && starts(PRIVATE_PAGES)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/signin";
-    url.search = `?next=${encodeURIComponent(path)}`;
+    // Coming from the landing page's URL box (/app?url=...)? They're probably
+    // new, so show sign UP. Either way, keep where they were going (+ the URL).
+    const fromLanding = path === "/app" && request.nextUrl.searchParams.has("url");
+    url.pathname = fromLanding ? "/signup" : "/signin";
+    url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return response;

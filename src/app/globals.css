@@ -1,80 +1,104 @@
-/* Fonts: Archivo (heavy all-caps headlines) + Inter (text), straight from Google Fonts. */
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Inter:wght@400;500;600;700&display=swap");
+/* Fonts: Archivo (heavy headlines + logo, kept), Inter (text), JetBrains Mono (labels). */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 /*
-  CRAWLER LOOK, mixing the founder's two Canva picks:
-   - "Creative Brief": huge heavy all-caps type, sky-blue gradient with grain,
-     01. 02. numbering with thin lines, tiny all-caps corner labels
-   - "Business Plan": cobalt blue on warm cream, the ✱ mark, pill tags
-  The color names below are RE-POINTED: every "slate" in the app is now warm
-  cream-to-ink, "indigo" is cobalt, and "sky" is the soft gradient blue. That
-  restyles every page at once.
+  CRAWLER LOOK v2: "AI startup" (think Linear / Vercel / Perplexity).
+   - crisp white page, near-black ink, ONE electric-blue accent
+   - dark "product" panels with a blue glow and a faint grid (.panel / .sky)
+   - monospace labels (.meta), heavy Archivo headlines (.display)
+  Tailwind color names are RE-POINTED below, so every page follows:
+  "slate" = cool neutral grays, "indigo" = electric blue, "sky" = soft blue.
 */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Archivo", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* warm neutrals: cream paper -> ink */
-  --color-slate-50: #f4f0e8;
-  --color-slate-100: #ece6da;
-  --color-slate-200: #e0d8c8;
-  --color-slate-300: #cbc1ae;
-  --color-slate-400: #9b9384;
-  --color-slate-500: #6f685d;
-  --color-slate-600: #4f4a42;
-  --color-slate-700: #36322d;
-  --color-slate-800: #211f1b;
-  --color-slate-900: #0f0f0e;
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e7e7ea;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #1c1c20;
+  --color-slate-900: #0a0a0b;
 
-  /* cobalt: the one strong color */
-  --color-indigo-50: #eef2fd;
-  --color-indigo-100: #dbe4fb;
-  --color-indigo-200: #b7c8f6;
-  --color-indigo-300: #8aa5ef;
-  --color-indigo-400: #557ae4;
-  --color-indigo-500: #2f58db;
-  --color-indigo-600: #1d47d1;
-  --color-indigo-700: #1739a8;
-  --color-indigo-800: #132f86;
-  --color-indigo-900: #0f2566;
+  --color-indigo-50: #eef1ff;
+  --color-indigo-100: #e0e6ff;
+  --color-indigo-200: #c2ccff;
+  --color-indigo-300: #96a6ff;
+  --color-indigo-400: #6f83ff;
+  --color-indigo-500: #4d63ff;
+  --color-indigo-600: #3448f5;
+  --color-indigo-700: #2635d1;
+  --color-indigo-800: #1f2ba6;
+  --color-indigo-900: #1a2480;
 
-  /* sky: the soft gradient blue */
-  --color-sky-200: #cfe3f7;
-  --color-sky-300: #a9cdf0;
-  --color-sky-400: #7fb2e6;
-  --color-sky-500: #5b97d6;
+  --color-sky-200: #cfe0ff;
+  --color-sky-300: #a9c6ff;
+  --color-sky-400: #7ea6ff;
+  --color-sky-500: #5b8bff;
 }
 
+html {
+  background: #fff;
+}
 body {
-  background: var(--color-slate-50);
   color: var(--color-slate-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* a soft blue glow at the very top of every page */
+  background: radial-gradient(900px 420px at 50% -120px, rgba(52, 72, 245, 0.1), transparent 70%), #fff;
+}
+::selection {
+  background: var(--color-indigo-200);
 }
 
-/* Huge heavy all-caps headline, like the Creative Brief cover. */
+/* Heavy headline (Archivo, the part the founder likes). */
 .display {
   font-family: var(--font-display);
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.03em;
-  line-height: 0.9;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
 }
 
-/* Tiny all-caps labels, like the corner text on the Creative Brief. */
+/* Small monospace label: "// how it works", "01 —". */
 .meta {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-/* Sky-blue gradient with film grain (the grain is a tiny generated texture). */
+/* Dark product panel with a blue glow and a faint grid.
+   (.sky is the old name; it now means the same dark panel.) */
+.panel,
 .sky {
-  background-color: var(--color-sky-400);
-  background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
-    linear-gradient(180deg, #4a88cf 0%, #6fa6e0 55%, #93bfea 100%);
   color: white;
+  background:
+    radial-gradient(600px 300px at 85% -10%, rgba(77, 99, 255, 0.45), transparent 70%),
+    radial-gradient(500px 280px at 0% 110%, rgba(126, 166, 255, 0.18), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 28px 28px,
+    #0a0a0b;
+  box-shadow: 0 30px 80px -30px rgba(52, 72, 245, 0.45);
+}
+
+/* A soft card: white, thin border, gentle shadow. */
+.card {
+  background: white;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.04), 0 8px 24px -12px rgba(10, 10, 11, 0.08);
+}
+
+/* Blue gradient text for one highlighted word in a headline. */
+.glow-text {
+  background: linear-gradient(90deg, #3448f5, #7ea6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

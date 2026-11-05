@@ -1,12 +1,16 @@
 "use client";
-// /app: the testing tool. 1) paste a URL  2) check the audience  3) start the run.
+// /app: the testing tool as a 4-step wizard, one decision per screen:
+//   1. Site      paste a URL (we crawl it)
+//   2. Review    check what we understood
+//   3. Audience  pick who reviews it
+//   4. Launch    optional extras, then start
 // "use client" means this page runs in the browser, so it can react to clicks.
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AudiencePicker from "@/components/AudiencePicker";
 import ProfileEditor from "@/components/ProfileEditor";
 import ExplorePanel from "@/components/ExplorePanel";
-import { DEFAULT_AUDIENCE } from "@/lib/presets";
+import { DEFAULT_AUDIENCE, PRESETS } from "@/lib/presets";
 import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
 type CrawlInfo = {
@@ -15,37 +19,51 @@ type CrawlInfo = {
   pages: { step: string; url: string; title: string; screenshots: string[]; note?: string }[];
 };
 
-export default function Home() {
+const STEPS = ["Site", "Review", "Audience", "Launch"] as const;
+const PRESET_EMOJI: Record<string, string> = {
+  "High school teens": "🎒",
+  "Gen Z students": "🎓",
+  "Solo SaaS founders": "🧑‍💻",
+  "Busy moms": "🍼",
+  "Small business owners": "🏪",
+};
+
+export default function AppPage() {
+  // Suspense: this page reads ?url= from the address bar.
+  return (
+    <Suspense>
+      <Wizard />
+    </Suspense>
+  );
+}
+
+function Wizard() {
   const router = useRouter();
-  const [url, setUrl] = useState("");
+  const params = useSearchParams();
+  const [step, setStep] = useState(0);
+  const [url, setUrl] = useState(params.get("url") ?? "");
   const [busy, setBusy] = useState<null | "analyzing" | "starting">(null);
   const [error, setError] = useState<string | null>(null);
   const [crawl, setCrawl] = useState<CrawlInfo | null>(null);
   const [profile, setProfile] = useState<ProductProfile | null>(null);
   const [suggested, setSuggested] = useState<Audience | null>(null);
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE);
-  const [explore, setExplore] = useState<ExploreSettings>({
-    enabled: false,
-    task: "",
-    access: "public",
-    startUrl: "",
-    reputation: false,
-  });
-  // The test account stays in this page's memory and is sent only to start the run.
+  const [presetName, setPresetName] = useState<string>("AI suggestion");
+  const [explore, setExplore] = useState<ExploreSettings>({ enabled: false, task: "", access: "public", startUrl: "", reputation: false });
+  // The test account stays in this page's memory and is sent only to start the test.
   const [credentials, setCredentials] = useState<Credentials>({ email: "", password: "" });
   const [ownsProduct, setOwnsProduct] = useState(false);
+  const autoStarted = useRef(false);
 
-  async function analyze(e: React.FormEvent) {
-    e.preventDefault(); // stop the browser from reloading the page
+  async function analyze(target = url) {
     setBusy("analyzing");
     setError(null);
-    setCrawl(null);
     try {
       // 1) Queue the analysis. 2) Check every 1.5s until a worker finishes it.
       const res = await fetch("/api/crawls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: target }),
       });
       const started = await res.json();
       if (!res.ok) throw new Error(started.error);
@@ -56,10 +74,14 @@ export default function Home() {
       if (data.audience) {
         setSuggested(data.audience);
         setAudience(data.audience);
+        setPresetName("AI suggestion");
       } else {
         setSuggested(null);
-        setError(`Couldn't auto-fill the profile and audience (${data.suggestError}). Fill them in below.`);
+        setPresetName("High school teens");
+        setAudience(PRESETS["High school teens"]);
+        setError(`We couldn't auto-fill everything (${data.suggestError}). Check it below.`);
       }
+      setStep(1);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -67,7 +89,17 @@ export default function Home() {
     }
   }
 
-  async function startRun() {
+  // Came from the landing page with ?url=...? Start right away.
+  useEffect(() => {
+    const fromLanding = params.get("url");
+    if (fromLanding && !autoStarted.current) {
+      autoStarted.current = true;
+      void analyze(fromLanding);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function launch() {
     if (!crawl || !profile) return;
     setBusy("starting");
     setError(null);
@@ -94,125 +126,271 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-14">
-      {/* ---------- Hero: sky-grain band + giant headline (from the Creative Brief) ---------- */}
-      <section className="sky relative overflow-hidden rounded-3xl px-6 pb-8 pt-6 sm:px-10 sm:pb-10">
-        <div className="meta flex justify-between text-white/85">
-          <span>✱ crawler</span>
-          <span>test before you launch</span>
-        </div>
-        <h1 className="display mt-10 text-[17vw] text-white sm:text-8xl">
-          New
-          <br />
-          test.
-        </h1>
-        <p className="mt-5 max-w-md text-base text-white/90">
-          Paste your site. 100 AI customers check your landing page, pricing and signup, then tell you what&apos;s
-          stopping them.
-        </p>
-        <form onSubmit={analyze} className="mt-6 flex flex-col gap-2 rounded-2xl bg-white p-1.5 sm:flex-row sm:rounded-full">
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="yourproduct.com"
-            className="flex-1 rounded-full bg-transparent px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400"
-            required
-          />
-          <button
-            disabled={busy !== null}
-            className="rounded-full bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-indigo-600 disabled:opacity-50"
-          >
-            {busy === "analyzing" ? "Reading your site…" : "Analyze ↗"}
-          </button>
-        </form>
-        <div className="meta mt-6 flex justify-between text-white/80">
-          <span>~1 min</span>
-          <span>under 5¢ per test</span>
-        </div>
-      </section>
-      {error && !crawl && <p className="rounded-2xl bg-white p-4 text-sm text-slate-700">⚠ {error}</p>}
+    <div className="mx-auto max-w-3xl space-y-8">
+      <Stepper step={step} canGoTo={(i) => i === 0 || Boolean(crawl)} onGo={setStep} />
 
-      {crawl && (
-        <>
-          <Step n="01" title="What we captured">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {(["hero", "pricing", "signup"] as const).map((step) => {
-                const p = crawl.pages.find((x) => x.step === step);
-                return (
-                  <div key={step} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    {p?.screenshots[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.screenshots[0]} alt={`${step} page`} className="aspect-[16/10] w-full object-cover object-top" />
-                    ) : (
-                      <div className="flex aspect-[16/10] items-center justify-center bg-slate-100 text-sm text-slate-400">
-                        not found
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <div className="meta text-slate-900">{step === "hero" ? "Landing page" : step}</div>
-                      <div className="truncate text-xs text-slate-500">{p ? p.note ?? p.url : "Personas will notice this is missing"}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Step>
+      {/* ---------- 1. Site ---------- */}
+      {step === 0 &&
+        (busy === "analyzing" ? (
+          <Reading url={url} />
+        ) : (
+          <section className="space-y-6 pt-4 text-center">
+            <p className="meta text-indigo-600">{"//"} step 1 of 4</p>
+            <h1 className="display text-5xl sm:text-6xl">What are we testing?</h1>
+            <p className="text-slate-600">Paste your landing page. We&apos;ll open it like a first-time visitor.</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void analyze();
+              }}
+              className="card mx-auto flex max-w-xl items-center gap-2 rounded-full p-1.5 pl-5"
+            >
+              <span className="meta text-slate-400">https://</span>
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="yourstartup.com"
+                className="min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-slate-400"
+                required
+                autoFocus
+              />
+              <button className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600">
+                Analyze →
+              </button>
+            </form>
+            <ErrorNote error={error} />
+          </section>
+        ))}
 
-          {profile && (
-            <Step n="02" title="What we understood" hint="Every persona reads this. Fix anything that's wrong.">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <ProfileEditor profile={profile} onChange={setProfile} />
-              </div>
-            </Step>
-          )}
+      {/* ---------- 2. Review ---------- */}
+      {step === 1 && crawl && profile && (
+        <section className="space-y-6">
+          <Heading n={2} title="Here's what we found" sub="Every AI customer reads this. Fix anything that's off." />
+          <div className="grid grid-cols-3 gap-2">
+            {(["hero", "pricing", "signup"] as const).map((s) => {
+              const p = crawl.pages.find((x) => x.step === s);
+              return (
+                <div key={s} className="card overflow-hidden p-1.5">
+                  {p?.screenshots[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.screenshots[0]} alt={`${s} page`} className="aspect-[16/10] w-full rounded-xl object-cover object-top" />
+                  ) : (
+                    <div className="flex aspect-[16/10] items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400">not found</div>
+                  )}
+                  <p className="meta px-1.5 pb-1 pt-2 text-slate-500">
+                    {p ? "✓" : "✗"} {s === "hero" ? "landing" : s}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="card p-5">
+            <ProfileEditor profile={profile} onChange={setProfile} />
+          </div>
+          <ErrorNote error={error} />
+          <Nav onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Looks right →" />
+        </section>
+      )}
 
-          <Step n="03" title="Who reviews it">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <AudiencePicker audience={audience} onChange={setAudience} suggested={suggested} />
-            </div>
-          </Step>
-
-          <Step n="04" title="Try the product" hint="Optional: an AI actually uses it first.">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <ExplorePanel
-                settings={explore}
-                onChange={setExplore}
-                credentials={credentials}
-                onCredentials={setCredentials}
-                ownsProduct={ownsProduct}
-                onOwnsProduct={setOwnsProduct}
+      {/* ---------- 3. Audience ---------- */}
+      {step === 2 && (
+        <section className="space-y-6">
+          <Heading n={3} title="Who should review it?" sub="Pick a crowd. You can fine-tune every detail below." />
+          <div className="grid gap-2 sm:grid-cols-3">
+            {suggested && (
+              <PresetCard
+                emoji="✱"
+                name="AI suggestion"
+                hint="based on your site"
+                active={presetName === "AI suggestion"}
+                onClick={() => {
+                  setAudience(suggested);
+                  setPresetName("AI suggestion");
+                }}
+              />
+            )}
+            {Object.entries(PRESETS).map(([name, preset]) => (
+              <PresetCard
+                key={name}
+                emoji={PRESET_EMOJI[name] ?? "•"}
+                name={name}
+                hint={`ages ${preset.ageMin}–${preset.ageMax}`}
+                active={presetName === name}
+                onClick={() => {
+                  setAudience(preset);
+                  setPresetName(name);
+                }}
+              />
+            ))}
+          </div>
+          <details className="card group p-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
+              Fine-tune the audience
+              <span className="meta text-slate-400 group-open:hidden">age, budget, mindset, device… +</span>
+            </summary>
+            <div className="mt-5">
+              <AudiencePicker
+                audience={audience}
+                onChange={(a) => {
+                  setAudience(a);
+                  setPresetName("Custom");
+                }}
+                suggested={suggested}
               />
             </div>
-          </Step>
+          </details>
+          <Nav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Next →" />
+        </section>
+      )}
 
-          <div className="space-y-3">
-            {error && <p className="rounded-2xl bg-white p-4 text-sm text-slate-700">⚠ {error}</p>}
+      {/* ---------- 4. Launch ---------- */}
+      {step === 3 && crawl && profile && (
+        <section className="space-y-6">
+          <Heading n={4} title="Ready to launch" sub="Add an AI explorer if you want it to actually use your product first." />
+          <div className="panel rounded-3xl p-6">
+            <p className="meta text-white/40">{"//"} your test</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <Summary label="site" value={crawl.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} />
+              <Summary label="audience" value={`100 · ${presetName.toLowerCase()}`} />
+              <Summary label="goal" value={`would ${profile.goal}`} />
+            </div>
+          </div>
+          <div className="card p-5">
+            <ExplorePanel
+              settings={explore}
+              onChange={setExplore}
+              credentials={credentials}
+              onCredentials={setCredentials}
+              ownsProduct={ownsProduct}
+              onOwnsProduct={setOwnsProduct}
+            />
+          </div>
+          <ErrorNote error={error} />
+          <div className="flex items-center justify-between gap-3">
+            <button onClick={() => setStep(2)} className="rounded-full px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900">
+              ← Back
+            </button>
             <button
-              onClick={startRun}
+              onClick={launch}
               disabled={busy !== null}
-              className="display w-full rounded-full bg-indigo-600 px-6 py-5 text-2xl text-white transition hover:bg-slate-900 disabled:opacity-50"
+              className="display flex-1 rounded-full bg-indigo-600 px-6 py-4 text-xl text-white shadow-[0_12px_40px_-12px_rgba(52,72,245,0.8)] transition hover:bg-slate-900 disabled:opacity-50 sm:flex-none sm:px-10"
             >
-              {busy === "starting" ? "Starting…" : explore.enabled ? "Try it + run 100 ↗" : "Run 100 customers ↗"}
+              {busy === "starting" ? "Launching…" : "Run 100 customers ✱"}
             </button>
           </div>
-        </>
+        </section>
       )}
     </div>
   );
 }
 
-// A numbered section: "01." in huge type with a thin line (from the Creative Brief).
-function Step({ n, title, hint, children }: { n: string; title: string; hint?: string; children: React.ReactNode }) {
+// ---------- pieces ----------
+
+function Stepper({ step, canGoTo, onGo }: { step: number; canGoTo: (i: number) => boolean; onGo: (i: number) => void }) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4 border-b border-slate-900 pb-2">
-        <h2 className="flex items-baseline gap-3">
-          <span className="display text-4xl sm:text-5xl">{n}.</span>
-          <span className="meta text-sm text-slate-900">{title}</span>
-        </h2>
-        {hint && <span className="hidden text-right text-xs text-slate-500 sm:block">{hint}</span>}
+    <div className="flex items-center gap-2">
+      {STEPS.map((label, i) => (
+        <button
+          key={label}
+          type="button"
+          disabled={!canGoTo(i)}
+          onClick={() => onGo(i)}
+          className="group flex flex-1 flex-col gap-2 text-left disabled:cursor-default"
+        >
+          <span className={`h-1 rounded-full transition-colors ${i <= step ? "bg-indigo-600" : "bg-slate-200"}`} />
+          <span className={`meta ${i === step ? "text-slate-900" : "text-slate-400"}`}>
+            0{i + 1} {label.toLowerCase()}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Heading({ n, title, sub }: { n: number; title: string; sub: string }) {
+  return (
+    <div>
+      <p className="meta text-indigo-600">{"//"} step {n} of 4</p>
+      <h1 className="display mt-2 text-4xl sm:text-5xl">{title}</h1>
+      <p className="mt-2 text-slate-600">{sub}</p>
+    </div>
+  );
+}
+
+function Nav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => void; nextLabel: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <button onClick={onBack} className="rounded-full px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900">
+        ← Back
+      </button>
+      <button onClick={onNext} className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-600">
+        {nextLabel}
+      </button>
+    </div>
+  );
+}
+
+function PresetCard({ emoji, name, hint, active, onClick }: { emoji: string; name: string; hint: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-[1.25rem] border p-4 text-left transition ${
+        active ? "border-indigo-600 bg-indigo-50 shadow-[0_0_0_3px_rgba(52,72,245,0.15)]" : "border-slate-200 bg-white hover:border-slate-400"
+      }`}
+    >
+      <span className="text-2xl">{emoji}</span>
+      <span className="mt-3 block font-semibold">{name}</span>
+      <span className="meta text-slate-500">{hint}</span>
+    </button>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="meta text-white/40">{label}</p>
+      <p className="mt-1 truncate font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function ErrorNote({ error }: { error: string | null }) {
+  if (!error) return null;
+  return <p className="card mx-auto max-w-xl border-indigo-200 bg-indigo-50 p-4 text-left text-sm text-slate-800">⚠ {error}</p>;
+}
+
+// While the worker reads the site: a dark "live" panel with a timer.
+function Reading({ url }: { url: string }) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const lines = [
+    "opening your site like a first-time visitor",
+    "looking for pricing and signup (links, buttons, pop-ups)",
+    "taking screenshots on a laptop and a phone",
+    "figuring out what you sell and who it's for",
+  ];
+  return (
+    <section className="panel space-y-6 rounded-3xl p-8">
+      <div className="meta flex justify-between text-white/40">
+        <span>
+          <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-indigo-400" />
+          reading {url.replace(/^https?:\/\//, "")}
+        </span>
+        <span>{seconds}s</span>
       </div>
-      {children}
+      <p className="display text-4xl sm:text-5xl">Reading your site…</p>
+      <ul className="space-y-2 font-mono text-[13px] text-white/60">
+        {lines.map((l) => (
+          <li key={l}>
+            <span className="text-sky-400">→</span> {l}
+          </li>
+        ))}
+      </ul>
+      <p className="meta text-white/30">usually 15–30 seconds</p>
     </section>
   );
 }
