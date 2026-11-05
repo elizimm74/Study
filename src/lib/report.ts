@@ -117,16 +117,29 @@ export async function writeAdvice(
   if (!raw) throw new Error("The report came back in the wrong format.");
 
   // Calculate flip counts in code from the real objection counts.
-  const fixes: Fix[] = raw.fixes
-    .map((f) => {
-      const groups = stats.objections.filter((o) => f.addresses.includes(o.category));
-      return {
-        ...f,
-        couldFlip: groups.reduce((s, o) => s + o.count, 0),
-        likelyFlip: groups.reduce((s, o) => s + o.maybeCount, 0),
-      };
-    })
-    .sort((a, b) => b.likelyFlip - a.likelyFlip || b.couldFlip - a.couldFlip);
+  // Every non-buyer has exactly ONE main objection, so each objection group
+  // is credited to only one fix, the one that helps most. Otherwise two
+  // fixes that both target "price" would claim the same people twice, and
+  // the numbers would add up to more people than actually said maybe.
+  const remaining = raw.fixes.map((f) => ({ ...f }));
+  const claimed = new Set<string>();
+  const fixes: Fix[] = [];
+  const gain = (f: (typeof remaining)[number]) => {
+    const groups = stats.objections.filter((o) => f.addresses.includes(o.category) && !claimed.has(o.category));
+    return {
+      couldFlip: groups.reduce((s, o) => s + o.count, 0),
+      likelyFlip: groups.reduce((s, o) => s + o.maybeCount, 0),
+      categories: groups.map((o) => o.category),
+    };
+  };
+  while (remaining.length) {
+    // Pick the fix that helps the most people not already counted.
+    remaining.sort((x, y) => gain(y).likelyFlip - gain(x).likelyFlip || gain(y).couldFlip - gain(x).couldFlip);
+    const best = remaining.shift()!;
+    const g = gain(best);
+    g.categories.forEach((c) => claimed.add(c));
+    fixes.push({ ...best, couldFlip: g.couldFlip, likelyFlip: g.likelyFlip });
+  }
 
   return {
     advice: { ...raw, fixes },

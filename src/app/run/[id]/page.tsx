@@ -18,6 +18,12 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
   const { id } = use(params);
   const [data, setData] = useState<Run | Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A seconds counter, so the screen never looks frozen.
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     let stopped = false;
@@ -73,8 +79,17 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
           <div className="h-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
         </div>
         <p className="text-sm text-slate-500">
-          {data.progress.done} of {data.progress.total} personas reviewed
+          {data.progress.done} of {data.progress.total} personas reviewed · {seconds}s
         </p>
+        {data.stage.startsWith("Personas") && data.progress.done === 0 && (
+          <p className="text-xs text-slate-400">
+            The first 25 go alone so your site is saved for the rest (that makes the run cheaper). The other 75 then
+            review at the same time.
+          </p>
+        )}
+        {data.stage.startsWith("Writing") && (
+          <p className="text-xs text-slate-400">The smarter model is turning the results into ranked fixes. About 15–30 seconds.</p>
+        )}
       </div>
     );
   }

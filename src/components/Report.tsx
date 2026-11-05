@@ -80,7 +80,7 @@ export default function Report({ run }: { run: Run }) {
       )}
 
       {/* ---------- Ranked fixes ---------- */}
-      <Section title="Ranked fixes" subtitle="Sorted by how many 'maybe' personas each fix speaks to. Counts come from the real objections, not AI guesses.">
+      <Section title="Ranked fixes" subtitle="Sorted by how many 'maybe' personas each fix speaks to. Counts come from the real objections, not AI guesses, and each person is counted for only one fix.">
         <ol className="space-y-3">
           {advice.fixes.map((f, i) => (
             <li key={i} className="rounded-xl border border-slate-200 bg-white p-4">
@@ -89,7 +89,9 @@ export default function Report({ run }: { run: Run }) {
                   {i + 1}. {f.title}
                 </p>
                 <p className="text-sm text-emerald-700">
-                  could flip {f.likelyFlip} maybe{f.likelyFlip === 1 ? "" : "s"} · addresses {f.couldFlip} non-buyers
+                  {f.couldFlip > 0
+                    ? `could flip ${f.likelyFlip} maybe${f.likelyFlip === 1 ? "" : "s"} · addresses ${f.couldFlip} non-buyers`
+                    : "helps the same people as a fix above"}
                 </p>
               </div>
               <p className="mt-1 text-sm text-slate-600">{f.problem}</p>
@@ -207,7 +209,7 @@ export default function Report({ run }: { run: Run }) {
       </Section>
 
       {/* ---------- Quotes ---------- */}
-      <Quotes best={stats.bestQuotes} all={stats.allQuotes} />
+      <Quotes best={stats.bestQuotes} all={stats.allQuotes} goal={run.profile?.goal ?? "buy"} />
     </div>
   );
 }
@@ -239,7 +241,9 @@ function VerdictBar({ buy, maybe, no, goal }: { buy: number; maybe: number; no: 
   );
 }
 
-function Quotes({ best, all }: { best: QuoteItem[]; all: QuoteItem[] }) {
+function Quotes({ best, all, goal }: { best: QuoteItem[]; all: QuoteItem[]; goal: string }) {
+  // "buy" is the internal name; show the site's real goal, e.g. "would join the waitlist".
+  const verdictLabel = (v: QuoteItem["verdict"]) => (v === "buy" ? `would ${goal}` : v);
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<"all" | QuoteItem["verdict"]>("all");
   const list = showAll ? all.filter((q) => filter === "all" || q.verdict === filter) : best;
@@ -257,7 +261,7 @@ function Quotes({ best, all }: { best: QuoteItem[]; all: QuoteItem[] }) {
               onClick={() => setFilter(f)}
               className={`rounded-full px-3 py-1 text-sm border ${filter === f ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-300"}`}
             >
-              {f}
+              {f === "all" ? "all" : verdictLabel(f)}
             </button>
           ))}
       </div>
@@ -268,7 +272,7 @@ function Quotes({ best, all }: { best: QuoteItem[]; all: QuoteItem[] }) {
             <figcaption className="mt-2 flex justify-between text-xs text-slate-500">
               <span>{q.label}</span>
               <span className={q.verdict === "buy" ? "text-emerald-700" : q.verdict === "maybe" ? "text-amber-700" : "text-slate-500"}>
-                {q.verdict}
+                {verdictLabel(q.verdict)}
               </span>
             </figcaption>
           </figure>

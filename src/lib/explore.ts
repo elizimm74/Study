@@ -404,10 +404,21 @@ async function listElements(page: Page): Promise<UiElement[]> {
     .catch(() => []);
 }
 
-// A cheap "did the screen change?" check: address + amount of text + scroll position.
+// A cheap "did the screen change?" check: address, amount of text, scroll
+// position, how much is typed into boxes, which box is selected, and how many
+// pop-ups are open. (Typing doesn't change the page's text, so without the
+// box info, filling in a form looked like "nothing happened".)
 async function pageFingerprint(page: Page) {
   const info = await page
-    .evaluate(() => `${document.body?.innerText.length ?? 0}:${Math.round(window.scrollY / 50)}`)
+    .evaluate(() => {
+      const textLen = window.__crawler?.deepText().length ?? document.body?.innerText.length ?? 0;
+      const typed = window.__crawler
+        .deepAll("input, textarea, [contenteditable=true]")
+        .reduce((sum, el) => sum + ((el as HTMLInputElement).value ?? (el as HTMLElement).innerText ?? "").length, 0);
+      const focused = document.activeElement?.getAttribute("data-explorer-id") ?? "";
+      const dialogs = window.__crawler.deepAll('[role=dialog], dialog[open], [aria-modal="true"]').length;
+      return `${textLen}:${Math.round(window.scrollY / 50)}:${typed}:${focused}:${dialogs}`;
+    })
     .catch(() => "");
   return `${page.url()}|${info}`;
 }
