@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bench": "tsc -p tsconfig.bench.json && node scripts/crawler-bench.cjs && node scripts/explorer-bench.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",

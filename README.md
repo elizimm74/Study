@@ -35,6 +35,25 @@ Open http://localhost:3000. To test without a real product, use one of the fake 
 - `http://localhost:3000/demo/app.html`: a fake app for **Try the product**. Task: "Search for a birthday template and open it". It also has traps: a Buy button, an outside link, and an email box.
 - `http://localhost:3000/demo/app-login.html`: test-account mode. Email `tester@example.com`, password `S3cret-Pass!` (fake, for testing only)
 
+## Accuracy benches
+
+```bash
+npm run bench
+```
+
+This runs the crawler and the explorer on practice sites in `public/demo/sites/`, where the right answers are known, and prints a score. Each site copies a real-world trap:
+- single-page apps
+- pricing that's only in the footer
+- no pricing link at all
+- buttons inside web components
+- bot-check pages
+- a misleading "Pricing" blog link
+- slow-loading content
+- hover menus
+- canvas editors, pop-ups, and safety traps
+
+Without an API key it tests the backup logic and all the safety rules. With your key in `.env.local`, it also tests the AI choosing what to click. **Run it after every crawler change.** If the score drops, the change broke something.
+
 ## Try the product (Milestone 3)
 Tick **"Have an AI explorer actually use the product"** on the home page. The explorer:
 - clicks around like a first-time user, and you can watch it live
@@ -57,6 +76,8 @@ The **cost of each run** is printed in the terminal where `npm run dev` is runni
 | `src/lib/crawl.ts` | Step 1: invisible browser closes cookie pop-ups, scrolls, lets Haiku pick what to click, then clicks through landing → pricing → signup/waitlist (links, buttons or pop-ups) |
 | `src/lib/suggest.ts` | One Haiku call: product profile + suggested audience |
 | `src/lib/personas.ts` | Step 2: generate varied personas in code (free) |
+| `src/lib/pageHelpers.ts` | Helpers injected into every page so we can see inside web components |
+| `scripts/*-bench.cjs` | Accuracy benches (`npm run bench`) |
 | `src/lib/explore.ts` | Milestone 3: the explorer agent that actually uses the product, plus all its safety rules |
 | `src/lib/reputation.ts` | Optional: searches the web for real reviews (Sonnet + web search, then Haiku tidies the result) |
 | `src/components/ExplorePanel.tsx` | "Try the product" settings card |

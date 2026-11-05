@@ -42,3 +42,6 @@ next-env.d.ts
 
 # saved crawls, runs and screenshots (local test data)
 /data
+
+# compiled code for the crawler bench
+/.bench-build

@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Plantly</title><style>body{font-family:system-ui;padding:32px}</style></head><body><div id="app">Loading…</div>
+<script>
+const views={'':`<nav><a href="#/plans">Plans</a> · <a href="#/start">Start growing</a></nav><h1>Plantly reminds you to water your plants.</h1><p>Never kill a plant again.</p>`,
+'#/plans':`<h1>Plans</h1><p>Free: 3 plants. Pro: $4/month for unlimited plants.</p>`,
+'#/start':`<h1>Create your account</h1><input placeholder="Email"><input type="password" placeholder="Password"><button>Sign up</button>`};
+function render(){document.getElementById('app').innerHTML=views[location.hash]??views['']}
+window.addEventListener('hashchange',render);setTimeout(render,1200);
+</script></body></html>

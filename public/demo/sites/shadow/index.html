@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Beatbox – make beats in your browser</title></head><body>
+<site-nav></site-nav><h1>Make beats in your browser.</h1><cta-button></cta-button>
+<script>
+customElements.define('site-nav',class extends HTMLElement{connectedCallback(){this.attachShadow({mode:'open'}).innerHTML='<nav><a href="pricing.html">Pricing</a></nav>'}});
+customElements.define('cta-button',class extends HTMLElement{connectedCallback(){const s=this.attachShadow({mode:'open'});s.innerHTML='<button>Start making beats</button>';s.querySelector('button').onclick=()=>location.href='signup.html'}});
+</script></body></html>

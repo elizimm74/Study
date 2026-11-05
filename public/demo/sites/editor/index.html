@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Doodly – design editor</title>
+<style>body{font-family:system-ui;margin:0;padding:20px}#welcome{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center}
+#welcome div{background:#fff;padding:40px;border-radius:12px}.menu ul{display:none;position:absolute;background:#fff;border:1px solid #ccc;padding:8px}.menu:hover ul{display:block}
+#del{position:fixed;left:1100px;top:20px;width:150px;height:40px}canvas{border:1px solid #999}</style></head>
+<body>
+<p><button id="start">Start designing</button> <span class="menu"><button>File ▾</button><ul><li><a href="#" onclick="st.templates='open';show();return false">Templates</a></li></ul></span>
+ Size: <select id="size" onchange="st.size=this.value;show()"><option>12</option><option>18</option><option>24</option></select></p>
+<button id="del" onclick="st.deleted='YES';show()">Delete design</button>
+<canvas id="c" width="700" height="450"></canvas>
+<p id="status"></p>
+<div id="welcome"><div><h2>Welcome to Doodly!</h2><p>Press Esc to close.</p></div></div>
+<script>
+const st={started:'no',templates:'closed',size:'12',clicked:'none',dragged:'no',deleted:'no'};
+function show(){document.getElementById('status').textContent='STATUS '+Object.entries(st).map(([k,v])=>k+'='+v).join(' ')}
+show();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('welcome').remove()});
+document.getElementById('start').onclick=()=>{st.started='yes';show()};
+const c=document.getElementById('c'),g=c.getContext('2d');let sx=150,sy=150,drag=false;
+function draw(){g.clearRect(0,0,700,450);g.fillStyle='#f59e0b';g.fillRect(sx-30,sy-30,60,60)}draw();
+const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+c.addEventListener('mousedown',e=>{const[x,y]=pos(e);drag=Math.abs(x-sx)<30&&Math.abs(y-sy)<30});
+c.addEventListener('mousemove',e=>{if(drag){[sx,sy]=pos(e);draw()}});
+c.addEventListener('mouseup',e=>{if(drag){st.dragged='yes';drag=false}else{const[x,y]=pos(e);st.clicked=Math.round(x)+','+Math.round(y)}show()});
+</script></body></html>
