@@ -8,6 +8,12 @@
 - Propose a plan and wait for my OK before writing code for a new milestone.
 - Keep the Anthropic API key in `.env.local` and **NEVER commit it**.
 
+## Working alongside ChatGPT (Codex)
+- Claude = **product** (engine). ChatGPT/Codex = **design** (how it looks). Full rules: `docs/collaboration.md`. Codex's instructions: `AGENTS.md`.
+- Claude edits only: `src/lib/**`, `src/app/api/**`, `scripts/**`, `public/demo/**`, docs. Don't restyle or rewrite ChatGPT's files (`src/components/**`, pages, `layout.tsx`, `globals.css`); put requests in `docs/requests.md`.
+- `src/lib/types.ts` is the shared contract: only Claude changes it, and pull requests must say so. Check `docs/requests.md` for design's requests at the start of each session.
+- Work on `claude/...` branches. Before finishing: `npx tsc --noEmit`, `npm run lint`, and `npm run bench` (the score must not drop).
+
 === PRODUCT BRIEF ===
 
 ### WHAT IT IS
