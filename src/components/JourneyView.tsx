@@ -4,6 +4,7 @@
 // the report afterwards.
 import { useState } from "react";
 import type { Journey } from "@/lib/types";
+import { fileUrl } from "@/lib/urls";
 
 const STATUS: Record<Journey["status"], { label: string; cls: string }> = {
   running: { label: "Exploring…", cls: "bg-sky-200 text-indigo-900" },
@@ -14,7 +15,8 @@ const STATUS: Record<Journey["status"], { label: string; cls: string }> = {
   error: { label: "Error", cls: "bg-slate-900 text-white" },
 };
 
-export default function JourneyView({ runId, journey, live }: { runId: string; journey: Journey; live?: boolean }) {
+// filesPrefix: where this test's screenshots are, e.g. "{userId}/tests/{id}".
+export default function JourneyView({ filesPrefix, journey, live }: { filesPrefix: string; journey: Journey; live?: boolean }) {
   const [picked, setPicked] = useState<number | null>(null);
   const steps = journey.steps;
   // Live: always follow the newest step. Report: the one you click (default: first).
@@ -45,7 +47,7 @@ export default function JourneyView({ runId, journey, live }: { runId: string; j
           {shown ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/screenshot/${runId}/${shown.screenshot}`} alt={`Step ${shown.n}`} className="w-full" />
+              <img src={fileUrl(filesPrefix, shown.screenshot)} alt={`Step ${shown.n}`} className="w-full" />
               <div className="bg-white p-3 text-sm">
                 <p className="font-medium">
                   Step {shown.n}: {shown.observation}

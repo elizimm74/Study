@@ -17,14 +17,13 @@
 //
 // Accuracy is measured with practice sites: `npm run bench`.
 import { chromium, devices, type Browser, type Page } from "playwright";
-import fs from "fs/promises";
-import path from "path";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { anthropic, HAIKU } from "./ai";
 import { costOfCall } from "./cost";
 import type { CallCost, Crawl, CrawledPage } from "./types";
-import { newId, saveJson, screenshotPath } from "./storage";
+import { newId } from "./storage";
+import { LocalBlobStore, fileKey, type BlobStore, type FileTarget } from "./blobs";
 import { installHelpers } from "./pageHelpers";
 
 const MAX_TEXT_CHARS = 6000; // keep the AI input (and cost) small
@@ -46,8 +45,14 @@ type Clickable = {
 // Thrown when the site shows a bot-protection page instead of its content.
 export class BlockedError extends Error {}
 
-export async function crawlSite(url: string): Promise<Crawl> {
-  const id = newId();
+// options.id / options.store / options.prefix: where screenshots go. The
+// worker passes Supabase Storage; benches use a local folder by default.
+export async function crawlSite(
+  url: string,
+  options: { id?: string; store?: BlobStore; prefix?: string } = {},
+): Promise<Crawl> {
+  const id = options.id ?? newId();
+  const files: FileTarget = { store: options.store ?? new LocalBlobStore(), prefix: options.prefix ?? `local/crawls/${id}` };
   const costs: CallCost[] = [];
   const browser = await chromium.launch();
   try {
@@ -63,11 +68,11 @@ export async function crawlSite(url: string): Promise<Crawl> {
     await checkMissing(page, response?.status() ?? 200, url);
     await checkBlocked(page);
     await prepare(page);
-    const hero = await capture(page, id, "hero", { tiles: 2 });
+    const hero = await capture(page, files, "hero", { tiles: 2 });
     pages.push(hero);
     const heroUrl = page.url(); // after any redirects
     // The phone screenshot happens in the background while we explore (faster).
-    const phoneShot = capturePhone(browser, heroUrl, id);
+    const phoneShot = capturePhone(browser, heroUrl, files);
 
     // 2) What would a visitor click?
     const clickables = await listClickables(page);
@@ -84,12 +89,12 @@ export async function crawlSite(url: string): Promise<Crawl> {
     const signupTab = await context.newPage();
     const [pricing, signupFromHero] = await Promise.all([
       (async () =>
-        (await safely(() => findStep(page, id, "pricing", choice.pricing, heroUrl))) ??
-        (await safely(() => guessAddresses(page, id, "pricing", heroUrl))))(),
+        (await safely(() => findStep(page, files, "pricing", choice.pricing, heroUrl))) ??
+        (await safely(() => guessAddresses(page, files, "pricing", heroUrl))))(),
       safely(async () => {
         await visit(signupTab, heroUrl);
         await prepare(signupTab);
-        return findStep(signupTab, id, "signup", choice.signup, heroUrl);
+        return findStep(signupTab, files, "signup", choice.signup, heroUrl);
       }),
     ]);
     if (pricing) pages.push(pricing);
@@ -101,16 +106,14 @@ export async function crawlSite(url: string): Promise<Crawl> {
       signup = await safely(async () => {
         await visit(signupTab, pricing.url);
         await prepare(signupTab);
-        return findStep(signupTab, id, "signup", rankByWords(await listClickables(signupTab)).signup, pricing.url);
+        return findStep(signupTab, files, "signup", rankByWords(await listClickables(signupTab)).signup, pricing.url);
       });
     }
-    signup ??= await safely(() => guessAddresses(signupTab, id, "signup", heroUrl));
+    signup ??= await safely(() => guessAddresses(signupTab, files, "signup", heroUrl));
     if (signup) pages.push(signup);
     hero.mobileScreenshotFile = await phoneShot;
 
-    const crawl: Crawl = { id, url, createdAt: new Date().toISOString(), pages, costs };
-    await saveJson("crawls", id, crawl);
-    return crawl;
+    return { id, url, createdAt: new Date().toISOString(), pages, costs, filesPrefix: files.prefix };
   } finally {
     await browser.close(); // always close, even if something failed
   }
@@ -132,7 +135,7 @@ async function safely<T>(fn: () => Promise<T | null>): Promise<T | null> {
 // (or signup) page.
 async function findStep(
   page: Page,
-  crawlId: string,
+  files: FileTarget,
   step: Step,
   candidates: Clickable[],
   startUrl: string,
@@ -152,11 +155,11 @@ async function findStep(
 
     const result = await follow(page, target);
     if (result.kind === "nothing") continue;
-    let captured = await captureResult(page, crawlId, step, result);
+    let captured = await captureResult(page, files, step, result);
 
     // Signup led to "Log in" (for existing users)? Look for "Create account".
     if (step === "signup" && result.kind === "page" && captured.signals.loginOnly) {
-      captured = (await fromLoginToSignup(page, crawlId)) ?? {
+      captured = (await fromLoginToSignup(page, files)) ?? {
         ...captured,
         note: "Only a log-in page was found. New visitors may not see how to create an account.",
       };
@@ -186,24 +189,24 @@ function looksRight(step: Step, p: CrawledPage) {
   return p.signals.formFields > 0 || p.signals.socialLogin || (p.signals.loginOnly && Boolean(p.note));
 }
 
-async function fromLoginToSignup(page: Page, crawlId: string): Promise<CrawledPage | null> {
+async function fromLoginToSignup(page: Page, files: FileTarget): Promise<CrawledPage | null> {
   const create = rankByWords(await listClickables(page)).signup[0];
   if (!create) return null;
   const result = await follow(page, create);
   if (result.kind === "nothing") return null;
-  return captureResult(page, crawlId, "signup", result, "The button led to a log-in page first; the create-account page was one more click away.");
+  return captureResult(page, files, "signup", result, "The button led to a log-in page first; the create-account page was one more click away.");
 }
 
 async function captureResult(
   page: Page,
-  crawlId: string,
+  files: FileTarget,
   step: Step,
   result: Exclude<FollowResult, { kind: "nothing" }>,
   note?: string,
 ): Promise<CrawledPage> {
   if (result.kind === "page") {
     await prepare(page);
-    return capture(page, crawlId, step, { tiles: step === "pricing" ? 2 : 1, note });
+    return capture(page, files, step, { tiles: step === "pricing" ? 2 : 1, note });
   }
   const where =
     result.kind === "popup"
@@ -211,11 +214,11 @@ async function captureResult(
       : step === "pricing"
         ? "Pricing is a section on the landing page."
         : "Signup is a form further down the landing page.";
-  return capture(page, crawlId, step, { tiles: 1, keepScroll: true, note: note ?? where, textOverride: result.text });
+  return capture(page, files, step, { tiles: 1, keepScroll: true, note: note ?? where, textOverride: result.text });
 }
 
 // Last resort: many sites have /pricing or /signup even without a visible link.
-async function guessAddresses(page: Page, crawlId: string, step: Step, heroUrl: string): Promise<CrawledPage | null> {
+async function guessAddresses(page: Page, files: FileTarget, step: Step, heroUrl: string): Promise<CrawledPage | null> {
   const paths =
     step === "pricing"
       ? ["/pricing", "/plans", "/price", "/pricing-plans"]
@@ -227,7 +230,7 @@ async function guessAddresses(page: Page, crawlId: string, step: Step, heroUrl: 
     await waitForContent(page);
     if (/404|not found|page (doesn't|does not) exist/i.test(await page.title())) continue;
     await prepare(page);
-    const captured = await capture(page, crawlId, step, {
+    const captured = await capture(page, files, step, {
       tiles: 1,
       note: `There's no visible ${step} link; we found it by trying the address ${p}. Real visitors may not find it.`,
     });
@@ -354,7 +357,7 @@ async function prepare(page: Page) {
 // ---------- capturing what's on screen ----------
 
 // The landing page as a phone shows it. Teens are almost always on phones.
-async function capturePhone(browser: Browser, url: string, crawlId: string) {
+async function capturePhone(browser: Browser, url: string, files: FileTarget) {
   // Scale 2 (not the iPhone's 3) keeps the image smaller, which keeps AI cost down.
   const context = await browser.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 2 });
   try {
@@ -363,7 +366,7 @@ async function capturePhone(browser: Browser, url: string, crawlId: string) {
     await visit(phone, url);
     await prepare(phone);
     const file = "hero-m.jpg";
-    await phone.screenshot({ path: screenshotPath(crawlId, file), type: "jpeg", quality: 70 });
+    await files.store.put(fileKey(files, file), await phone.screenshot({ type: "jpeg", quality: 70 }));
     return file;
   } catch (err) {
     console.warn("[crawl] phone screenshot failed:", (err as Error).message.split("\n")[0]);
@@ -375,7 +378,7 @@ async function capturePhone(browser: Browser, url: string, crawlId: string) {
 
 async function capture(
   page: Page,
-  crawlId: string,
+  files: FileTarget,
   step: CrawledPage["step"],
   opts: { tiles: number; keepScroll?: boolean; note?: string; textOverride?: string },
 ): Promise<CrawledPage> {
@@ -384,8 +387,6 @@ async function capture(
   const text = rawText.replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_TEXT_CHARS);
 
   // Screenshots: the top of the page, then one screen further down, etc.
-  const dir = path.dirname(screenshotPath(crawlId, "x"));
-  await fs.mkdir(dir, { recursive: true });
   const screenshotFiles: string[] = [];
   let lastY = -1;
   for (let i = 0; i < opts.tiles; i++) {
@@ -404,7 +405,7 @@ async function capture(
     }
     const file = `${step}-${i + 1}.jpg`;
     try {
-      await page.screenshot({ path: screenshotPath(crawlId, file), type: "jpeg", quality: 70 });
+      await files.store.put(fileKey(files, file), await page.screenshot({ type: "jpeg", quality: 70 }));
       screenshotFiles.push(file);
     } catch {
       // A failed screenshot isn't fatal; the text still describes the page.

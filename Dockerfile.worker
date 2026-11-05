@@ -1,0 +1,18 @@
+# The WORKER as a container (Railway, Fly.io, Render...).
+# Playwright's official image already includes Chromium and everything it
+# needs. Keep its version the same as "playwright" in package.json.
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
+
+WORKDIR /app
+ENV NODE_ENV=production \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+COPY package.json package-lock.json ./
+RUN npm ci --include=dev
+
+COPY tsconfig.worker.json ./
+COPY src ./src
+RUN npm run worker:build && npm prune --omit=dev
+
+# Settings come from the host's environment variables (see .env.example).
+CMD ["node", ".worker-build/worker/main.js"]

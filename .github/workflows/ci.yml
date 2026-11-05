@@ -1,0 +1,20 @@
+# Runs on every push: type check, lint, the accuracy benches, and a build.
+# If anything fails, GitHub shows a red X on the commit.
+name: CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run bench
+      - run: npm run build

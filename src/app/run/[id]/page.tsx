@@ -12,11 +12,14 @@ type Progress = {
   stage: string;
   progress: { done: number; total: number };
   journey?: Journey; // live explorer steps
+  filesPrefix: string; // where this test's screenshots are
 };
+
+type Done = Run & { filesPrefix: string };
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [data, setData] = useState<Run | Progress | null>(null);
+  const [data, setData] = useState<Done | Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   // A seconds counter, so the screen never looks frozen.
   const [seconds, setSeconds] = useState(0);
@@ -29,7 +32,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
     let stopped = false;
     async function poll() {
       try {
-        const res = await fetch(`/api/run/${id}`);
+        const res = await fetch(`/api/tests/${id}`);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
         if (stopped) return;
@@ -69,7 +72,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
             live · {seconds}s
           </p>
           <p className="display text-4xl sm:text-5xl">The explorer is trying your product</p>
-          <JourneyView runId={id} journey={journey} live />
+          <JourneyView filesPrefix={data.filesPrefix} journey={journey} live />
         </div>
       );
     }

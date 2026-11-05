@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "bench": "tsc -p tsconfig.bench.json && node scripts/crawler-bench.cjs && node scripts/explorer-bench.cjs",
-    "realcheck": "tsc -p tsconfig.bench.json && node scripts/real-sites.cjs"
+    "realcheck": "tsc -p tsconfig.bench.json && node scripts/real-sites.cjs",
+    "worker:build": "tsc -p tsconfig.worker.json",
+    "worker": "node .worker-build/worker/main.js",
+    "worker:dev": "npm run worker:build && node --env-file=.env.local .worker-build/worker/main.js",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",
@@ -30,5 +34,8 @@
     "eslint-config-next": "15.5.28",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.6"
   }
 }

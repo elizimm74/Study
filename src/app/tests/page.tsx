@@ -2,7 +2,7 @@
 // Row Level Security means this list can only ever contain YOUR tests.
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
-import { AUTH_ENABLED, FREE_TESTS } from "@/lib/supabase/config";
+import { AUTH_ENABLED } from "@/lib/supabase/config";
 
 type Row = { id: string; url: string; goal: string | null; status: string; score: number | null; total: number | null; created_at: string };
 
@@ -31,7 +31,7 @@ export default async function MyTests() {
         <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center">
           <p className="display text-4xl">No tests yet</p>
           <p className="mt-2 text-slate-600">
-            You have {FREE_TESTS} free test{FREE_TESTS === 1 ? "" : "s"}. Paste your site and see what 100 customers think.
+            Your first test is free. Paste your site and see what 100 customers think.
           </p>
         </div>
       ) : (
@@ -41,13 +41,20 @@ export default async function MyTests() {
               <Link href={`/run/${t.id}`} className="flex items-center gap-4 py-5 hover:bg-white sm:gap-6">
                 <span className="meta w-10 text-slate-400">({String(tests.length - i).padStart(3, "0")})</span>
                 <span className="display w-28 text-4xl">
-                  {t.status === "done" ? t.score : t.status === "running" ? "…" : "×"}
+                  {t.status === "done" ? t.score : t.status === "error" ? "×" : "…"}
                   {t.status === "done" && <span className="text-xl text-slate-400">/{t.total}</span>}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{t.url.replace(/^https?:\/\//, "")}</span>
                   <span className="text-sm text-slate-500">
-                    {t.status === "done" ? `would ${t.goal ?? "buy"}` : t.status === "running" ? "still running" : "failed"} ·{" "}
+                    {t.status === "done"
+                      ? `would ${t.goal ?? "buy"}`
+                      : t.status === "error"
+                        ? "failed (didn't use up your plan)"
+                        : t.status === "queued"
+                          ? "waiting to start"
+                          : "still running"}{" "}
+                    ·{" "}
                     {new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </span>
                 </span>

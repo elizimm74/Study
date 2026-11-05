@@ -5,14 +5,13 @@
 //  - The page text + screenshots are identical for every batch, so we mark
 //    them for PROMPT CACHING. After the first batch they cost ~10% as much.
 //  - We run batch 1 alone (to fill the cache), then the rest in parallel.
-import fs from "fs/promises";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type Anthropic from "@anthropic-ai/sdk";
 import { anthropic, assertNotRefused, HAIKU } from "./ai";
 import { costOfCall } from "./cost";
 import { describePersona } from "./personas";
-import { screenshotPath } from "./storage";
+import type { BlobStore } from "./blobs";
 import { profileToText, signalsToText } from "./suggest";
 import { rulesFor } from "./behavior";
 import {
@@ -26,8 +25,13 @@ import {
   type Verdict,
 } from "./types";
 
-// Optional extras from Milestone 3.
-export type Extras = { runId: string; journey?: Journey; reputation?: Reputation };
+// Where to read screenshots from, plus the optional Milestone 3 extras.
+export type Extras = {
+  store: BlobStore;
+  testPrefix?: string; // where the explorer's screenshots are, e.g. "{userId}/tests/{id}"
+  journey?: Journey;
+  reputation?: Reputation;
+};
 const MAX_JOURNEY_SHOTS = 6; // a few key moments, to keep cost down
 
 const BATCH_SIZE = 25;
@@ -81,10 +85,10 @@ export async function evaluatePersonas(
   profile: ProductProfile,
   personas: Persona[],
   onProgress: Progress,
-  extras?: Extras,
+  extras: Extras,
 ): Promise<{ verdicts: Verdict[]; costs: CallCost[] }> {
   const siteContent = await buildSiteContent(crawl, profile, extras);
-  const hasJourney = Boolean(extras?.journey?.steps.length);
+  const hasJourney = Boolean(extras.journey?.steps.length);
   const batches: Persona[][] = [];
   for (let i = 0; i < personas.length; i += BATCH_SIZE) {
     batches.push(personas.slice(i, i + BATCH_SIZE));
@@ -115,12 +119,13 @@ export async function evaluatePersonas(
 async function buildSiteContent(
   crawl: Crawl,
   profile: ProductProfile,
-  extras?: Extras,
+  extras: Extras,
 ): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
-  const addImage = async (file: string, label: string) => {
+  const addImage = async (key: string, label: string) => {
     try {
-      const data = await fs.readFile(file);
+      const data = await extras.store.get(key);
+      if (!data) return;
       blocks.push(
         { type: "text", text: label },
         { type: "image", source: { type: "base64", media_type: "image/jpeg", data: data.toString("base64") } },
@@ -137,15 +142,15 @@ async function buildSiteContent(
     if (page.mobileScreenshotFile) {
       files.push({ file: page.mobileScreenshotFile, label: `Screenshot of the ${page.step} page on a PHONE:` });
     }
-    for (const { file, label } of files) await addImage(screenshotPath(crawl.id, file), label);
+    for (const { file, label } of files) await addImage(`${crawl.filesPrefix}/${file}`, label);
   }
 
   // Milestone 3: key moments from the explorer actually using the product.
-  const journey = extras?.journey;
+  const journey = extras.journey;
   if (journey?.steps.length) {
     for (const step of pickKeySteps(journey)) {
       await addImage(
-        screenshotPath(extras!.runId, step.screenshot),
+        `${extras.testPrefix}/${step.screenshot}`,
         `EXPLORER step ${step.n} (inside the product): ${step.observation}`,
       );
     }
@@ -168,7 +173,7 @@ async function buildSiteContent(
       : "");
 
   // cache_control marks the end of the part that's the same for every batch.
-  blocks.push({ type: "text", text: text + journeyText(journey) + reviewsText(extras?.reputation), cache_control: { type: "ephemeral" } });
+  blocks.push({ type: "text", text: text + journeyText(journey) + reviewsText(extras.reputation), cache_control: { type: "ephemeral" } });
   return blocks;
 }
 

@@ -9,11 +9,5 @@ export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? 
 // (handy for local testing and for the benches).
 export const AUTH_ENABLED = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
-// How many free tests each account gets (the Free plan: 1 x 100 personas).
-export const FREE_TESTS = Number(process.env.FREE_TESTS_PER_ACCOUNT ?? 1);
-
-// Emails that never hit the limit (you, for testing). Comma-separated.
-export function isAdmin(email: string | undefined) {
-  const admins = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  return Boolean(email && admins.includes(email.toLowerCase()));
-}
+// Plans and limits live in the database (profiles.plan, plan_test_limit()).
+// Admins (profiles.is_admin = true) have no limit.

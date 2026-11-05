@@ -41,13 +41,15 @@ export default function Home() {
     setError(null);
     setCrawl(null);
     try {
-      const res = await fetch("/api/analyze", {
+      // 1) Queue the analysis. 2) Check every 1.5s until a worker finishes it.
+      const res = await fetch("/api/crawls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const started = await res.json();
+      if (!res.ok) throw new Error(started.error);
+      const data = await waitForCrawl(started.crawlId);
       setCrawl(data.crawl);
       setProfile(data.profile);
       setExplore((e) => ({ ...e, task: data.profile?.tryTask || e.task, startUrl: data.crawl.url }));
@@ -70,7 +72,7 @@ export default function Home() {
     setBusy("starting");
     setError(null);
     try {
-      const res = await fetch("/api/run", {
+      const res = await fetch("/api/tests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,7 +86,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      router.push(`/run/${data.runId}`);
+      router.push(`/run/${data.testId}`);
     } catch (err) {
       setError((err as Error).message);
       setBusy(null);
@@ -213,4 +215,17 @@ function Step({ n, title, hint, children }: { n: string; title: string; hint?: s
       {children}
     </section>
   );
+}
+
+// Checks the analysis every 1.5 seconds until it's done (about 10-30s), max 3 minutes.
+async function waitForCrawl(crawlId: string) {
+  for (let i = 0; i < 120; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    const res = await fetch(`/api/crawls/${crawlId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    if (data.status === "done") return data;
+    if (data.status === "error") throw new Error(data.error ?? "Couldn't read that site.");
+  }
+  throw new Error("Reading the site is taking too long. Is the worker running?");
 }

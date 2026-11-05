@@ -46,3 +46,6 @@ next-env.d.ts
 
 # compiled code for the crawler bench
 /.bench-build
+
+# compiled worker
+/.worker-build

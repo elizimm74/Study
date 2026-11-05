@@ -37,7 +37,7 @@ const FAQ = [
   },
   {
     q: "Is my data private?",
-    a: "Yes. Your tests are tied to your account, and the database only lets you see your own. Test-account passwords are never saved.",
+    a: "Yes. Your tests are tied to your account, and the database only lets you see your own. Test-account passwords are encrypted, and erased as soon as the test starts.",
   },
   { q: "How long does a test take?", a: "About a minute, or 2–3 minutes if the explorer also tries your product." },
 ];

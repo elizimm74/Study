@@ -9,6 +9,8 @@
 const path = require("path");
 const { serve } = require("./bench-server.cjs");
 const { exploreProduct } = require(path.join(__dirname, "..", ".bench-build", "lib", "explore.js"));
+const { LocalBlobStore } = require(path.join(__dirname, "..", ".bench-build", "lib", "blobs.js"));
+const store = new LocalBlobStore(); // screenshots go to data/blobs (not uploaded)
 
 const D = (action, extra = {}) => ({ observation: "test", friction: "", action, element_id: -1, text: "", x: -1, y: -1, x2: -1, y2: -1, reason: "scripted", ...extra });
 const find = (els, label) => (els.find((e) => e.label === label) || els.find((e) => e.label.startsWith(label)) || { id: -1 }).id;
@@ -23,7 +25,8 @@ async function run(dir, start, access, credentials, script) {
   const seen = [];
   let lastText = "";
   const settings = { enabled: true, task: "bench", access, startUrl, reputation: false };
-  const r = await exploreProduct(`bench${Math.random().toString(16).slice(2, 10)}`, settings, credentials, (j) => seen.push(JSON.stringify(j)),
+  const files = { store, prefix: `bench/tests/bench${Math.random().toString(16).slice(2, 10)}` };
+  const r = await exploreProduct(files, settings, credentials, (j) => seen.push(JSON.stringify(j)),
     async (n, els, url, text) => {
       seen.push(JSON.stringify(els));
       lastText = text;

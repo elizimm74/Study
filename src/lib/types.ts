@@ -81,6 +81,7 @@ export type Crawl = {
   createdAt: string;
   pages: CrawledPage[];
   costs: CallCost[]; // AI calls made while crawling (choosing what to click)
+  filesPrefix: string; // where this crawl's screenshots are, e.g. "{userId}/crawls/{id}"
 };
 
 // What the product IS, written by Haiku after the crawl. The founder can

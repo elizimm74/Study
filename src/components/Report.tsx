@@ -20,7 +20,7 @@ const STEP_NAMES: Record<string, string> = {
   converted: "converted",
 };
 
-export default function Report({ run }: { run: Run }) {
+export default function Report({ run }: { run: Run & { filesPrefix: string } }) {
   const stats = run.stats!;
   const advice = run.advice!;
   const goal = run.profile?.goal ?? "buy";
@@ -103,7 +103,7 @@ export default function Report({ run }: { run: Run }) {
       <div className="border-t border-slate-900">
         {run.journey && run.journey.steps.length > 0 && (
           <Fold title="Product test" hint={`${run.journey.steps.length} steps · ${run.journey.status}`}>
-            <JourneyView runId={run.id} journey={run.journey} />
+            <JourneyView filesPrefix={run.filesPrefix} journey={run.journey} />
           </Fold>
         )}
 

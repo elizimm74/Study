@@ -14,7 +14,7 @@ type Props = {
 
 const ACCESS: { value: ExploreAccess; title: string; detail: string }[] = [
   { value: "public", title: "Public parts only", detail: "Anything that works without an account. Fine for any site." },
-  { value: "account", title: "My test account", detail: "For your own product. Never saved, and the AI never sees the password." },
+  { value: "account", title: "My test account", detail: "For your own product. Encrypted, erased once the test starts, and never shown to the AI." },
   { value: "preview", title: "Preview link (login off)", detail: "For your own product, e.g. a Vercel preview with login turned off." },
 ];
 
@@ -91,7 +91,7 @@ export default function ExplorePanel(props: Props) {
                 className={inputCls}
               />
               <p className="text-xs text-slate-500 sm:col-span-2">
-                Use a throwaway test account, never your real one. It&apos;s only kept in memory for this one test.
+                Use a throwaway test account, never your real one. It&apos;s encrypted and erased as soon as the test starts.
               </p>
             </div>
           )}

@@ -1,6 +1,10 @@
-// Runs the whole engine in order and keeps track of progress.
+// Runs one test from start to finish:
 //   [explorer tries the product + reputation search]  (optional, at the same time)
 //   -> personas (code) -> evaluate (Haiku) -> aggregate (code) -> advice (Sonnet)
+//
+// It's a plain function with no global state: the WORKER calls it, and saves
+// progress to the database through `onChange`. Any worker on any machine can
+// run any test.
 import { generatePersonas } from "./personas";
 import { evaluatePersonas } from "./evaluate";
 import { aggregate, type Stats } from "./aggregate";
@@ -8,8 +12,7 @@ import { writeAdvice, type Advice } from "./report";
 import { exploreProduct } from "./explore";
 import { checkReputation } from "./reputation";
 import { logRunCost } from "./cost";
-import { loadJson, newId, saveJson } from "./storage";
-import { saveTestFinished, saveTestStarted, type Owner } from "./db";
+import type { BlobStore } from "./blobs";
 import type {
   Audience,
   CallCost,
@@ -25,15 +28,15 @@ import type {
 
 export type Run = {
   id: string;
-  userId?: string; // who ran it (when accounts are on)
+  userId?: string;
   crawlId: string;
   url: string;
   createdAt: string;
   profile: ProductProfile;
   audience: Audience;
-  explore?: ExploreSettings; // never includes the test account details
+  explore?: ExploreSettings; // never includes the test-account details
   seed: number;
-  status: "running" | "done" | "error";
+  status: "queued" | "running" | "done" | "error";
   stage: string; // human-readable, shown on the progress screen
   progress: { done: number; total: number };
   error?: string;
@@ -47,61 +50,57 @@ export type Run = {
   totalCostUsd?: number;
 };
 
-// Runs in progress live in memory. `globalThis` keeps them alive when the
-// dev server reloads code after you save a file.
-const g = globalThis as unknown as { __runs?: Map<string, Run> };
-const liveRuns = (g.__runs ??= new Map<string, Run>());
+export type RunInput = {
+  id: string;
+  userId?: string;
+  crawl: Crawl;
+  profile: ProductProfile;
+  audience: Audience;
+  count: number;
+  explore?: ExploreSettings;
+  credentials?: Credentials | null; // kept in memory only, never in the Run
+  seed?: number; // same seed = same personas (for before/after re-runs later)
+};
 
-export async function getRun(id: string): Promise<Run | null> {
-  return liveRuns.get(id) ?? (await loadJson<Run>("runs", id));
-}
+export type RunHooks = {
+  store: BlobStore; // where screenshots are read from and written to
+  testPrefix: string; // this test's folder in the store, e.g. "{userId}/tests/{id}"
+  onChange: (run: Run) => void; // called whenever stage / progress / journey changes
+};
 
-// Starts a run and returns its id right away; the work continues in the
-// background while the browser checks progress every second.
-export async function startRun(
-  crawl: Crawl,
-  profile: ProductProfile,
-  audience: Audience,
-  count: number,
-  explore?: ExploreSettings,
-  credentials: Credentials | null = null, // passed along in memory only
-  owner?: Owner, // the signed-in user (accounts on); results are saved to their account
-): Promise<string> {
-  const seed = Math.floor(Math.random() * 1e9);
+export async function runTest(input: RunInput, hooks: RunHooks): Promise<Run> {
+  const seed = input.seed ?? Math.floor(Math.random() * 1e9);
   const run: Run = {
-    id: newId(),
-    userId: owner?.userId,
-    crawlId: crawl.id,
-    url: crawl.url,
+    id: input.id,
+    userId: input.userId,
+    crawlId: input.crawl.id,
+    url: input.crawl.url,
     createdAt: new Date().toISOString(),
-    profile,
-    audience,
-    explore: explore?.enabled ? explore : undefined,
+    profile: input.profile,
+    audience: input.audience,
+    explore: input.explore?.enabled ? input.explore : undefined,
     seed,
     status: "running",
     stage: "Creating personas",
-    progress: { done: 0, total: count },
-    personas: generatePersonas(audience, count, seed),
+    progress: { done: 0, total: input.count },
+    personas: generatePersonas(input.audience, input.count, seed),
     verdicts: [],
     costs: [],
   };
-  // Save the "running" row first, so it counts toward the free limit right away.
-  if (owner) await saveTestStarted(owner, run);
-  liveRuns.set(run.id, run);
-  void execute(run, crawl, credentials, owner); // "void" = start it, don't wait for it
-  return run.id;
-}
+  const changed = () => hooks.onChange(run);
+  changed();
 
-async function execute(run: Run, crawl: Crawl, credentials: Credentials | null, owner?: Owner) {
   try {
     // 1) Optional: try the product and check reviews AT THE SAME TIME (faster).
     if (run.explore) {
       run.stage = "The explorer is trying your product";
+      changed();
       const settings = run.explore;
       const [explored, rep] = await Promise.all([
         settings.task.trim()
-          ? exploreProduct(run.id, settings, credentials, (j) => {
+          ? exploreProduct({ store: hooks.store, prefix: hooks.testPrefix }, settings, input.credentials ?? null, (j) => {
               run.journey = { ...j, steps: [...j.steps] }; // copy, for the live view
+              changed();
             })
           : Promise.resolve(null),
         settings.reputation ? checkReputation(run.url, run.profile) : Promise.resolve(null),
@@ -118,14 +117,16 @@ async function execute(run: Run, crawl: Crawl, credentials: Credentials | null, 
 
     // 2) Personas review everything they'd see.
     run.stage = "Personas are reviewing your site";
+    changed();
     const { verdicts, costs } = await evaluatePersonas(
-      crawl,
+      input.crawl,
       run.profile,
       run.personas,
       (done, total) => {
         run.progress = { done, total };
+        changed();
       },
-      { runId: run.id, journey: run.journey, reputation: run.reputation ?? undefined },
+      { store: hooks.store, testPrefix: hooks.testPrefix, journey: run.journey, reputation: run.reputation ?? undefined },
     );
     run.verdicts = verdicts;
     run.costs.push(...costs);
@@ -134,7 +135,8 @@ async function execute(run: Run, crawl: Crawl, credentials: Credentials | null, 
     run.stats = aggregate(run.audience, run.personas, verdicts, Boolean(run.journey?.steps.length));
 
     run.stage = "Writing your fixes";
-    const { advice, cost } = await writeAdvice(crawl, run.profile, run.stats, run.journey, run.reputation ?? undefined);
+    changed();
+    const { advice, cost } = await writeAdvice(input.crawl, run.profile, run.stats, run.journey, run.reputation ?? undefined);
     run.advice = advice;
     run.costs.push(cost);
 
@@ -146,9 +148,6 @@ async function execute(run: Run, crawl: Crawl, credentials: Credentials | null, 
     run.error = (err as Error).message;
     console.error(`[run ${run.id}] failed:`, err);
     if (run.costs.length) run.totalCostUsd = logRunCost(run.id, run.costs);
-  } finally {
-    await saveJson("runs", run.id, run);
-    if (owner) await saveTestFinished(owner, run);
-    liveRuns.delete(run.id);
   }
+  return run;
 }

@@ -6,7 +6,7 @@ import { createServerClient } from "@supabase/ssr";
 import { AUTH_ENABLED, SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 
 const PRIVATE_PAGES = ["/app", "/run", "/tests"];
-const PRIVATE_APIS = ["/api/analyze", "/api/run", "/api/screenshot"];
+const PRIVATE_APIS = ["/api/crawls", "/api/tests", "/api/files"];
 
 export async function middleware(request: NextRequest) {
   if (!AUTH_ENABLED) return NextResponse.next(); // accounts switched off

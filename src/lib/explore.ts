@@ -14,13 +14,11 @@
 //  - the test password is NEVER shown to the AI: it writes {{PASSWORD}} and
 //    code types the real one. Credentials are never saved anywhere.
 import { chromium, devices, type Page } from "playwright";
-import fs from "fs/promises";
-import path from "path";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { anthropic, HAIKU, SONNET } from "./ai";
 import { costOfCall } from "./cost";
-import { screenshotPath } from "./storage";
+import { fileKey, type FileTarget } from "./blobs";
 import { installHelpers } from "./pageHelpers";
 import type { CallCost, Credentials, ExploreSettings, Journey, JourneyStep } from "./types";
 
@@ -106,7 +104,7 @@ Rules:
 type UiElement = { id: number; kind: string; label: string; inView: boolean; editable: boolean; attrs: string; box: string };
 
 export async function exploreProduct(
-  runId: string,
+  files: FileTarget, // where the explorer's screenshots go, e.g. "{userId}/tests/{testId}"
   settings: ExploreSettings,
   credentials: Credentials | null,
   onUpdate: (j: Journey) => void, // called after every step (for the live view)
@@ -125,7 +123,6 @@ export async function exploreProduct(
   };
   const log: string[] = []; // short history the AI sees each step
   const site = siteOf(settings.startUrl);
-  await fs.mkdir(path.dirname(screenshotPath(runId, "x")), { recursive: true });
 
   const browser = await chromium.launch();
   try {
@@ -156,7 +153,7 @@ export async function exploreProduct(
       if (await hasCaptcha(page)) {
         journey.status = "blocked";
         log.push(`Step ${n}: a "prove you're human" check appeared. Stopped (we never bypass these).`);
-        await recordStep(page, runId, journey, n, {
+        await recordStep(page, files, journey, n, {
           observation: "A captcha / human-verification check blocks the way.",
           action: "Stopped at a captcha",
           model: "code",
@@ -167,7 +164,8 @@ export async function exploreProduct(
       // Look at the screen.
       const elements = await listElements(page);
       const file = `explore-${String(n).padStart(2, "0")}.jpg`;
-      const shot = await page.screenshot({ path: screenshotPath(runId, file), type: "jpeg", quality: 60 });
+      const shot = await page.screenshot({ type: "jpeg", quality: 60 });
+      await files.store.put(fileKey(files, file), shot);
       const pageText = (await page.evaluate(() => window.__crawler?.deepText() ?? document.body?.innerText ?? "").catch(() => "")).slice(0, 1500);
 
       // Ask the AI what to do. Haiku normally; Sonnet when Haiku seems stuck.
@@ -457,13 +455,14 @@ async function settle(page: Page, ms = 4_000) {
 
 async function recordStep(
   page: Page,
-  runId: string,
+  files: FileTarget,
   journey: Journey,
   n: number,
   step: Pick<JourneyStep, "observation" | "action" | "model">,
 ) {
   const file = `explore-${String(n).padStart(2, "0")}.jpg`;
-  await page.screenshot({ path: screenshotPath(runId, file), type: "jpeg", quality: 60 }).catch(() => {});
+  const shot = await page.screenshot({ type: "jpeg", quality: 60 }).catch(() => null);
+  if (shot) await files.store.put(fileKey(files, file), shot).catch(() => {});
   journey.steps.push({ n, url: page.url(), screenshot: file, ...step });
 }
 
