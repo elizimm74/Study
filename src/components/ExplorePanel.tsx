@@ -90,7 +90,7 @@ export default function ExplorePanel(props: Props) {
                 autoComplete="new-password"
                 className={inputCls}
               />
-              <p className="text-xs text-amber-800 sm:col-span-2">
+              <p className="text-xs text-slate-500 sm:col-span-2">
                 Use a throwaway test account, never your real one. It&apos;s only kept in memory for this one test.
               </p>
             </div>

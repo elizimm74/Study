@@ -33,43 +33,47 @@ export default function Report({ run }: { run: Run }) {
 
   return (
     <div className="space-y-6">
-      {/* ---------- 1. The answer ---------- */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <p className="truncate text-sm text-slate-500">{run.url}</p>
-        <p className="mt-2 text-4xl font-bold tracking-tight">
-          {stats.buy} of {stats.total} would {goal}
+      {/* ---------- 1. The answer: giant score on the sky band ---------- */}
+      <section className="sky rounded-3xl px-6 pb-7 pt-6 sm:px-10">
+        <div className="meta flex justify-between gap-4 text-white/85">
+          <span className="truncate">{run.url.replace(/^https?:\/\//, "")}</span>
+          <span className="shrink-0">✱ crawler report</span>
+        </div>
+        <p className="display mt-8 text-white">
+          <span className="text-[26vw] sm:text-[10rem]">{stats.buy}</span>
+          <span className="text-[9vw] text-white/70 sm:text-6xl">/{stats.total}</span>
         </p>
+        <p className="display mt-1 text-2xl text-white sm:text-4xl">would {goal}</p>
         <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} goal={goal} />
-        <p className="mt-4 text-slate-700">{firstSentence(advice.summary)}</p>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <p className="mt-5 max-w-2xl text-white/95">{firstSentence(advice.summary)}</p>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs">
           {top && (
-            <Chip tone="rose">
-              Biggest blocker: {top.category} ({pct(top.pctOfNonBuyers)} of no&apos;s)
+            <Chip>
+              Biggest blocker: {top.category} · {pct(top.pctOfNonBuyers)}
             </Chip>
           )}
           {run.journey && run.journey.steps.length > 0 && (
-            <Chip tone={run.journey.status === "completed" ? "emerald" : "amber"}>
-              Product test: {run.journey.status === "completed" ? "worked" : run.journey.status}
-            </Chip>
+            <Chip>Product test: {run.journey.status === "completed" ? "worked" : run.journey.status}</Chip>
           )}
         </div>
       </section>
 
-      {/* ---------- 2. Fix these first ---------- */}
+      {/* ---------- 2. Fix these first: 01. 02. 03. with thin lines ---------- */}
       <section>
-        <h2 className="mb-2 text-lg font-semibold">Fix these first</h2>
-        <ol className="space-y-2">
+        <div className="flex items-end justify-between border-b border-slate-900 pb-2">
+          <h2 className="meta text-sm text-slate-900">Fix these first</h2>
+          <span className="meta text-slate-400">ranked by people won</span>
+        </div>
+        <ol>
           {shownFixes.map((f, i) => (
-            <li key={i} className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-                {i + 1}
-              </span>
+            <li key={i} className="flex gap-4 border-b border-slate-200 py-4 sm:gap-6">
+              <span className="display w-14 shrink-0 text-4xl sm:w-20 sm:text-5xl">{String(i + 1).padStart(2, "0")}.</span>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                  <p className="font-semibold">{f.title}</p>
-                  <p className="text-xs font-medium text-emerald-700">
-                    could win {f.likelyFlip} of the {stats.maybe} maybes
-                  </p>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <p className="text-lg font-semibold leading-snug">{f.title}</p>
+                  <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                    +{f.likelyFlip} of {stats.maybe} maybes
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-slate-600">{f.change}</p>
               </div>
@@ -77,17 +81,18 @@ export default function Report({ run }: { run: Run }) {
           ))}
         </ol>
         {fixes.length > 3 && (
-          <button onClick={() => setMoreFixes(!moreFixes)} className="mt-2 text-sm text-indigo-700 hover:underline">
-            {moreFixes ? "Show fewer" : `Show ${fixes.length - 3} more fix${fixes.length - 3 === 1 ? "" : "es"}`}
+          <button onClick={() => setMoreFixes(!moreFixes)} className="meta mt-3 text-indigo-600 hover:underline">
+            {moreFixes ? "Show fewer" : `+ ${fixes.length - 3} more fix${fixes.length - 3 === 1 ? "" : "es"}`}
           </button>
         )}
       </section>
 
       {/* ---------- 3. Quick facts ---------- */}
       <section className="grid gap-3 sm:grid-cols-3">
-        <Fact label="Liked it most" value={best ? best.value : "-"} detail={best ? `${best.dimension} · ${pct(best.buyRate)} would ${goal}` : "Not enough data"} />
-        <Fact label="Liked it least" value={worst ? worst.value : "-"} detail={worst ? `${worst.dimension} · ${pct(worst.buyRate)} would ${goal}` : "Not enough data"} />
-        <Fact
+ <Fact n="001" label="Liked it most" value={best ? best.value : "-"} detail={best ? `${best.dimension} · ${pct(best.buyRate)} would ${goal}` : "Not enough data"} />
+ <Fact n="002" label="Liked it least" value={worst ? worst.value : "-"} detail={worst ? `${worst.dimension} · ${pct(worst.buyRate)} would ${goal}` : "Not enough data"} />
+ <Fact
+          n="003"
           label="Most people left at"
           value={worstStep && worstStep.lost > 0 ? STEP_NAMES[worstStep.step] : "-"}
           detail={worstStep && worstStep.lost > 0 ? `${worstStep.lost} of ${stats.total} gave up there` : ""}
@@ -95,7 +100,7 @@ export default function Report({ run }: { run: Run }) {
       </section>
 
       {/* ---------- 4. Details, folded away ---------- */}
-      <div className="space-y-2">
+      <div className="border-t border-slate-900">
         {run.journey && run.journey.steps.length > 0 && (
           <Fold title="Product test" hint={`${run.journey.steps.length} steps · ${run.journey.status}`}>
             <JourneyView runId={run.id} journey={run.journey} />
@@ -110,8 +115,8 @@ export default function Report({ run }: { run: Run }) {
                   <span className="font-medium capitalize">{o.category}</span>
                   <span className="text-slate-500">{pct(o.pctOfNonBuyers)}</span>
                 </div>
-                <div className="mt-1 h-2 rounded bg-slate-100">
-                  <div className="h-2 rounded bg-rose-400" style={{ width: pct(o.pctOfNonBuyers) }} />
+                <div className="mt-1 h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-slate-900" style={{ width: pct(o.pctOfNonBuyers) }} />
                 </div>
                 {o.examples[0] && <p className="mt-1 text-xs text-slate-500">“{o.examples[0]}”</p>}
               </div>
@@ -130,9 +135,9 @@ export default function Report({ run }: { run: Run }) {
                     {f.lost ? ` · ${f.lost} left` : ""}
                   </span>
                 </div>
-                <div className="mt-1 h-2.5 rounded bg-slate-100">
+                <div className="mt-1 h-2.5 rounded-full bg-slate-100">
                   <div
-                    className={`h-2.5 rounded ${f.step === "converted" ? "bg-emerald-600" : "bg-indigo-500"}`}
+                    className={`h-2.5 rounded-full ${f.step === "converted" ? "bg-indigo-600" : "bg-sky-400"}`}
                     style={{ width: pct(f.reached / Math.max(1, stats.total)) }}
                   />
                 </div>
@@ -173,8 +178,8 @@ export default function Report({ run }: { run: Run }) {
               <p className="text-slate-700">{run.reputation.summary}</p>
               {run.reputation.found && (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <List title="Praise" tone="text-emerald-700" items={run.reputation.praise} />
-                  <List title="Complaints" tone="text-rose-700" items={run.reputation.complaints} />
+                  <List title="Praise" tone="text-indigo-600" items={run.reputation.praise} />
+                  <List title="Complaints" tone="text-slate-900" items={run.reputation.complaints} />
                 </div>
               )}
               {run.reputation.sources.length > 0 && (
@@ -253,51 +258,44 @@ function AllSegments({ segments, goal }: { segments: Record<string, SegmentRow[]
 // Green shade: 0% = very light, 50%+ = darkest.
 function heat(rate: number): React.CSSProperties {
   const t = Math.min(1, rate / 0.5);
-  return { background: `rgba(5, 150, 105, ${0.08 + t * 0.85})`, color: t > 0.5 ? "white" : "#064e3b" };
+  return { background: `rgba(29, 71, 209, ${0.07 + t * 0.88})`, color: t > 0.5 ? "white" : "#132f86" };
 }
 
 function VerdictBar({ buy, maybe, no, goal }: { buy: number; maybe: number; no: number; goal: string }) {
   const total = Math.max(1, buy + maybe + no);
   return (
     <div className="mt-4">
-      <div className="flex h-3 overflow-hidden rounded-full">
-        <div className="bg-emerald-600" style={{ width: pct(buy / total) }} />
-        <div className="bg-amber-400" style={{ width: pct(maybe / total) }} />
-        <div className="bg-slate-300" style={{ width: pct(no / total) }} />
+      <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
+        <div className="rounded-full bg-indigo-600" style={{ width: pct(buy / total) }} />
+        <div className="rounded-full bg-white" style={{ width: pct(maybe / total) }} />
+        <div className="rounded-full bg-white/35" style={{ width: pct(no / total) }} />
       </div>
-      <div className="mt-1 flex gap-4 text-xs text-slate-500">
+      <div className="meta mt-2 flex flex-wrap gap-x-4 gap-y-1 text-white/90">
         <span>
-          <span className="text-emerald-600">●</span> would {goal} {buy}
+          <span className="text-indigo-600">●</span> would {goal} {buy}
         </span>
-        <span>
-          <span className="text-amber-400">●</span> maybe {maybe}
-        </span>
-        <span>
-          <span className="text-slate-300">●</span> no {no}
-        </span>
+        <span>● maybe {maybe}</span>
+        <span className="text-white/70">● no {no}</span>
       </div>
     </div>
   );
 }
 
-function Chip({ tone, children }: { tone: "rose" | "slate" | "emerald" | "amber"; children: React.ReactNode }) {
-  const cls = {
-    rose: "bg-rose-50 text-rose-800",
-    slate: "bg-slate-100 text-slate-700",
-    emerald: "bg-emerald-50 text-emerald-800",
-    amber: "bg-amber-50 text-amber-800",
-  }[tone];
-  return <span className={`rounded-full px-2.5 py-1 font-medium ${cls}`}>{children}</span>;
+function Chip({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-full bg-white px-3 py-1 font-semibold text-indigo-700">{children}</span>;
 }
 
-function Fact({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Fact({ n, label, value, detail }: { n: string; label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-medium uppercase text-slate-400">{label}</p>
-      <p className="mt-1 truncate font-semibold capitalize" title={value}>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="meta flex justify-between text-slate-400">
+        <span>{label}</span>
+        <span>({n})</span>
+      </p>
+      <p className="display mt-3 line-clamp-2 text-xl leading-tight sm:text-2xl" title={value}>
         {value}
       </p>
-      <p className="text-xs text-slate-500">{detail}</p>
+      <p className="mt-1 text-xs text-slate-500">{detail}</p>
     </div>
   );
 }
@@ -305,15 +303,17 @@ function Fact({ label, value, detail }: { label: string; value: string; detail: 
 // A section you click to open. Keeps the page short.
 function Fold({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <details className="group rounded-xl border border-slate-200 bg-white">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
-        <span className="font-medium">{title}</span>
-        <span className="flex items-center gap-2 text-xs text-slate-400">
-          {hint}
-          <span className="transition-transform group-open:rotate-90">›</span>
+    <details className="group border-b border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-4">
+        <span className="text-lg font-semibold">{title}</span>
+        <span className="flex items-center gap-3">
+          <span className="meta hidden text-slate-400 sm:inline">{hint}</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-sm transition group-open:rotate-45 group-open:border-slate-900 group-open:bg-slate-900 group-open:text-white">
+            +
+          </span>
         </span>
       </summary>
-      <div className="border-t border-slate-100 p-4">{children}</div>
+      <div className="pb-6">{children}</div>
     </details>
   );
 }
@@ -344,11 +344,11 @@ function Quotes({ best, all, goal }: { best: QuoteItem[]; all: QuoteItem[]; goal
     <div>
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((q) => (
-          <figure key={q.personaId} className="rounded-lg bg-slate-50 p-3">
+          <figure key={q.personaId} className="rounded-2xl bg-white p-4">
             <blockquote className="text-sm text-slate-800">“{q.quote}”</blockquote>
             <figcaption className="mt-1 flex justify-between text-xs text-slate-500">
               <span>{q.label}</span>
-              <span className={q.verdict === "buy" ? "text-emerald-700" : q.verdict === "maybe" ? "text-amber-700" : "text-slate-500"}>
+              <span className={`meta ${q.verdict === "buy" ? "text-indigo-600" : q.verdict === "maybe" ? "text-sky-500" : "text-slate-400"}`}>
                 {verdictLabel(q.verdict)}
               </span>
             </figcaption>

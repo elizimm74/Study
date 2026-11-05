@@ -6,12 +6,12 @@ import { useState } from "react";
 import type { Journey } from "@/lib/types";
 
 const STATUS: Record<Journey["status"], { label: string; cls: string }> = {
-  running: { label: "Exploring…", cls: "bg-indigo-100 text-indigo-800" },
-  completed: { label: "Task completed", cls: "bg-emerald-100 text-emerald-800" },
-  stuck: { label: "Got stuck", cls: "bg-amber-100 text-amber-800" },
-  blocked: { label: "Blocked (captcha)", cls: "bg-rose-100 text-rose-800" },
-  "out of steps": { label: "Ran out of steps", cls: "bg-amber-100 text-amber-800" },
-  error: { label: "Error", cls: "bg-rose-100 text-rose-800" },
+  running: { label: "Exploring…", cls: "bg-sky-200 text-indigo-900" },
+  completed: { label: "Task completed", cls: "bg-indigo-600 text-white" },
+  stuck: { label: "Got stuck", cls: "bg-sky-200 text-indigo-900" },
+  blocked: { label: "Blocked (captcha)", cls: "bg-slate-900 text-white" },
+  "out of steps": { label: "Ran out of steps", cls: "bg-sky-200 text-indigo-900" },
+  error: { label: "Error", cls: "bg-slate-900 text-white" },
 };
 
 export default function JourneyView({ runId, journey, live }: { runId: string; journey: Journey; live?: boolean }) {
@@ -32,7 +32,7 @@ export default function JourneyView({ runId, journey, live }: { runId: string; j
 
       {!live && journey.summary && <p className="text-slate-700">{journey.summary}</p>}
       {!live && journey.frictionPoints.length > 0 && (
-        <ul className="list-disc space-y-1 pl-5 text-sm text-rose-800">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-slate-900">
           {journey.frictionPoints.map((f, i) => (
             <li key={i}>{f}</li>
           ))}
@@ -70,7 +70,7 @@ export default function JourneyView({ runId, journey, live }: { runId: string; j
                 }`}
               >
                 <span className="font-medium">{s.n}.</span> {s.action}
-                {s.friction && <span className={`block text-xs ${shown?.n === s.n ? "text-rose-200" : "text-rose-700"}`}>⚠ {s.friction}</span>}
+                {s.friction && <span className={`block text-xs ${shown?.n === s.n ? "text-sky-200" : "text-indigo-700"}`}>⚠ {s.friction}</span>}
                 {s.model === "Sonnet" && (
                   <span className={`block text-xs ${shown?.n === s.n ? "text-indigo-200" : "text-indigo-600"}`}>
                     smarter model stepped in

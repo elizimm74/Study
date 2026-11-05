@@ -64,22 +64,24 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
       };
       return (
         <div className="space-y-4">
-          <p className="text-lg font-medium">
-            <span className="mr-2 inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-rose-500" />
-            Live: the explorer is trying your product
+          <p className="meta flex items-center gap-2 text-slate-500">
+            <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-rose-500" />
+            live · {seconds}s
           </p>
+          <p className="display text-4xl sm:text-5xl">The explorer is trying your product</p>
           <JourneyView runId={id} journey={journey} live />
         </div>
       );
     }
     return (
-      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <p className="text-lg font-medium">{data.stage}…</p>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+      <div className="mx-auto max-w-xl space-y-5 py-16 text-center">
+        <p className="meta text-slate-400">✱ working · {seconds}s</p>
+        <p className="display text-5xl sm:text-6xl">{data.stage}</p>
+        <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
           <div className="h-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
         </div>
         <p className="text-sm text-slate-500">
-          {data.progress.done} of {data.progress.total} personas reviewed · {seconds}s
+          {data.progress.done} of {data.progress.total} customers reviewed
         </p>
         {data.stage.startsWith("Personas") && data.progress.done === 0 && (
           <p className="text-xs text-slate-400">
