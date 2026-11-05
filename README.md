@@ -14,13 +14,11 @@ npm install
 npx playwright install chromium   # one-time: downloads the invisible browser (~150 MB)
 ```
 
-Create a file called `.env.local` in the project folder containing your key:
-
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
+Create a file called `.env.local` in the project folder. Copy everything from `.env.example`, then fill in your Anthropic key and **your email** in `ADMIN_EMAILS`, so you never hit the free-test limit while testing.
 
 `.env.local` is listed in `.gitignore`, so it is never uploaded to GitHub.
+
+Without the two `NEXT_PUBLIC_SUPABASE_...` lines, accounts are switched off and the app works without sign-in.
 
 Start the site:
 
@@ -28,12 +26,21 @@ Start the site:
 npm run dev
 ```
 
-Open http://localhost:3000. To test without a real product, use one of the fake demo sites:
+Open http://localhost:3000 for the landing page. **Start free** creates an account, then the testing tool is at http://localhost:3000/app. To test without a real product, use one of the fake demo sites:
 - `http://localhost:3000/demo/index.html`: a meal-planning app with normal links
 - `http://localhost:3000/demo/tricky.html`: a cookie banner, a "Plans" button, and a waitlist pop-up
 - `http://localhost:3000/demo/loginwall.html`: "Get started" leads to a log-in page first
 - `http://localhost:3000/demo/app.html`: a fake app for **Try the product**. Task: "Search for a birthday template and open it". It also has traps: a Buy button, an outside link, and an email box.
 - `http://localhost:3000/demo/app-login.html`: test-account mode. Email `tester@example.com`, password `S3cret-Pass!` (fake, for testing only)
+
+## Accounts (Supabase)
+
+- **Sign up / sign in:** email + password, or "Continue with Google". The pages are `/signup` and `/signin`.
+- **My tests:** `/tests` lists every test you've run. Tests are saved in the Supabase project **"crawler"** (table `tests`).
+- **Privacy:** Row Level Security in the database means each person can only see their own tests.
+- **Free plan:** 1 test per account (`FREE_TESTS_PER_ACCOUNT`). Emails in `ADMIN_EMAILS` have no limit.
+- **Email confirmation:** new accounts get a "confirm your email" link. Supabase's built-in email sender only allows a few emails per hour. For quick testing, you can turn off **Confirm email** in Supabase: Authentication → Sign In / Providers → Email.
+- **Google sign-in** needs a one-time setup: create an OAuth client in Google Cloud Console, then paste its ID and secret into Supabase under Authentication → Sign In / Providers → Google. Until then, the button shows a friendly "not set up yet" message.
 
 ## Accuracy benches
 
@@ -84,6 +91,12 @@ The **cost of each run** is printed in the terminal where `npm run dev` is runni
 | `src/lib/crawl.ts` | Step 1: invisible browser closes cookie pop-ups, scrolls, lets Haiku pick what to click, then clicks through landing → pricing → signup/waitlist (links, buttons or pop-ups) |
 | `src/lib/suggest.ts` | One Haiku call: product profile + suggested audience |
 | `src/lib/personas.ts` | Step 2: generate varied personas in code (free) |
+| `src/app/page.tsx` | Landing page (hero, how it works, example, pricing, FAQ) |
+| `src/app/app/page.tsx` | The testing tool (was the home page) |
+| `src/app/signin`, `signup`, `auth/*`, `tests` | Sign in / sign up, email and Google return path, sign out, My tests |
+| `src/middleware.ts` | Keeps people signed in, and sends signed-out visitors to /signin |
+| `src/lib/supabase/*` | Connections to Supabase (browser, server, as-a-user) + settings |
+| `src/lib/db.ts` | Saves each test to the user's account |
 | `src/lib/pageHelpers.ts` | Helpers injected into every page so we can see inside web components |
 | `scripts/*-bench.cjs` | Accuracy benches (`npm run bench`) |
 | `src/lib/explore.ts` | Milestone 3: the explorer agent that actually uses the product, plus all its safety rules |

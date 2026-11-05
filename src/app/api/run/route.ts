@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { loadJson } from "@/lib/storage";
 import { startRun } from "@/lib/pipeline";
 import { requireApiKey } from "@/lib/ai";
+import { supabaseServer } from "@/lib/supabase/server";
+import { AUTH_ENABLED, FREE_TESTS, isAdmin } from "@/lib/supabase/config";
+import type { Owner } from "@/lib/db";
 import type { Audience, Crawl, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -61,9 +64,42 @@ export async function POST(req: Request) {
     };
   }
 
+  // Accounts on: who is this, and do they have a free test left?
+  let owner: Owner | undefined;
+  if (AUTH_ENABLED) {
+    const supabase = await supabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!user || !session) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
+
+    if (!isAdmin(user.email)) {
+      // Count this user's tests (Row Level Security: only their own rows are visible).
+      const { count, error } = await supabase.from("tests").select("id", { count: "exact", head: true });
+      if (error) return NextResponse.json({ error: `Couldn't check your tests: ${error.message}` }, { status: 500 });
+      if ((count ?? 0) >= FREE_TESTS) {
+        return NextResponse.json(
+          {
+            error: `You've used your ${FREE_TESTS === 1 ? "free test" : `${FREE_TESTS} free tests`}. Paid plans are coming soon.`,
+            limitReached: true,
+          },
+          { status: 402 },
+        );
+      }
+    }
+    owner = { userId: user.id, accessToken: session.access_token };
+  }
+
   // Only `explore` (without the account details) goes into the saved run.
-  const runId = startRun(crawl, profile, audience, PERSONA_COUNT, explore, credentials);
-  return NextResponse.json({ runId });
+  try {
+    const runId = await startRun(crawl, profile, audience, PERSONA_COUNT, explore, credentials, owner);
+    return NextResponse.json({ runId });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+  }
 }
 
 function cleanUrl(input?: string) {

@@ -9,6 +9,7 @@ import { exploreProduct } from "./explore";
 import { checkReputation } from "./reputation";
 import { logRunCost } from "./cost";
 import { loadJson, newId, saveJson } from "./storage";
+import { saveTestFinished, saveTestStarted, type Owner } from "./db";
 import type {
   Audience,
   CallCost,
@@ -24,6 +25,7 @@ import type {
 
 export type Run = {
   id: string;
+  userId?: string; // who ran it (when accounts are on)
   crawlId: string;
   url: string;
   createdAt: string;
@@ -56,17 +58,19 @@ export async function getRun(id: string): Promise<Run | null> {
 
 // Starts a run and returns its id right away; the work continues in the
 // background while the browser checks progress every second.
-export function startRun(
+export async function startRun(
   crawl: Crawl,
   profile: ProductProfile,
   audience: Audience,
   count: number,
   explore?: ExploreSettings,
   credentials: Credentials | null = null, // passed along in memory only
-): string {
+  owner?: Owner, // the signed-in user (accounts on); results are saved to their account
+): Promise<string> {
   const seed = Math.floor(Math.random() * 1e9);
   const run: Run = {
     id: newId(),
+    userId: owner?.userId,
     crawlId: crawl.id,
     url: crawl.url,
     createdAt: new Date().toISOString(),
@@ -81,12 +85,14 @@ export function startRun(
     verdicts: [],
     costs: [],
   };
+  // Save the "running" row first, so it counts toward the free limit right away.
+  if (owner) await saveTestStarted(owner, run);
   liveRuns.set(run.id, run);
-  void execute(run, crawl, credentials); // "void" = start it, don't wait for it
+  void execute(run, crawl, credentials, owner); // "void" = start it, don't wait for it
   return run.id;
 }
 
-async function execute(run: Run, crawl: Crawl, credentials: Credentials | null) {
+async function execute(run: Run, crawl: Crawl, credentials: Credentials | null, owner?: Owner) {
   try {
     // 1) Optional: try the product and check reviews AT THE SAME TIME (faster).
     if (run.explore) {
@@ -142,6 +148,7 @@ async function execute(run: Run, crawl: Crawl, credentials: Credentials | null) 
     if (run.costs.length) run.totalCostUsd = logRunCost(run.id, run.costs);
   } finally {
     await saveJson("runs", run.id, run);
+    if (owner) await saveTestFinished(owner, run);
     liveRuns.delete(run.id);
   }
 }

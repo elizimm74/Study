@@ -9,6 +9,7 @@
 - Keep the Anthropic API key in `.env.local` and **NEVER commit it**.
 
 ## Working alongside ChatGPT (Codex)
+- STATUS: the founder decided NOT to use Codex for now, so Claude builds everything (design files included), keeping the Canva-based design style. The rules below apply only once Codex is switched on.
 - Claude = **product** (engine). ChatGPT/Codex = **design** (how it looks). Full rules: `docs/collaboration.md`. Codex's instructions: `AGENTS.md`.
 - Claude edits only: `src/lib/**`, `src/app/api/**`, `scripts/**`, `public/demo/**`, docs. Don't restyle or rewrite ChatGPT's files (`src/components/**`, pages, `layout.tsx`, `globals.css`); put requests in `docs/requests.md`.
 - `src/lib/types.ts` is the shared contract: only Claude changes it, and pull requests must say so. Check `docs/requests.md` for design's requests at the start of each session.
@@ -117,4 +118,13 @@ ranked fixes, quotes). Show me the actual cost of each run in the console.
 - Accuracy push toward 90% on REAL sites: added 4 practice sites for likely real-world gaps ("Contact sales" pricing with no prices, prices like "9,99 €", cookie walls inside frames, mega-menus that create links on hover). The crawler now handles all of them; bench is 16/16. Also fixed a bench-server bug (missing UTF-8 charset).
 - `npm run realcheck`: 22 real sites, measured accuracy % (verified pricing + signup), saves data/realcheck-<date>.json. Must run on the founder's Mac (the cloud blocks outside sites). Bot-protected sites are counted separately and never bypassed. NEXT: the founder runs it and sends the JSON; fix the failures until >=90%.
 - DESIGN (2026-11-05): founder rejected Canva's AI-generated options ("needs to be minimalistic Gen Z aesthetic") and chose 2 Canva templates: "White and Blue Modern Creative Brief" (huge heavy all-caps type, sky gradient with grain, 01./02. numbered lists with thin lines, tiny all-caps corner labels, (001), arrows) + "Blue Beige Minimal Business Plan" (cobalt on cream, the asterisk mark, pill tags). Built as the Crawler look: globals.css re-points Tailwind colors (slate = cream to ink, indigo = cobalt #1d47d1, sky = gradient blue), Archivo 900 for `.display` headlines, Inter for text, `.meta` labels, `.sky` grain band. Restyled: header (✱ crawler), home hero + numbered steps, report (giant score on the sky band, 01. fixes, (001) fact cards, line-style folds), progress/live screens. Keep new UI in this style.
+- MILESTONE 4 BUILT (accounts + landing page), approved by the founder ("just do everything"):
+  - Supabase project **"crawler"** (id `txoimqedwfsuxoqiguop`, us-east-1, free plan). Table `public.tests` (id, user_id, url, goal, status, score, total, cost_usd, data jsonb, timestamps) with RLS: select/insert/update only own rows; NO delete policy (so deleting can't reset the free test). The security advisor reports 0 issues.
+  - Packages installed (approved): @supabase/supabase-js, @supabase/ssr. Keys in `.env.local` (template: `.env.example`; the URL + publishable key are public by design). No service/secret key is used anywhere.
+  - `/` = new landing page; the tool moved to `/app`; `/signin`, `/signup` (email + Google), `/auth/callback`, `/auth/signout`, `/tests` (My tests). `src/middleware.ts` refreshes sessions and guards /app, /run, /tests and /api/analyze|run|screenshot.
+  - Runs save to Supabase as the user (their access token + RLS) at start ("running", which counts toward the limit) and at the end (full report). `/api/run/[id]` only returns your own runs.
+  - Free limit: FREE_TESTS_PER_ACCOUNT (default 1) counted from the user's rows; ADMIN_EMAILS bypass it.
+  - Without the Supabase env vars, accounts are OFF and everything works like before.
+  - NOT testable from the cloud (Supabase is unreachable here): live sign-up/sign-in, saving rows, Google. Tested here: the build, page routing/redirects with accounts on and off, API 401s.
+  - TODO for the founder: add the env lines; Google OAuth setup (README); maybe turn off "Confirm email" for testing. Screenshots are still saved on the local disk (move to Supabase Storage before hosting on Vercel).
 - Next up: founder tests on real sites; then Milestone 2 (re-run on the same personas, before/after, honest score range, scorecard image).
