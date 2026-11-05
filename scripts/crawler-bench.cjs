@@ -22,6 +22,7 @@ const CASES = [
   { name: "content appears after 2.5s", dir: "sites/slow", start: "/", pricing: "/pricing.html", signup: "/signup.html", heroHas: "Grow tomatoes" },
   { name: "pricing in hover menu", dir: "sites/hovermenu", start: "/", pricing: "/pricing.html", signup: "/signup.html" },
   { name: "bot-check page", dir: "sites/blocked", start: "/", blocked: true },
+  { name: "page doesn't exist (404)", dir: "sites/blocked", start: "/no-such-page.html", missing: true },
 ];
 
 function where(url) {
@@ -62,10 +63,11 @@ function check(c, crawl) {
     let problems;
     try {
       const crawl = await crawlSite(url);
-      problems = c.blocked ? ["expected the crawler to report a bot-check page, but it crawled it"] : check(c, crawl);
+      problems = c.blocked || c.missing ? [`expected the crawler to stop with an error, but it crawled the page`] : check(c, crawl);
     } catch (err) {
       const msg = String(err && err.message);
-      problems = c.blocked && /block|bot|checking your browser/i.test(msg) ? [] : [`crashed: ${msg.split("\n")[0]}`];
+      const expected = (c.blocked && /block|bot|checking your browser/i.test(msg)) || (c.missing && /not found|no page/i.test(msg));
+      problems = expected ? [] : [`crashed: ${msg.split("\n")[0]}`];
     }
     server.close();
     const ok = problems.length === 0;

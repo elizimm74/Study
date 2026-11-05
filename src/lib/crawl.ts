@@ -57,8 +57,10 @@ export async function crawlSite(url: string): Promise<Crawl> {
     const page = await context.newPage();
     const pages: CrawledPage[] = [];
 
-    // 1) Landing page
-    await visit(page, url);
+    // 1) Landing page. Stop right away if it doesn't exist, so we never pay
+    //    for 100 personas reviewing an error page.
+    const response = await visit(page, url);
+    await checkMissing(page, response?.status() ?? 200, url);
     await checkBlocked(page);
     await prepare(page);
     const hero = await capture(page, id, "hero", { tiles: 2 });
@@ -220,9 +222,28 @@ async function guessAddresses(page: Page, crawlId: string, step: Step, heroUrl: 
 // ---------- visiting and preparing a page ----------
 
 async function visit(page: Page, url: string) {
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
   await settle(page);
   await waitForContent(page);
+  return response;
+}
+
+// Thrown when the address doesn't lead to a real page (a typo, an old link...).
+export class MissingPageError extends Error {}
+
+async function checkMissing(page: Page, status: number, url: string) {
+  const title = await page.title().catch(() => "");
+  const text = await page.evaluate(() => document.body?.innerText ?? "").catch(() => "");
+  const looksMissing =
+    status === 404 ||
+    status === 410 ||
+    (text.length < 600 && /\b404\b|page (could not be|can't be|cannot be|was not) found|page not found|this page (doesn't|does not) exist/i.test(title + " " + text));
+  if (looksMissing) {
+    throw new MissingPageError(`There's no page at ${url} (it says "not found"). Check the address for typos.`);
+  }
+  if (status >= 500) {
+    throw new MissingPageError(`${url} is showing a server error (${status}). The site may be down; try again later.`);
+  }
 }
 
 // Give JavaScript-heavy sites a moment to finish loading (max 5s).
