@@ -12,7 +12,7 @@ const { crawlSite } = require(path.join(__dirname, "..", ".bench-build", "lib", 
 // site folder (served as the website's root) + start page + correct answers
 const CASES = [
   { name: "basic links", dir: ".", start: "/index.html", pricing: "/pricing.html", signup: "/signup.html" },
-  { name: "cookie banner + button + pop-up", dir: ".", start: "/tricky.html", pricing: "/pricing.html", signup: "popup" },
+  { name: "cookie banner + button + pop-up", dir: ".", start: "/tricky.html", pricing: "/tricky-pricing.html", signup: "popup" },
   { name: "log-in page first", dir: "sites/loginwall", start: "/", pricing: null, signup: "/create-account.html" },
   { name: "single-page app (#routes)", dir: "sites/spa", start: "/", pricing: "#/plans", signup: "#/start" },
   { name: "pricing only in footer", dir: "sites/footer", start: "/", pricing: "/billing.html", signup: "/access.html" },
