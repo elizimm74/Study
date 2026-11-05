@@ -19,7 +19,7 @@ function serve(dir) {
         res.writeHead(404, { "Content-Type": "text/html" });
         return res.end("<title>404 Not Found</title><h1>Page not found</h1>");
       }
-      res.writeHead(200, { "Content-Type": "text/html" }).end(fs.readFileSync(file));
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(fs.readFileSync(file));
     });
     server.listen(0, "127.0.0.1", () => resolve(server));
   });

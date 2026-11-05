@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Brightly – website builder</title><style>body{font-family:system-ui;padding:24px}#panel a{display:block}</style></head><body>
+<header><nav><button id="prod">Product ▾</button> <button id="res">Resources ▾</button></nav><div id="panel"></div></header>
+<h1>Build a website in an afternoon.</h1><p><button onclick="location.href='signup.html'">Get started</button></p>
+<script>
+const panel=document.getElementById('panel');
+document.getElementById('prod').addEventListener('mouseenter',()=>{panel.innerHTML='<a href="features.html">Features</a><a href="plans.html">Plans &amp; pricing</a>'});
+document.getElementById('res').addEventListener('mouseenter',()=>{panel.innerHTML='<a href="blog.html">Blog</a>'});
+</script></body></html>

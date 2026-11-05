@@ -54,6 +54,14 @@ This runs the crawler and the explorer on practice sites in `public/demo/sites/`
 
 Without an API key it tests the backup logic and all the safety rules. With your key in `.env.local`, it also tests the AI choosing what to click. **Run it after every crawler change.** If the score drops, the change broke something.
 
+## Real-site accuracy check
+
+```bash
+npm run realcheck
+```
+
+This crawls 22 popular real websites (Notion, Canva, Figma, Duolingo...) and prints a **measured accuracy %** for finding a verified pricing page and signup page. It needs the open internet, so run it on your own computer. Personas don't run, so it costs almost nothing. The details are saved to `data/realcheck-<date>.json`. Send that file to Claude to fix the failures.
+
 ## Try the product (Milestone 3)
 Tick **"Have an AI explorer actually use the product"** on the home page. The explorer:
 - clicks around like a first-time user, and you can watch it live

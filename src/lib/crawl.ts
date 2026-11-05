@@ -72,6 +72,13 @@ export async function crawlSite(url: string): Promise<Crawl> {
     // 2) What would a visitor click?
     const clickables = await listClickables(page);
     const choice = await chooseClicks(hero.title, hero.text, clickables, costs);
+    // Missing pricing or signup? Some menus only CREATE their links when you
+    // hover over them. Hover the top menu items and look again.
+    if (!choice.pricing.length || !choice.signup.length) {
+      const revealed = rankByWords(await revealMenuLinks(page));
+      choice.pricing = merge(choice.pricing, revealed.pricing);
+      choice.signup = merge(choice.signup, revealed.signup);
+    }
 
     // 3) + 4) Look for pricing and signup AT THE SAME TIME, in two browser tabs.
     const signupTab = await context.newPage();
@@ -138,7 +145,9 @@ async function findStep(
     }
     // Number the buttons on THIS tab, then find the candidate among them
     // (numbers from another tab or an earlier visit don't carry over).
-    const target = findSame(await listClickables(page), candidate);
+    // (Links revealed by hovering a menu may be gone after reloading, but a
+    // link can still be followed by its address.)
+    const target = findSame(await listClickables(page), candidate) ?? (candidate.href ? candidate : undefined);
     if (!target) continue;
 
     const result = await follow(page, target);
@@ -161,10 +170,18 @@ async function findStep(
 // Pricing must show prices. Signup must have a form or a "continue with Google".
 function looksRight(step: Step, p: CrawledPage) {
   if (step === "pricing") {
-    return (
+    const showsPrices =
       p.signals.pricesSeen.length > 0 ||
-      /\bfree\b[\s\S]{0,80}\b(plan|tier|forever)\b|\bper (month|user|seat|year)\b|\/\s?(mo|month|yr|year)\b|\bbilled (monthly|annually|yearly)\b/i.test(p.text)
-    );
+      /\bfree\b[\s\S]{0,80}\b(plan|tier|forever)\b|\bper (month|user|seat|year)\b|\/\s?(mo|month|yr|year)\b|\bbilled (monthly|annually|yearly)\b/i.test(p.text);
+    // Business tools often show plans but say "Contact sales" instead of a price.
+    // That's still the pricing page, as long as it isn't a blog post ABOUT pricing.
+    const top = `${p.title} ${p.text.slice(0, 300)}`;
+    const isArticle = /blog|article|news|\bpost\b/i.test(`${p.url} ${p.title}`);
+    const plansPage =
+      !isArticle &&
+      /pricing|plans|prices|preise|tarif|precios|prix/i.test(top) &&
+      /contact (sales|us)|talk to (sales|us)|custom (pricing|quote|plan)|get a quote|enterprise|\bplans?\b|\bfree\b/i.test(p.text);
+    return showsPrices || plansPage;
   }
   return p.signals.formFields > 0 || p.signals.socialLogin || (p.signals.loginOnly && Boolean(p.note));
 }
@@ -258,7 +275,8 @@ async function waitForContent(page: Page) {
   let stable = 0;
   for (let i = 0; i < 20; i++) {
     const len = await page.evaluate(() => window.__crawler?.deepText().trim().length ?? 0).catch(() => 0);
-    stable = len === last && len > 40 ? stable + 1 : 0;
+    // Stable = same length twice in a row (with real text, or after ~2s anyway).
+    stable = len === last && (len > 40 || i >= 6) ? stable + 1 : 0;
     if (stable >= 2) return;
     last = len;
     await page.waitForTimeout(300);
@@ -302,6 +320,21 @@ async function prepare(page: Page) {
       }
     })
     .catch(() => {});
+  // Cookie walls are sometimes inside a separate frame: click "Accept" there too.
+  for (const frame of page.frames()) {
+    if (frame === page.mainFrame()) continue;
+    await frame
+      .evaluate(() => {
+        const re = /^(accept|accept all|accept cookies|allow all|allow cookies|agree|i agree|got it|ok|okay|i understand|accept & close)$/i;
+        for (const el of Array.from(document.querySelectorAll("button, a, [role=button]"))) {
+          if (re.test(((el as HTMLElement).innerText || "").trim())) {
+            (el as HTMLElement).click();
+            return;
+          }
+        }
+      })
+      .catch(() => {});
+  }
   await page.waitForTimeout(300);
 
   // Scroll down in steps so "load as you scroll" content appears, then go back up.
@@ -421,7 +454,11 @@ async function measure(page: Page, text: string): Promise<CrawledPage["signals"]
     })
     .catch(() => ({ formFields: 0, asksForCard: false, socialLogin: false, loginOnly: false }));
 
-  const prices = text.match(/[$€£]\s?\d[\d,.]*(\s?\/\s?(mo|month|yr|year|user|seat|week))?/gi) ?? [];
+  // "$19", "19 €", "9,99 €", "£5", "USD 10", "10 EUR", optionally followed by "/mo" etc.
+  const prices =
+    text.match(
+      /(?:[$€£¥₹]\s?\d[\d,.]*|\b(?:USD|EUR|GBP|CAD|AUD)\s?\d[\d,.]*|\d[\d,.]*\s?(?:€|£|¥|₹|USD|EUR|GBP)(?![a-z]))(?:\s?\/\s?(?:mo|month|yr|year|user|seat|week))?/gi,
+    ) ?? [];
   return { ...found, pricesSeen: [...new Set(prices)].slice(0, 8) };
 }
 
@@ -513,7 +550,7 @@ async function chooseClicks(
 
 function merge(first: Clickable[], second: Clickable[]) {
   const out = [...first];
-  for (const c of second) if (!out.some((x) => x.id === c.id)) out.push(c);
+  for (const c of second) if (!out.some((x) => x.text === c.text && x.href === c.href)) out.push(c);
   return out;
 }
 
@@ -552,6 +589,35 @@ function rankByWords(clickables: Clickable[]): { pricing: Clickable[]; signup: C
       .map((x) => x.c);
 
   return { pricing: rank(pricingScore), signup: rank(signupScore) };
+}
+
+// Hover each top menu item (up to 8) and collect links that appear.
+async function revealMenuLinks(page: Page): Promise<Clickable[]> {
+  const found: Clickable[] = [];
+  const triggers = await page
+    .evaluate(() =>
+      window.__crawler
+        .deepAll("header button, nav button, header [aria-haspopup], nav [aria-haspopup], nav li > a, nav li > span, header li > a")
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && r.top < 250;
+        })
+        .slice(0, 8)
+        .map((el, i) => {
+          el.setAttribute("data-crawler-menu", String(i));
+          return i;
+        }),
+    )
+    .catch(() => [] as number[]);
+  for (const i of triggers) {
+    await page.hover(`[data-crawler-menu="${i}"]`, { timeout: 2_000 }).catch(() => {});
+    await page.waitForTimeout(350);
+    for (const c of await listClickables(page)) {
+      if (c.href && !found.some((x) => x.href === c.href && x.text === c.text)) found.push(c);
+    }
+  }
+  await page.mouse.move(0, 0).catch(() => {}); // close the menu again
+  return found;
 }
 
 // After reloading a page the ids change, so find the same element by its text.

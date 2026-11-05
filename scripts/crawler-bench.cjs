@@ -21,6 +21,10 @@ const CASES = [
   { name: "misleading 'Pricing' blog link", dir: "sites/wrongfirst", start: "/", pricing: "/plans.html", signup: "/join.html" },
   { name: "content appears after 2.5s", dir: "sites/slow", start: "/", pricing: "/pricing.html", signup: "/signup.html", heroHas: "Grow tomatoes" },
   { name: "pricing in hover menu", dir: "sites/hovermenu", start: "/", pricing: "/pricing.html", signup: "/signup.html" },
+  { name: "'Contact sales' pricing (no prices)", dir: "sites/contactsales", start: "/", pricing: "/pricing.html", signup: "/demo.html", noPricesOk: true },
+  { name: "prices written like '9,99 €'", dir: "sites/euro", start: "/", pricing: "/preise.html", signup: "/start.html" },
+  { name: "cookie wall inside a frame", dir: "sites/consentframe", start: "/", pricing: "/pricing.html", signup: "/signup.html", heroHas: "Notes that understand code" },
+  { name: "mega-menu builds links on hover", dir: "sites/megamenu", start: "/", pricing: "/plans.html", signup: "/signup.html" },
   { name: "bot-check page", dir: "sites/blocked", start: "/", blocked: true },
   { name: "page doesn't exist (404)", dir: "sites/blocked", start: "/no-such-page.html", missing: true },
 ];
@@ -44,7 +48,7 @@ function check(c, crawl) {
       problems.push(`${step}: expected ${want}, got nothing`);
     } else if (!where(got.url).endsWith(want)) {
       problems.push(`${step}: expected ${want}, got ${where(got.url)}`);
-    } else if (step === "pricing" && !/[$€£]\s?\d/.test(got.text)) {
+    } else if (step === "pricing" && !c.noPricesOk && !/[$€£]\s?\d|\d\s?[€£]/.test(got.text)) {
       problems.push(`pricing: right page, but no prices in the captured text`);
     }
   }
