@@ -99,7 +99,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         {message && <p className="text-sm text-slate-900">⚠ {message}</p>}
         <button
           disabled={busy}
-          className="display w-full rounded-full bg-indigo-600 px-6 py-4 text-xl text-white transition hover:bg-slate-900 disabled:opacity-50"
+          className="btn display w-full px-6 py-4 text-xl"
         >
           {busy ? "One sec…" : mode === "signup" ? "Create account ↗" : "Sign in ↗"}
         </button>

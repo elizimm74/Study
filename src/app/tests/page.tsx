@@ -21,7 +21,7 @@ export default async function MyTests() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-900 pb-3">
         <h1 className="display text-6xl">My tests</h1>
-        <Link href="/app" className="rounded-full bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-indigo-600">
+        <Link href="/app" className="btn px-6 py-3">
           New test ↗
         </Link>
       </div>

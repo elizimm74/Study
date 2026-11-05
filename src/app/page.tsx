@@ -1,8 +1,16 @@
 // The landing page. The URL box here sends you straight into the app
 // (or to sign up first, then into the app with your URL already filled in).
+// Look v3: the gray Canva deck (fog, hairline labels, hexagons) + Fastlane (dots, glowing button, badges, devices).
 import Link from "next/link";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
+
+// Honest "badge cards" (Fastlane shows awards here; we show true facts instead).
+const BADGES = [
+  { icon: "✱", top: "customers", bottom: "Built from published research" },
+  { icon: "¢", top: "cost", bottom: "About 5¢ a test" },
+  { icon: "=", top: "scores", bottom: "Counted by code, not guessed" },
+];
 
 const STEPS = [
   { n: "01", title: "Paste your URL", text: "Crawler opens your site like a first-time visitor: landing page → pricing → signup." },
@@ -40,11 +48,18 @@ export default async function Landing() {
   return (
     <div className="space-y-28">
       {/* ---------- Hero ---------- */}
-      <section className="pt-6 text-center">
-        <span className="meta inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600 shadow-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" /> now in beta · your first test is free
-        </span>
-        <h1 className="display mx-auto mt-6 max-w-4xl text-[13vw] sm:text-7xl md:text-8xl">
+      <section className="relative pt-2 text-center">
+        <Hexagons />
+        {/* The deck's thin top line with tiny labels at each end. */}
+        <div className="meta flex items-center gap-4 text-slate-500">
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 shadow-[0_0_8px_2px_rgba(52,72,245,0.6)]" /> beta · first test free
+          </span>
+          <span className="rule" />
+          <span className="hidden sm:inline">made for indie hackers</span>
+        </div>
+
+        <h1 className="display mx-auto mt-12 max-w-5xl text-[12.5vw] text-slate-800 sm:text-6xl md:text-[4.6rem]">
           Find out why they <span className="glow-text">won&apos;t buy.</span>
           <br />
           Before launch.
@@ -64,23 +79,35 @@ export default async function Landing() {
             className="min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-slate-400"
             required
           />
-          <button className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600">
-            Test it free →
-          </button>
+          <button className="btn px-5 py-2.5 text-sm">Test it free →</button>
         </form>
-        <p className="meta mt-3 text-slate-400">no card · ~60 seconds · built for indie hackers</p>
+        <p className="meta mt-3 text-slate-500">no card · ~60 seconds</p>
+
+        <div className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-2">
+          {BADGES.map((b) => (
+            <div key={b.top} className="card flex items-center gap-3 rounded-2xl px-4 py-2.5 text-left">
+              <span className="display w-5 text-center text-xl text-indigo-600">{b.icon}</span>
+              <span>
+                <span className="meta block text-slate-400">{b.top}</span>
+                <span className="text-sm font-semibold text-slate-800">{b.bottom}</span>
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
-      {/* ---------- Product preview (what a run looks like) ---------- */}
-      <section className="panel overflow-hidden rounded-3xl p-2">
-        <div className="flex items-center gap-1.5 px-3 py-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-          <span className="meta ml-3 text-white/40">crawler · run #a1b2c3 · shipfast.studio</span>
-        </div>
-        <div className="grid gap-2 md:grid-cols-[1.1fr_1fr]">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 font-mono text-[13px] leading-7 text-white/70">
+      {/* ---------- Product preview: a laptop window (the run) + a phone (the report) ---------- */}
+      <section className="relative md:pb-14">
+        {/* the blue glow behind the devices */}
+        <div className="absolute inset-x-10 top-10 -z-10 h-3/4 rounded-full bg-indigo-500/40 blur-[90px]" />
+        <div className="panel overflow-hidden rounded-3xl p-2 md:mr-44">
+          <div className="flex items-center gap-1.5 px-3 py-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+            <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+            <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+            <span className="meta ml-3 truncate text-white/40">crawler · run #a1b2c3 · shipfast.studio</span>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 font-mono text-[13px] leading-7 text-white/70 md:pr-40">
             <p>
               <span className="text-sky-400">→</span> opened landing page <span className="text-white/30">1.2s</span>
             </p>
@@ -91,7 +118,7 @@ export default async function Landing() {
               <span className="text-sky-400">→</span> waitlist opens in a pop-up (2 fields)
             </p>
             <p>
-              <span className="text-sky-400">→</span> 100 customers reviewing… <span className="text-white">████████████</span> 100%
+              <span className="text-sky-400">→</span> 100 customers reviewing… <span className="text-white">████████</span> 100%
             </p>
             <p className="text-white">
               <span className="text-indigo-400">✱</span> P017, 16, student: <span className="text-white/60">&quot;ok but what does it actually build?&quot;</span>
@@ -103,27 +130,36 @@ export default async function Landing() {
               <span className="text-emerald-400">✓</span> report ready · <span className="text-white">4.7¢</span>
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <p className="meta text-white/40">{"//"} score</p>
-            <p className="display mt-2 text-white">
-              <span className="text-7xl">9</span>
-              <span className="text-3xl text-white/40">/100</span>
+        </div>
+
+        {/* Phone mockup showing the report */}
+        <div className="relative mx-auto -mt-6 w-64 rounded-[2.4rem] border border-white/70 bg-slate-800 p-2 shadow-[0_40px_80px_-20px_rgba(52,72,245,0.65)] md:absolute md:-top-10 md:right-0 md:mt-0">
+          <div className="rounded-[2rem] bg-slate-50 px-4 pb-5 pt-3">
+            <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-slate-300" />
+            <p className="meta text-slate-400">{"//"} score</p>
+            <p className="display mt-1 text-slate-800">
+              <span className="text-6xl">9</span>
+              <span className="text-2xl text-slate-400">/100</span>
             </p>
-            <p className="mt-1 text-sm text-white/70">would join the waitlist</p>
-            <div className="mt-4 flex h-2 gap-0.5 overflow-hidden rounded-full">
-              <div className="w-[9%] rounded-full bg-indigo-500" />
+            <p className="mt-1 text-sm text-slate-600">would join the waitlist</p>
+            <div className="mt-3 flex h-2 gap-0.5 overflow-hidden rounded-full">
+              <div className="w-[9%] rounded-full bg-indigo-600" />
               <div className="w-[27%] rounded-full bg-sky-300" />
-              <div className="flex-1 rounded-full bg-white/15" />
+              <div className="flex-1 rounded-full bg-slate-200" />
             </div>
-            <p className="meta mt-6 text-white/40">{"//"} fix first</p>
-            <p className="mt-2 text-white">Let people try it before the waitlist</p>
-            <span className="meta mt-2 inline-block rounded-full bg-indigo-500/20 px-2.5 py-1 text-indigo-300">+9 of 27 maybes</span>
+            <p className="meta mt-5 text-slate-400">{"//"} fix first</p>
+            <p className="mt-1 font-semibold leading-snug text-slate-800">Let people try it before the waitlist</p>
+            <span className="meta mt-2 inline-block rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-700">+9 of 27 maybes</span>
+            <p className="mt-4 rounded-xl bg-white p-3 text-sm text-slate-600">
+              &quot;ok but what does it actually build?&quot;
+              <span className="meta mt-1 block text-slate-400">P017 · 16 · phone</span>
+            </p>
           </div>
         </div>
       </section>
 
       {/* ---------- How it works ---------- */}
-      <Section id="how" label="// how it works" title="Three steps. One minute.">
+      <Section id="how" n="01" label="how it works" title="Three steps. One minute.">
         <div className="grid gap-3 sm:grid-cols-3">
           {STEPS.map((s) => (
             <div key={s.n} className="card p-6">
@@ -136,7 +172,7 @@ export default async function Landing() {
       </Section>
 
       {/* ---------- Bento: what's inside ---------- */}
-      <Section label="// what's inside" title="Not a vibe check. A test.">
+      <Section n="02" label="what's inside" title="Not a vibe check. A test.">
         <div className="grid gap-3 md:grid-cols-3">
           <div className="panel rounded-[1.25rem] p-6 md:col-span-2">
             <p className="meta text-white/40">research-backed customers</p>
@@ -159,22 +195,22 @@ export default async function Landing() {
       </Section>
 
       {/* ---------- Pricing ---------- */}
-      <Section id="pricing" label="// pricing" title="Start free. Pay when you launch.">
+      <Section id="pricing" n="03" label="pricing" title="Start free. Pay when you launch.">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((p) => (
             <div key={p.name} className={`flex flex-col rounded-[1.25rem] p-6 ${p.highlight ? "panel" : "card"}`}>
-              <p className={`meta ${p.highlight ? "text-white/50" : "text-slate-400"}`}>{p.name}</p>
+              <p className={`meta ${p.highlight ? "text-white/50" : "text-slate-500"}`}>{p.name}</p>
               <p className="display mt-4 text-5xl">
                 {p.price}
                 <span className={`ml-1 text-base font-medium tracking-normal ${p.highlight ? "text-white/50" : "text-slate-400"}`}>{p.per}</span>
               </p>
               <p className={`mt-2 flex-1 text-sm ${p.highlight ? "text-white/70" : "text-slate-600"}`}>{p.detail}</p>
               {p.live ? (
-                <Link href={signedIn ? "/app" : "/signup"} className="mt-6 rounded-full bg-slate-900 py-2.5 text-center text-sm font-semibold text-white hover:bg-indigo-600">
+                <Link href={signedIn ? "/app" : "/signup"} className="btn mt-6 py-2.5 text-center text-sm">
                   {p.cta} →
                 </Link>
               ) : (
-                <span className={`mt-6 rounded-full py-2.5 text-center text-sm font-medium ${p.highlight ? "bg-white/10 text-white/60" : "bg-slate-100 text-slate-400"}`}>
+                <span className={`mt-6 rounded-full py-2.5 text-center text-sm font-medium ${p.highlight ? "bg-white/10 text-white/60" : "bg-slate-200/70 text-slate-500"}`}>
                   {p.cta}
                 </span>
               )}
@@ -184,8 +220,8 @@ export default async function Landing() {
       </Section>
 
       {/* ---------- FAQ ---------- */}
-      <Section label="// faq" title="Questions.">
-        <div className="card divide-y divide-slate-200 px-6">
+      <Section n="04" label="faq" title="Questions.">
+        <div className="card divide-y divide-slate-300/60 px-6">
           {FAQ.map((f) => (
             <details key={f.q} className="group py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between py-4 font-semibold">
@@ -202,12 +238,12 @@ export default async function Landing() {
       <section className="panel rounded-3xl px-6 py-16 text-center">
         <p className="display text-5xl sm:text-6xl">Launch with receipts.</p>
         <p className="mx-auto mt-4 max-w-md text-white/60">Know what 100 customers think before you post on X.</p>
-        <Link href={signedIn ? "/app" : "/signup"} className="mt-8 inline-block rounded-full bg-white px-7 py-3 font-semibold text-slate-900 hover:bg-indigo-100">
+        <Link href={signedIn ? "/app" : "/signup"} className="btn mt-8 inline-block px-7 py-3">
           Run your free test →
         </Link>
       </section>
 
-      <footer className="meta flex justify-between border-t border-slate-200 pt-6 text-slate-400">
+      <footer className="meta flex justify-between border-t border-slate-300 pt-6 text-slate-500">
         <span>✱ crawler</span>
         <span>© {new Date().getFullYear()}</span>
       </footer>
@@ -215,12 +251,19 @@ export default async function Landing() {
   );
 }
 
-function Section({ id, label, title, children }: { id?: string; label: string; title: string; children: React.ReactNode }) {
+// A section with the deck-style header: "// label ———— (01)", then a big headline.
+function Section({ id, n, label, title, children }: { id?: string; n: string; label: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24 space-y-8">
       <div>
-        <p className="meta text-indigo-600">{label}</p>
-        <h2 className="display mt-3 text-4xl sm:text-5xl">{title}</h2>
+        <div className="meta flex items-center gap-4 text-slate-500">
+          <span className="text-indigo-600">
+            {"//"} {label}
+          </span>
+          <span className="rule" />
+          <span>({n})</span>
+        </div>
+        <h2 className="display mt-6 text-4xl text-slate-800 sm:text-6xl">{title}</h2>
       </div>
       {children}
     </section>
@@ -233,5 +276,23 @@ function Bento({ title, text }: { title: string; text: string }) {
       <p className="text-lg font-semibold tracking-tight">{title}</p>
       <p className="mt-2 text-slate-600">{text}</p>
     </div>
+  );
+}
+
+// Faint hexagon outlines in the corner, like the gray deck. Pure decoration.
+function Hexagons() {
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute -left-28 top-44 -z-10 hidden h-80 w-80 text-slate-400/50 md:block"
+      viewBox="0 0 200 200"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+    >
+      <path d="M100 10 178 55v90L100 190 22 145V55z" />
+      <path d="M100 40 152 70v60l-52 30-52-30V70z" />
+      <path d="M100 40v60m0 0 52 30M100 100l-52 30" />
+    </svg>
   );
 }

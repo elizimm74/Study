@@ -154,7 +154,7 @@ function Wizard() {
                 required
                 autoFocus
               />
-              <button className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600">
+              <button className="btn px-5 py-2.5 text-sm">
                 Analyze →
               </button>
             </form>
@@ -273,7 +273,7 @@ function Wizard() {
             <button
               onClick={launch}
               disabled={busy !== null}
-              className="display flex-1 rounded-full bg-indigo-600 px-6 py-4 text-xl text-white shadow-[0_12px_40px_-12px_rgba(52,72,245,0.8)] transition hover:bg-slate-900 disabled:opacity-50 sm:flex-none sm:px-10"
+              className="btn display flex-1 px-6 py-4 text-xl sm:flex-none sm:px-10"
             >
               {busy === "starting" ? "Launching…" : "Run 100 customers ✱"}
             </button>
@@ -323,7 +323,7 @@ function Nav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => 
       <button onClick={onBack} className="rounded-full px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900">
         ← Back
       </button>
-      <button onClick={onNext} className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-600">
+      <button onClick={onNext} className="btn px-6 py-3 text-sm">
         {nextLabel}
       </button>
     </div>
