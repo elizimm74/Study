@@ -4,6 +4,7 @@ import Link from "next/link";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ProductPreview from "@/components/landing/ProductPreview";
+import AnalysisFlow from "@/components/landing/AnalysisFlow";
 import UrlForm from "@/components/landing/UrlForm";
 import { EXAMPLE_SITE } from "@/components/landing/example";
 
@@ -61,6 +62,9 @@ export default async function Landing() {
         </div>
         <ProductPreview />
       </section>
+
+      {/* ---------- 2b. Customers flow into the site, with checks ---------- */}
+      <AnalysisFlow />
 
       {/* ---------- 3. How it works ---------- */}
       <section id="how" className="grid scroll-mt-24 gap-8 lg:grid-cols-[1fr_2fr] lg:gap-16">
