@@ -23,12 +23,12 @@ export default function ExplorePanel(props: Props) {
   const set = <K extends keyof ExploreSettings>(k: K, v: ExploreSettings[K]) => onChange({ ...s, [k]: v });
 
   return (
-    <div className="space-y-5">
-      <label className="flex items-start gap-3">
-        <input type="checkbox" checked={s.enabled} onChange={(e) => set("enabled", e.target.checked)} className="mt-1" />
+    <div className="space-y-6">
+      <label className="flex cursor-pointer items-start gap-4">
+        <input type="checkbox" checked={s.enabled} onChange={(e) => set("enabled", e.target.checked)} className="mt-1 h-5 w-5 shrink-0" />
         <span>
           <span className="font-medium">Have an AI explorer actually use the product</span>
-          <span className="block text-sm text-slate-500">
+          <span className="mt-1 block text-sm text-muted">
             It clicks around like a first-time user, then the personas react to what it saw. About 2–5¢ and 1–2 minutes.
           </span>
         </span>
@@ -37,7 +37,7 @@ export default function ExplorePanel(props: Props) {
       {s.enabled && (
         <>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">What should it try?</span>
+            <span className="field-label">What should it try?</span>
             <input
               value={s.task}
               onChange={(e) => set("task", e.target.value)}
@@ -47,28 +47,29 @@ export default function ExplorePanel(props: Props) {
           </label>
 
           <div>
-            <span className="mb-1.5 block text-sm font-medium">How is it allowed in?</span>
+            <span className="field-label">How is it allowed in?</span>
             <div className="grid gap-2 sm:grid-cols-3">
               {ACCESS.map((a) => (
                 <button
                   key={a.value}
                   type="button"
                   onClick={() => set("access", a.value)}
-                  className={`rounded-lg border p-3 text-left text-sm ${
-                    s.access === a.value ? "border-indigo-600 bg-indigo-50" : "border-slate-300 bg-white"
+                  aria-pressed={s.access === a.value}
+                  className={`rounded-lg border p-4 text-left text-sm transition-colors duration-150 ${
+                    s.access === a.value ? "border-fg bg-subtle" : "border-line hover:border-line-strong"
                   }`}
                 >
                   <span className="block font-medium">{a.title}</span>
-                  <span className="text-slate-500">{a.detail}</span>
+                  <span className="mt-1 block text-muted">{a.detail}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">
+            <span className="field-label">
               {s.access === "preview" ? "Preview link" : "Where to start"}{" "}
-              <span className="font-normal text-slate-400">(e.g. the app page instead of the homepage)</span>
+              <span className="field-hint">(e.g. the app page instead of the homepage)</span>
             </span>
             <input value={s.startUrl} onChange={(e) => set("startUrl", e.target.value)} className={inputCls} />
           </label>
@@ -90,21 +91,21 @@ export default function ExplorePanel(props: Props) {
                 autoComplete="new-password"
                 className={inputCls}
               />
-              <p className="text-xs text-slate-500 sm:col-span-2">
+              <p className="text-sm text-muted sm:col-span-2">
                 Use a throwaway test account, never your real one. It&apos;s encrypted and erased as soon as the test starts.
               </p>
             </div>
           )}
 
           {s.access !== "public" && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={props.ownsProduct} onChange={(e) => props.onOwnsProduct(e.target.checked)} />
+            <label className="flex min-h-11 cursor-pointer items-center gap-4 text-sm">
+              <input type="checkbox" className="h-5 w-5 shrink-0" checked={props.ownsProduct} onChange={(e) => props.onOwnsProduct(e.target.checked)} />
               This is my own product (or I have permission to test it).
             </label>
           )}
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={s.reputation} onChange={(e) => set("reputation", e.target.checked)} />
+          <label className="flex min-h-11 cursor-pointer items-center gap-4 text-sm">
+            <input type="checkbox" className="h-5 w-5 shrink-0" checked={s.reputation} onChange={(e) => set("reputation", e.target.checked)} />
             Also look up what real people say online (Reddit, app stores, reviews). About 5–10¢ more.
           </label>
         </>
@@ -113,4 +114,4 @@ export default function ExplorePanel(props: Props) {
   );
 }
 
-const inputCls = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";
+const inputCls = "field";

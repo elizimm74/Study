@@ -25,12 +25,12 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
     onChange({ ...audience, business: { ...audience.business, [key]: value } });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Presets */}
       <div className="flex flex-wrap gap-2">
         {suggested && (
           <button type="button" onClick={() => onChange(suggested)} className={presetBtn}>
-            ✨ AI suggestion
+            AI suggestion
           </button>
         )}
         {Object.entries(PRESETS).map(([name, preset]) => (
@@ -50,16 +50,16 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
         />
       </Field>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
         <Field label="Age range">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Num value={audience.ageMin} onChange={(v) => set("ageMin", v)} />
-            <span>to</span>
+            <span className="text-sm text-muted">to</span>
             <Num value={audience.ageMax} onChange={(v) => set("ageMax", v)} />
             <select
               value={audience.ageSkew}
               onChange={(e) => set("ageSkew", e.target.value as Audience["ageSkew"])}
-              className={inputCls}
+              className={`${inputCls} w-auto`}
             >
               <option value="even">evenly spread</option>
               <option value="younger">skew younger</option>
@@ -106,9 +106,9 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
       </Field>
 
       {audience.mode === "business" && (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 space-y-6">
-          <p className="text-sm font-medium text-indigo-900">Business buyers</p>
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-8 rounded-xl border border-line bg-subtle p-6">
+          <p className="font-medium">Business buyers</p>
+          <div className="grid gap-8 md:grid-cols-2">
             <Field label="Roles" hint="comma separated">
               <ListInput value={audience.business.roles} onChange={(v) => setBiz("roles", v)} />
             </Field>
@@ -124,6 +124,7 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
               value={audience.business.decisionSelfPct}
               onChange={(e) => setBiz("decisionSelfPct", Number(e.target.value))}
               className="w-full"
+              aria-label="Share who can buy on their own"
             />
           </Field>
           <Field label="Company size">
@@ -141,9 +142,8 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
 
 // ---------- small building blocks ----------
 
-const inputCls = "rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";
-const presetBtn =
-  "rounded-full border border-slate-300 bg-white px-3 py-1 text-sm hover:border-slate-500";
+const inputCls = "field";
+const presetBtn = "chip";
 
 function toggle<T>(list: T[], item: T): T[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -152,8 +152,8 @@ function toggle<T>(list: T[], item: T): T[] {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-1.5 text-sm font-medium">
-        {label} {hint && <span className="font-normal text-slate-400">({hint})</span>}
+      <div className="field-label">
+        {label} {hint && <span className="field-hint">({hint})</span>}
       </div>
       {children}
     </div>
@@ -164,12 +164,11 @@ function Chips<T extends string>({
   options,
   selected,
   onToggle,
-  single,
 }: {
   options: readonly T[];
   selected: T[];
   onToggle: (v: T) => void;
-  single?: boolean;
+  single?: boolean; // only one can be picked (the parent handles that; selected = filled chip)
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -180,11 +179,10 @@ function Chips<T extends string>({
             key={o}
             type="button"
             onClick={() => onToggle(o)}
-            className={`rounded-full px-3 py-1 text-sm border ${
-              on ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-300 text-slate-600"
-            }`}
+            aria-pressed={on}
+            className="chip"
           >
-            {single ? o : `${on ? "✓ " : ""}${o}`}
+            {o}
           </button>
         );
       })}
@@ -198,7 +196,7 @@ function Num({ value, onChange }: { value: number; onChange: (v: number) => void
       type="number"
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      className={`${inputCls} w-16`}
+      className={`${inputCls} w-20 px-2 text-center`}
     />
   );
 }
@@ -208,7 +206,7 @@ function Split<T extends Record<string, number>>({ values, onChange }: { values:
   return (
     <div className="flex flex-wrap items-center gap-3">
       {Object.entries(values).map(([key, val]) => (
-        <label key={key} className="flex items-center gap-1 text-sm text-slate-600">
+        <label key={key} className="flex items-center gap-2 text-sm text-muted">
           {key}
           <Num value={val} onChange={(v) => onChange({ ...values, [key]: v })} />
         </label>

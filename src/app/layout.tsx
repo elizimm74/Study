@@ -1,74 +1,112 @@
-// The frame around every page: <html>, <body>, the floating top bar.
+// The frame around every page: <html>, <body>, the top bar and the footer.
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { APP_NAME } from "@/lib/config";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
+import ThemeToggle, { THEME_SCRIPT } from "@/components/ThemeToggle";
 
 // Build every page fresh for each visitor, so the header always shows
 // whether THIS person is signed in.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `${APP_NAME}: test your startup on 100 AI customers`,
-  description: "Paste your site. 100 AI customers try it and tell you why they'd leave, before your launch does.",
+  title: `${APP_NAME.toLowerCase()}: see why visitors won't buy`,
+  description: "Paste your URL. AI customers try your site and tell you who'd buy, who wouldn't, and what to fix.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await currentUser();
 
   return (
-    <html lang="en">
-      <body className="min-h-screen">
-        {/* Floating pill header */}
-        <header className="sticky top-3 z-50 px-3">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-slate-200 bg-white/80 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(28,30,34,0.2)] backdrop-blur-xl">
-            <Link href="/" className="display flex items-center gap-1.5 text-xl lowercase">
-              <span className="text-indigo-600">✱</span>
-              {APP_NAME}
-            </Link>
-            <nav className="flex items-center gap-1 text-sm font-medium">
+    // suppressHydrationWarning: the theme script may add data-theme before React loads.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      {/* flex column: the footer stays at the bottom even on short pages */}
+      <body className="flex min-h-screen flex-col">
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-bg focus:p-4">
+          Skip to content
+        </a>
+        <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
+          <div className="page flex h-16 items-center justify-between gap-4">
+            <Logo />
+            <nav className="flex items-center gap-1 text-sm" aria-label="Main">
               {user ? (
                 <>
                   <NavLink href="/tests">My tests</NavLink>
-                  <form action="/auth/signout" method="post">
-                    <button className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900">Sign out</button>
+                  <form action="/auth/signout" method="post" className="hidden sm:block">
+                    <button className="btn btn-text text-sm">Sign out</button>
                   </form>
-                  <Link href="/app" className="btn ml-1 px-4 py-1.5">
+                  <ThemeToggle />
+                  <Link href="/app" className="btn btn-secondary ml-1 text-sm">
                     New test
                   </Link>
                 </>
               ) : AUTH_ENABLED ? (
                 <>
-                  <NavLink href="/#how" className="hidden sm:inline-block">
+                  <NavLink href="/#how" className="hidden md:inline-flex">
                     How it works
                   </NavLink>
-                  <NavLink href="/#pricing" className="hidden sm:inline-block">
+                  <NavLink href="/#pricing" className="hidden md:inline-flex">
                     Pricing
                   </NavLink>
                   <NavLink href="/signin">Sign in</NavLink>
-                  <Link href="/signup" className="btn ml-1 px-4 py-1.5">
+                  <ThemeToggle />
+                  <Link href="/signup" className="btn btn-secondary ml-1 text-sm">
                     Start free
                   </Link>
                 </>
               ) : (
-                <Link href="/app" className="btn px-4 py-1.5">
-                  Open app
-                </Link>
+                <>
+                  <NavLink href="/#how" className="hidden md:inline-flex">
+                    How it works
+                  </NavLink>
+                  <NavLink href="/#pricing" className="hidden md:inline-flex">
+                    Pricing
+                  </NavLink>
+                  <ThemeToggle />
+                  <Link href="/app" className="btn btn-secondary ml-1 text-sm">
+                    Open app
+                  </Link>
+                </>
               )}
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-4 pb-16 pt-10">{children}</main>
+
+        <main id="main" className="page flex-1 pb-24 pt-12 sm:pt-16">
+          {children}
+        </main>
+
+        <footer className="border-t border-line">
+          <div className="page flex h-16 items-center justify-between gap-4 text-sm text-faint">
+            <Logo small />
+            <span>© {new Date().getFullYear()}</span>
+          </div>
+        </footer>
       </body>
     </html>
   );
 }
 
+// "✱ crawler": the asterisk mark in the accent, the name lowercase.
+function Logo({ small }: { small?: boolean }) {
+  return (
+    <Link href="/" className={`inline-flex min-h-11 items-center gap-2 font-medium tracking-tight text-fg ${small ? "text-sm" : "text-[17px]"}`}>
+      <span className="text-accent" aria-hidden>
+        ✱
+      </span>
+      {APP_NAME.toLowerCase()}
+    </Link>
+  );
+}
+
 function NavLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
   return (
-    <Link href={href} className={`rounded-full px-3 py-1.5 text-slate-600 hover:bg-white/70 hover:text-slate-900 ${className}`}>
+    <Link href={href} className={`btn btn-text text-sm ${className}`}>
       {children}
     </Link>
   );

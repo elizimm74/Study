@@ -18,7 +18,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
   if (!AUTH_ENABLED) {
     return (
-      <p className="rounded-2xl bg-white p-5 text-sm text-slate-600">
+      <p className="card p-6 text-sm text-muted">
         Accounts aren&apos;t switched on yet. Add the Supabase keys to <code>.env.local</code> (see the README), then
         restart <code>npm run dev</code>.
       </p>
@@ -55,9 +55,9 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
   if (checkEmail) {
     return (
-      <div className="rounded-2xl bg-white p-6 text-center">
-        <p className="display text-3xl">Check your email</p>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="card p-6">
+        <p className="t-h3">Check your email</p>
+        <p className="mt-1 text-sm text-muted">
           We sent a link to <b>{email}</b>. Click it to finish signing up.
         </p>
       </div>
@@ -69,23 +69,30 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       <button
         onClick={google}
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold hover:border-slate-900"
+        className="btn btn-ghost w-full"
       >
-        <span className="text-lg">G</span> Continue with Google
+        <GoogleMark /> Continue with Google
       </button>
-      <div className="meta flex items-center gap-3 text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" /> or <span className="h-px flex-1 bg-slate-200" />
+      <div className="t-label flex items-center gap-4">
+        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
       </div>
-      <form onSubmit={submit} className="space-y-3">
+      <form onSubmit={submit} className="space-y-4">
+        <label htmlFor="auth-email" className="sr-only">
+          Email
+        </label>
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          id="auth-email"
           placeholder="you@email.com"
           autoComplete="email"
-          className="w-full rounded-full border border-slate-300 bg-white px-5 py-3 outline-none focus:border-slate-900"
+          className="field"
         />
+        <label htmlFor="auth-password" className="sr-only">
+          Password
+        </label>
         <input
           type="password"
           required
@@ -93,35 +100,49 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={mode === "signup" ? "Make a password (6+ characters)" : "Password"}
+          id="auth-password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          className="w-full rounded-full border border-slate-300 bg-white px-5 py-3 outline-none focus:border-slate-900"
+          className="field"
         />
-        {message && <p className="text-sm text-slate-900">⚠ {message}</p>}
-        <button
-          disabled={busy}
-          className="btn display w-full px-6 py-4 text-xl"
-        >
-          {busy ? "One sec…" : mode === "signup" ? "Create account ↗" : "Sign in ↗"}
+        {message && (
+          <p role="alert" className="rounded-lg border border-line-strong bg-subtle p-4 text-sm">
+            {message}
+          </p>
+        )}
+        <button disabled={busy} className="btn btn-primary w-full">
+          {busy ? "One sec…" : mode === "signup" ? "Create account" : "Sign in"}
         </button>
       </form>
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-sm text-muted">
         {mode === "signup" ? (
           <>
             Already have an account?{" "}
-            <Link href={`/signin?next=${encodeURIComponent(next)}`} className="font-semibold text-slate-900 underline">
+            <Link href={`/signin?next=${encodeURIComponent(next)}`} className="font-medium text-fg underline underline-offset-2">
               Sign in
             </Link>
           </>
         ) : (
           <>
             New here?{" "}
-            <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-slate-900 underline">
+            <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-medium text-fg underline underline-offset-2">
               Create a free account
             </Link>
           </>
         )}
       </p>
     </div>
+  );
+}
+
+// Google's "G" in one color (follows the text color).
+function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.6 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.96S8.78 6.26 12 6.26c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.7 14.55 2.75 12 2.75 6.9 2.75 2.75 6.9 2.75 12S6.9 21.25 12 21.25c6.92 0 9.25-4.86 9.25-7.34 0-.5-.05-.88-.12-1.26z"
+      />
+    </svg>
   );
 }
 

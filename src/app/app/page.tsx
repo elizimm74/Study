@@ -20,12 +20,13 @@ type CrawlInfo = {
 };
 
 const STEPS = ["Site", "Review", "Audience", "Launch"] as const;
-const PRESET_EMOJI: Record<string, string> = {
-  "High school teens": "🎒",
-  "Gen Z students": "🎓",
-  "Solo SaaS founders": "🧑‍💻",
-  "Busy moms": "🍼",
-  "Small business owners": "🏪",
+// One plain line under each preset (no emoji icons).
+const PRESET_HINT: Record<string, string> = {
+  "High school teens": "Phones, short attention, rarely a card",
+  "Gen Z students": "Price-sensitive, social-first",
+  "Solo SaaS founders": "Skeptical, compare everything",
+  "Busy moms": "Short on time, want it to just work",
+  "Small business owners": "Care about ROI and support",
 };
 
 export default function AppPage() {
@@ -126,7 +127,7 @@ function Wizard() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-12">
       <Stepper step={step} canGoTo={(i) => i === 0 || Boolean(crawl)} onGo={setStep} />
 
       {/* ---------- 1. Site ---------- */}
@@ -134,29 +135,34 @@ function Wizard() {
         (busy === "analyzing" ? (
           <Reading url={url} />
         ) : (
-          <section className="space-y-6 pt-4 text-center">
-            <p className="meta text-indigo-600">{"//"} step 1 of 4</p>
-            <h1 className="display text-5xl sm:text-6xl">What are we testing?</h1>
-            <p className="text-slate-600">Paste your landing page. We&apos;ll open it like a first-time visitor.</p>
+          <section className="space-y-8">
+            <Heading n={1} title="What are we testing?" sub="Paste your landing page. We'll open it like a first-time visitor." />
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 void analyze();
               }}
-              className="card mx-auto flex max-w-xl items-center gap-2 rounded-full p-1.5 pl-5"
+              className="flex max-w-xl flex-col gap-2 sm:flex-row"
             >
-              <span className="meta text-slate-400">https://</span>
-              <input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="yourstartup.com"
-                className="min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-slate-400"
-                required
-                autoFocus
-              />
-              <button className="btn px-5 py-2.5 text-sm">
-                Analyze →
-              </button>
+              <label htmlFor="site-url" className="sr-only">
+                Your website
+              </label>
+              <div className="relative flex-1">
+                <span className="t-label pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
+                  https://
+                </span>
+                <input
+                  id="site-url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="yourstartup.com"
+                  className="field h-12 pl-20"
+                  inputMode="url"
+                  required
+                  autoFocus
+                />
+              </div>
+              <button className="btn btn-primary h-12 px-6">Analyze</button>
             </form>
             <ErrorNote error={error} />
           </section>
@@ -164,44 +170,45 @@ function Wizard() {
 
       {/* ---------- 2. Review ---------- */}
       {step === 1 && crawl && profile && (
-        <section className="space-y-6">
+        <section className="space-y-8">
           <Heading n={2} title="Here's what we found" sub="Every AI customer reads this. Fix anything that's off." />
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {(["hero", "pricing", "signup"] as const).map((s) => {
               const p = crawl.pages.find((x) => x.step === s);
               return (
-                <div key={s} className="card overflow-hidden p-1.5">
+                <figure key={s} className="card overflow-hidden">
                   {p?.screenshots[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.screenshots[0]} alt={`${s} page`} className="aspect-[16/10] w-full rounded-xl object-cover object-top" />
+                    <img src={p.screenshots[0]} alt={`${s} page`} className="aspect-[16/10] w-full border-b border-line object-cover object-top" />
                   ) : (
-                    <div className="flex aspect-[16/10] items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400">not found</div>
+                    <div className="flex aspect-[16/10] items-center justify-center border-b border-line bg-subtle text-xs text-faint">not found</div>
                   )}
-                  <p className="meta px-1.5 pb-1 pt-2 text-slate-500">
-                    {p ? "✓" : "✗"} {s === "hero" ? "landing" : s}
-                  </p>
-                </div>
+                  <figcaption className="flex items-center justify-between gap-2 p-2 sm:px-4">
+                    <span className="truncate text-sm">{s === "hero" ? "Landing" : s === "pricing" ? "Pricing" : "Signup"}</span>
+                    <span className={`pill hidden sm:inline-flex ${p ? "" : "pill-no"}`}>{p ? "found" : "missing"}</span>
+                  </figcaption>
+                </figure>
               );
             })}
           </div>
-          <div className="card p-5">
+          <div className="card p-6">
             <ProfileEditor profile={profile} onChange={setProfile} />
           </div>
           <ErrorNote error={error} />
-          <Nav onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Looks right →" />
+          <Nav onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Looks right" />
         </section>
       )}
 
       {/* ---------- 3. Audience ---------- */}
       {step === 2 && (
-        <section className="space-y-6">
+        <section className="space-y-8">
           <Heading n={3} title="Who should review it?" sub="Pick a crowd. You can fine-tune every detail below." />
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2">
             {suggested && (
               <PresetCard
-                emoji="✱"
                 name="AI suggestion"
-                hint="based on your site"
+                hint="Based on what your site says"
+                tag="auto"
                 active={presetName === "AI suggestion"}
                 onClick={() => {
                   setAudience(suggested);
@@ -212,9 +219,9 @@ function Wizard() {
             {Object.entries(PRESETS).map(([name, preset]) => (
               <PresetCard
                 key={name}
-                emoji={PRESET_EMOJI[name] ?? "•"}
                 name={name}
-                hint={`ages ${preset.ageMin}–${preset.ageMax}`}
+                hint={PRESET_HINT[name] ?? ""}
+                tag={`${preset.ageMin}–${preset.ageMax}`}
                 active={presetName === name}
                 onClick={() => {
                   setAudience(preset);
@@ -223,12 +230,15 @@ function Wizard() {
               />
             ))}
           </div>
-          <details className="card group p-5">
-            <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
-              Fine-tune the audience
-              <span className="meta text-slate-400 group-open:hidden">age, budget, mindset, device… +</span>
+          <details className="card group">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-6 py-4">
+              <span className="font-medium">Fine-tune the audience</span>
+              <span className="flex items-center gap-2 text-sm text-faint">
+                <span className="hidden sm:inline">age, budget, mindset, device</span>
+                <Chevron />
+              </span>
             </summary>
-            <div className="mt-5">
+            <div className="border-t border-line p-6">
               <AudiencePicker
                 audience={audience}
                 onChange={(a) => {
@@ -239,23 +249,20 @@ function Wizard() {
               />
             </div>
           </details>
-          <Nav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Next →" />
+          <Nav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Next" />
         </section>
       )}
 
       {/* ---------- 4. Launch ---------- */}
       {step === 3 && crawl && profile && (
-        <section className="space-y-6">
-          <Heading n={4} title="Ready to launch" sub="Add an AI explorer if you want it to actually use your product first." />
-          <div className="panel rounded-3xl p-6">
-            <p className="meta text-white/40">{"//"} your test</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <Summary label="site" value={crawl.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} />
-              <Summary label="audience" value={`100 · ${presetName.toLowerCase()}`} />
-              <Summary label="goal" value={`would ${profile.goal}`} />
-            </div>
-          </div>
-          <div className="card p-5">
+        <section className="space-y-8">
+          <Heading n={4} title="Ready to launch" sub="Optional: let an AI explorer actually use your product first." />
+          <dl className="card grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <Summary label="Site" value={crawl.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} />
+            <Summary label="Audience" value={`100 · ${presetName}`} />
+            <Summary label="Goal" value={`Would ${profile.goal}`} />
+          </dl>
+          <div className="card p-6">
             <ExplorePanel
               settings={explore}
               onChange={setExplore}
@@ -266,16 +273,12 @@ function Wizard() {
             />
           </div>
           <ErrorNote error={error} />
-          <div className="flex items-center justify-between gap-3">
-            <button onClick={() => setStep(2)} className="rounded-full px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900">
-              ← Back
+          <div className="flex items-center justify-between gap-4 border-t border-line pt-6">
+            <button onClick={() => setStep(2)} className="btn btn-text">
+              Back
             </button>
-            <button
-              onClick={launch}
-              disabled={busy !== null}
-              className="btn display flex-1 px-6 py-4 text-xl sm:flex-none sm:px-10"
-            >
-              {busy === "starting" ? "Launching…" : "Run 100 customers ✱"}
+            <button onClick={launch} disabled={busy !== null} className="btn btn-primary h-12 px-8">
+              {busy === "starting" ? "Starting…" : "Run 100 customers"}
             </button>
           </div>
         </section>
@@ -288,79 +291,109 @@ function Wizard() {
 
 function Stepper({ step, canGoTo, onGo }: { step: number; canGoTo: (i: number) => boolean; onGo: (i: number) => void }) {
   return (
-    <div className="flex items-center gap-2">
+    <nav aria-label="Steps" className="grid grid-cols-4 gap-2">
       {STEPS.map((label, i) => (
         <button
           key={label}
           type="button"
           disabled={!canGoTo(i)}
           onClick={() => onGo(i)}
-          className="group flex flex-1 flex-col gap-2 text-left disabled:cursor-default"
+          aria-current={i === step ? "step" : undefined}
+          className="flex min-h-11 flex-col justify-end gap-2 text-left disabled:cursor-default"
         >
-          <span className={`h-1 rounded-full transition-colors ${i <= step ? "bg-indigo-600" : "bg-slate-200"}`} />
-          <span className={`meta ${i === step ? "text-slate-900" : "text-slate-400"}`}>
-            0{i + 1} {label.toLowerCase()}
+          <span className={`h-0.5 rounded-full transition-colors duration-200 ${i <= step ? "bg-fg" : "bg-line"}`} />
+          <span className={`text-xs sm:text-sm ${i === step ? "font-medium text-fg" : "text-faint"}`}>
+            <span className="hidden sm:inline">{i + 1}. </span>
+            {label}
           </span>
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
 
 function Heading({ n, title, sub }: { n: number; title: string; sub: string }) {
   return (
     <div>
-      <p className="meta text-indigo-600">{"//"} step {n} of 4</p>
-      <h1 className="display mt-2 text-4xl sm:text-5xl">{title}</h1>
-      <p className="mt-2 text-slate-600">{sub}</p>
+      <p className="t-label">step {n} of 4</p>
+      <h1 className="t-h1 mt-4">{title}</h1>
+      <p className="t-lead mt-4">{sub}</p>
     </div>
   );
 }
 
 function Nav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => void; nextLabel: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <button onClick={onBack} className="rounded-full px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900">
-        ← Back
+    <div className="flex items-center justify-between gap-4 border-t border-line pt-6">
+      <button onClick={onBack} className="btn btn-text">
+        Back
       </button>
-      <button onClick={onNext} className="btn px-6 py-3 text-sm">
+      <button onClick={onNext} className="btn btn-secondary px-6">
         {nextLabel}
       </button>
     </div>
   );
 }
 
-function PresetCard({ emoji, name, hint, active, onClick }: { emoji: string; name: string; hint: string; active: boolean; onClick: () => void }) {
+function PresetCard({ name, hint, tag, active, onClick }: { name: string; hint: string; tag: string; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[1.25rem] border p-4 text-left transition ${
-        active ? "border-indigo-600 bg-indigo-50 shadow-[0_0_0_3px_rgba(52,72,245,0.15)]" : "border-slate-200 bg-white hover:border-slate-400"
+      aria-pressed={active}
+      className={`flex min-h-20 items-start justify-between gap-4 rounded-xl border p-4 text-left transition-colors duration-150 ${
+        active ? "border-fg bg-subtle" : "border-line bg-bg hover:border-line-strong"
       }`}
     >
-      <span className="text-2xl">{emoji}</span>
-      <span className="mt-3 block font-semibold">{name}</span>
-      <span className="meta text-slate-500">{hint}</span>
+      <span>
+        <span className="block font-medium">{name}</span>
+        <span className="mt-1 block text-sm text-muted">{hint}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-2">
+        <span className="t-label">{tag}</span>
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded-full border ${active ? "border-fg bg-fg text-bg" : "border-line-strong"}`}
+          aria-hidden
+        >
+          {active && (
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+      </span>
     </button>
   );
 }
 
 function Summary({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0">
-      <p className="meta text-white/40">{label}</p>
-      <p className="mt-1 truncate font-semibold">{value}</p>
+    <div className="min-w-0 p-6">
+      <dt className="t-label">{label}</dt>
+      <dd className="mt-2 truncate font-medium">{value}</dd>
     </div>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transition-transform duration-200 group-open:rotate-180" aria-hidden>
+      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
 function ErrorNote({ error }: { error: string | null }) {
   if (!error) return null;
-  return <p className="card mx-auto max-w-xl border-indigo-200 bg-indigo-50 p-4 text-left text-sm text-slate-800">⚠ {error}</p>;
+  return (
+    <p role="alert" className="max-w-xl rounded-lg border border-line-strong bg-subtle p-4 text-sm">
+      <span className="font-medium">Heads up: </span>
+      {error}
+    </p>
+  );
 }
 
-// While the worker reads the site: a dark "live" panel with a timer.
+// While the worker reads the site: a live checklist with a timer.
 function Reading({ url }: { url: string }) {
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
@@ -368,29 +401,31 @@ function Reading({ url }: { url: string }) {
     return () => clearInterval(t);
   }, []);
   const lines = [
-    "opening your site like a first-time visitor",
-    "looking for pricing and signup (links, buttons, pop-ups)",
-    "taking screenshots on a laptop and a phone",
-    "figuring out what you sell and who it's for",
+    "Opening your site like a first-time visitor",
+    "Looking for pricing and signup",
+    "Taking screenshots on a laptop and a phone",
+    "Working out what you sell and who it's for",
   ];
+  // Light up one line every ~5 seconds, so it feels alive (the real work runs in parallel).
+  const active = Math.min(lines.length - 1, Math.floor(seconds / 5));
   return (
-    <section className="panel space-y-6 rounded-3xl p-8">
-      <div className="meta flex justify-between text-white/40">
-        <span>
-          <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-indigo-400" />
-          reading {url.replace(/^https?:\/\//, "")}
-        </span>
-        <span>{seconds}s</span>
+    <section className="space-y-8" aria-live="polite">
+      <div>
+        <p className="t-label flex items-center gap-2">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+          reading {url.replace(/^https?:\/\//, "")} · {seconds}s
+        </p>
+        <h1 className="t-h1 mt-4">Reading your site…</h1>
+        <p className="t-lead mt-4">Usually 15–30 seconds.</p>
       </div>
-      <p className="display text-4xl sm:text-5xl">Reading your site…</p>
-      <ul className="space-y-2 font-mono text-[13px] text-white/60">
-        {lines.map((l) => (
-          <li key={l}>
-            <span className="text-sky-400">→</span> {l}
+      <ol className="card divide-y divide-line">
+        {lines.map((l, i) => (
+          <li key={l} className={`flex items-center gap-4 px-6 py-4 text-sm ${i <= active ? "text-fg" : "text-faint"}`}>
+            <span className={`h-2 w-2 shrink-0 rounded-full ${i < active ? "bg-fg" : i === active ? "animate-pulse bg-accent" : "bg-line-strong"}`} aria-hidden />
+            {l}
           </li>
         ))}
-      </ul>
-      <p className="meta text-white/30">usually 15–30 seconds</p>
+      </ol>
     </section>
   );
 }

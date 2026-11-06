@@ -1,199 +1,357 @@
-/* Fonts: Archivo (heavy headlines + logo, kept), Inter (text), JetBrains Mono (labels). */
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+/* Fonts: Geist (text + headlines) and Geist Mono (small labels). */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /*
-  CRAWLER LOOK v3.1: "white + glow" (v3 "fog" with a WHITE page; founder: "turn back to white").
-  Mix of the founder's gray Canva deck (Life OS) and usefastlane.ai:
-   - foggy cool-gray page with soft blurred blue/pink light (the deck)
-   - a halftone dot texture at the top + ONE glowing blue button per screen (Fastlane)
-   - charcoal sentence-case headlines in heavy Archivo (.display)
-   - frosted-glass cards (.card), dark charcoal product panels (.panel / .sky)
-   - thin hairline rules with tiny mono labels (.meta, .rule), like the deck's top line
-  Tailwind color names are RE-POINTED below, so every page follows:
-  "slate" = cool fog grays → charcoal, "indigo" = electric blue, "sky" = soft blue.
+  CRAWLER DESIGN SYSTEM (v5, "Linear / Vercel" minimal).
+  Rules, so the look stays consistent:
+   - Black and white + ONE accent (hot orange). The accent is only for primary
+     buttons and key numbers. Small accent TEXT uses --accent-ink (darker, readable).
+   - Colors are CSS variables with a light and a dark value. Tailwind names map
+     to them: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
+     border-line, border-line-strong, bg-accent, text-accent-fg, text-accent-ink.
+   - Spacing: only the scale 4, 8, 16, 24, 32, 48, 64, 96, 128px
+     (Tailwind 1, 2, 4, 6, 8, 12, 16, 24, 32).
+   - Radius: 8px (rounded-lg) for controls, 12px (rounded-xl) for cards, full for pills/avatars.
+   - Type: Geist, ONLY two weights site-wide: 400 (text) and 500 (headlines, buttons, labels). Scale: .t-*
+   - Motion: 150–250ms, nothing loud.
 */
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Archivo", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-slate-50: #f4f6f9;
-  --color-slate-100: #eceff4;
-  --color-slate-200: #dde2e9;
-  --color-slate-300: #c6cdd7;
-  --color-slate-400: #8e96a3;
-  --color-slate-500: #6a717d;
-  --color-slate-600: #4c525c;
-  --color-slate-700: #383c44;
-  --color-slate-800: #27292e;
-  --color-slate-900: #1c1e22;
-
-  --color-indigo-50: #eef1ff;
-  --color-indigo-100: #e0e6ff;
-  --color-indigo-200: #c2ccff;
-  --color-indigo-300: #96a6ff;
-  --color-indigo-400: #6f83ff;
-  --color-indigo-500: #4d63ff;
-  --color-indigo-600: #3448f5;
-  --color-indigo-700: #2635d1;
-  --color-indigo-800: #1f2ba6;
-  --color-indigo-900: #1a2480;
-
-  --color-sky-200: #cfe0ff;
-  --color-sky-300: #a9c6ff;
-  --color-sky-400: #7ea6ff;
-  --color-sky-500: #5b8bff;
+/* ---------- Color tokens ---------- */
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --bg-raised: #f4f4f5;
+  --fg: #0a0a0a;
+  --fg-muted: #52525b; /* 7.7:1 on white */
+  --fg-faint: #71717a; /* 4.8:1 on white (AA) */
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --accent: #ff5a1f;
+  --accent-hover: #ff7340;
+  --accent-fg: #0a0a0a; /* text on the accent: 6.7:1 */
+  --accent-ink: #c2410c; /* accent-colored small text: 5.2:1 on white */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.14);
+  color-scheme: light;
+}
+/* Dark values. Used when the computer is in dark mode (unless the visitor picked light),
+   or when the visitor picked dark with the header toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0a0a;
+    --bg-subtle: #111113;
+    --bg-raised: #1a1a1d;
+    --fg: #fafafa;
+    --fg-muted: #a1a1aa;
+    --fg-faint: #8b8b94;
+    --line: #232326;
+    --line-strong: #303035;
+    --accent-ink: #ff8a5c;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --bg-subtle: #111113;
+  --bg-raised: #1a1a1d;
+  --fg: #fafafa;
+  --fg-muted: #a1a1aa;
+  --fg-faint: #8b8b94;
+  --line: #232326;
+  --line-strong: #303035;
+  --accent-ink: #ff8a5c;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
+  color-scheme: dark;
 }
 
+/* Tailwind names → the variables above ("inline" = utilities read the variable directly,
+   so switching light/dark needs no rebuild). */
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-subtle: var(--bg-subtle);
+  --color-raised: var(--bg-raised);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-faint: var(--fg-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-ink: var(--accent-ink);
+}
+
+/* ---------- Base ---------- */
 html {
-  background: #ffffff;
+  background: var(--bg);
 }
 body {
-  position: relative;
-  isolation: isolate; /* so the ::before/::after layers sit above this background but behind content */
   min-height: 100vh;
-  color: var(--color-slate-900);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  background: #ffffff;
-}
-/* The deck's soft blurred light blobs. Fixed behind everything, so they don't scroll away. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background:
-    radial-gradient(700px 380px at 50% -8%, rgba(52, 72, 245, 0.12), transparent 70%),
-    radial-gradient(460px 380px at 92% 30%, rgba(126, 166, 255, 0.14), transparent 70%);
-  filter: blur(20px);
-}
-/* Fastlane-style halftone dots across the top of the page, fading out downward. */
-body::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 640px;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(rgba(52, 72, 245, 0.16) 1.1px, transparent 1.4px) 0 0 / 9px 9px;
-  -webkit-mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
-  mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
+  text-rendering: optimizeLegibility;
 }
 ::selection {
-  background: var(--color-indigo-200);
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
 }
-
-/* Heavy headline (Archivo, the part the founder likes). Sentence case, tight, charcoal. */
-.display {
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
+/* Visible keyboard focus everywhere (mouse clicks don't show it). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
-
-/* Small monospace label: "// how it works", "(01)". */
-.meta {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+input[type="checkbox"],
+input[type="range"] {
+  accent-color: var(--accent);
 }
-
-/* Thin hairline across a row, like the line at the top of the deck. Put it on an empty <span>. */
-.rule {
-  flex: 1;
-  height: 1px;
-  background: var(--color-slate-300);
-}
-
-/* THE main button: electric blue with a glow. Use once per screen. */
-.btn {
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #4d63ff, #3448f5);
-  color: white;
-  font-weight: 600;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 10px 30px -8px rgba(52, 72, 245, 0.75),
-    0 0 0 1px rgba(38, 53, 209, 0.6);
-  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
-}
-.btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 14px 36px -8px rgba(52, 72, 245, 0.9),
-    0 0 0 1px rgba(38, 53, 209, 0.6);
-}
-.btn:disabled {
-  opacity: 0.5;
-  transform: none;
-}
-
-/* Dark charcoal product panel with a blue glow and faint dots.
-   (.sky is the old name; it now means the same dark panel.) */
-.panel,
-.sky {
-  color: white;
-  background:
-    radial-gradient(600px 300px at 85% -10%, rgba(77, 99, 255, 0.45), transparent 70%),
-    radial-gradient(500px 280px at 0% 110%, rgba(126, 166, 255, 0.18), transparent 70%),
-    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px) 0 0 / 14px 14px,
-    #1c1e22;
-  box-shadow: 0 30px 80px -30px rgba(52, 72, 245, 0.5);
-}
-
-/* White card with a thin gray border and a soft shadow. */
-.card {
-  background: #ffffff;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 1.25rem;
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 1px 2px rgba(28, 30, 34, 0.04), 0 12px 32px -16px rgba(28, 30, 34, 0.18);
-}
-
-/* Blue gradient text for one highlighted word in a headline. */
-.glow-text {
-  background: linear-gradient(90deg, #3448f5, #7ea6ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ---------- The landing page's agent swarm (src/components/CrawlerSwarm.tsx) ---------- */
-/* A short dash (6 of 100 units) slides from the agent's end of the string to the site. */
-.swarm-signal {
-  stroke-dasharray: 6 94;
-  animation: swarm-flow 3s linear infinite;
-}
-@keyframes swarm-flow {
-  from { stroke-dashoffset: 100; }
-  to { stroke-dashoffset: 0; }
-}
-/* Agents bob up and down a little, each at its own time. */
-.swarm-agent {
-  animation: swarm-bob 4s ease-in-out infinite;
-}
-@keyframes swarm-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-/* The crawler's scan line moves down the page and starts again. */
-.swarm-scan {
-  animation: swarm-scan 3.2s ease-in-out infinite;
-}
-@keyframes swarm-scan {
-  0% { transform: translateY(0); opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translateY(220px); opacity: 0; }
-}
-/* People who turned off animations in their settings get a still picture. */
 @media (prefers-reduced-motion: reduce) {
-  .swarm-signal, .swarm-agent, .swarm-scan { animation: none; }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* ---------- Type scale ---------- */
+@layer components {
+  /* Hero headline: 48 → 96px */
+  .t-display {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 0.98;
+  }
+  /* Page titles: 40 → 64px */
+  .t-h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  /* Section titles: 32 → 48px */
+  .t-h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+  /* Card titles: 18px */
+  .t-h3 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+  /* Intro paragraphs: 18px */
+  .t-lead {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--fg-muted);
+  }
+  /* Small mono label: "example result", "step 2 of 4" */
+  .t-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    color: var(--fg-faint);
+  }
+  /* Huge numbers (scores). Tabular so digits line up. */
+  .t-number {
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Layout ---------- */
+  .page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 72rem; /* 1152px */
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .page {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  /* ---------- Surfaces ---------- */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-raised {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---------- Buttons (all 44px tall: easy to tap) ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 150ms,
+      border-color 150ms,
+      color 150ms,
+      opacity 150ms;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  /* THE main action: accent. One per screen. */
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  /* Strong but not accent: black (white in dark mode). */
+  .btn-secondary {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+  /* Outline. */
+  .btn-ghost {
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--bg-subtle);
+  }
+  /* Text-only, for "Back" and nav links. */
+  .btn-text {
+    color: var(--fg-muted);
+    padding-inline: 0.75rem;
+  }
+  .btn-text:hover:not(:disabled) {
+    color: var(--fg);
+    background: var(--bg-subtle);
+  }
+
+  /* ---------- Form fields ---------- */
+  .field {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+    transition:
+      border-color 150ms,
+      box-shadow 150ms;
+  }
+  .field::placeholder {
+    color: var(--fg-faint);
+  }
+  .field:hover {
+    border-color: color-mix(in oklab, var(--fg) 30%, var(--line-strong));
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--fg);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+  }
+  .field-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .field-hint {
+    font-weight: 400;
+    color: var(--fg-faint);
+  }
+
+  /* ---------- Pills (verdicts, tags, toggles) ---------- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 1.5rem;
+    padding-inline: 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    color: var(--fg-muted);
+  }
+  .pill-buy {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-fg);
+  }
+  .pill-maybe {
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+  .pill-no {
+    background: var(--bg-raised);
+    border-color: var(--bg-raised);
+    color: var(--fg-muted);
+  }
+  /* A selectable chip (audience options). 44px tall for tapping. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    transition:
+      border-color 150ms,
+      background-color 150ms,
+      color 150ms;
+  }
+  .chip:hover {
+    color: var(--fg);
+    border-color: color-mix(in oklab, var(--fg) 30%, var(--line-strong));
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
 }

@@ -8,7 +8,12 @@ type Row = { id: string; url: string; goal: string | null; status: string; score
 
 export default async function MyTests() {
   if (!AUTH_ENABLED) {
-    return <p className="rounded-2xl bg-white p-5 text-slate-600">Accounts are switched off, so tests aren&apos;t saved to an account.</p>;
+    return (
+      <div className="mx-auto max-w-3xl">
+        <h1 className="t-h1">My tests</h1>
+        <p className="card mt-8 p-6 text-muted">Accounts are switched off, so tests aren&apos;t saved to an account.</p>
+      </div>
+    );
   }
   const supabase = await supabaseServer();
   const { data, error } = await supabase
@@ -18,35 +23,42 @@ export default async function MyTests() {
   const tests = (data ?? []) as Row[];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-900 pb-3">
-        <h1 className="display text-6xl">My tests</h1>
-        <Link href="/app" className="btn px-6 py-3">
-          New test ↗
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="t-h1">My tests</h1>
+        <Link href="/app" className="btn btn-primary">
+          New test
         </Link>
       </div>
-      {error && <p className="text-sm text-slate-900">⚠ Couldn&apos;t load your tests: {error.message}</p>}
+      {error && (
+        <p role="alert" className="rounded-lg border border-line-strong bg-subtle p-4 text-sm">
+          Couldn&apos;t load your tests: {error.message}
+        </p>
+      )}
 
       {tests.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center">
-          <p className="display text-4xl">No tests yet</p>
-          <p className="mt-2 text-slate-600">
-            Your first test is free. Paste your site and see what 100 customers think.
-          </p>
+        <div className="card p-8">
+          <p className="t-h3">No tests yet</p>
+          <p className="mt-1 text-muted">Your first test is free. Paste your site and see what 100 customers think.</p>
+          <Link href="/app" className="btn btn-secondary mt-6">
+            Run your first test
+          </Link>
         </div>
       ) : (
-        <ol>
+        <ol className="card divide-y divide-line">
           {tests.map((t, i) => (
-            <li key={t.id} className="border-b border-slate-200">
-              <Link href={`/run/${t.id}`} className="flex items-center gap-4 py-5 hover:bg-white sm:gap-6">
-                <span className="meta w-10 text-slate-400">({String(tests.length - i).padStart(3, "0")})</span>
-                <span className="display w-28 text-4xl">
-                  {t.status === "done" ? t.score : t.status === "error" ? "×" : "…"}
-                  {t.status === "done" && <span className="text-xl text-slate-400">/{t.total}</span>}
+            <li key={t.id}>
+              <Link href={`/run/${t.id}`} className="flex items-center gap-4 px-6 py-4 transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl hover:bg-subtle sm:gap-6">
+                <span className="t-label hidden w-8 sm:block">{String(tests.length - i).padStart(2, "0")}</span>
+                <span className="flex w-20 items-baseline gap-1">
+                  <span className={`t-number text-3xl ${t.status === "done" ? "text-accent" : "text-faint"}`}>
+                    {t.status === "done" ? t.score : t.status === "error" ? "×" : "…"}
+                  </span>
+                  {t.status === "done" && <span className="text-sm text-faint">/{t.total}</span>}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{t.url.replace(/^https?:\/\//, "")}</span>
-                  <span className="text-sm text-slate-500">
+                  <span className="block truncate font-medium">{t.url.replace(/^https?:\/\//, "")}</span>
+                  <span className="text-sm text-muted">
                     {t.status === "done"
                       ? `would ${t.goal ?? "buy"}`
                       : t.status === "error"
@@ -58,7 +70,7 @@ export default async function MyTests() {
                     {new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </span>
                 </span>
-                <span className="text-xl">↗</span>
+                <span className="text-faint" aria-hidden>→</span>
               </Link>
             </li>
           ))}

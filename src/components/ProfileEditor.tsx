@@ -14,10 +14,10 @@ export default function ProfileEditor({ profile, onChange }: Props) {
     onChange({ ...profile, [key]: value.split("\n").map((s) => s.trim()).filter(Boolean) });
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       <label className="block md:col-span-2">
-        <span className="mb-1 block text-sm font-medium">
-          Goal <span className="font-normal text-slate-400">(what counts as a win on this site)</span>
+        <span className="field-label">
+          Goal <span className="field-hint">(what counts as a win on this site)</span>
         </span>
         <select
           value={profile.goal}
@@ -41,12 +41,12 @@ export default function ProfileEditor({ profile, onChange }: Props) {
   );
 }
 
-const boxCls = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";
+const boxCls = "field";
 
 function TextBox({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium">{label}</span>
+      <span className="field-label">{label}</span>
       <textarea rows={2} value={value} onChange={(e) => onChange(e.target.value)} className={boxCls} />
     </label>
   );
@@ -65,8 +65,8 @@ function ListBox({ label, hint, value, onChange }: { label: string; hint: string
   }
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium">
-        {label} <span className="font-normal text-slate-400">({hint})</span>
+      <span className="field-label">
+        {label} <span className="field-hint">({hint})</span>
       </span>
       <textarea
         rows={3}

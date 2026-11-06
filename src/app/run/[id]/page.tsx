@@ -48,8 +48,13 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
     };
   }, [id]);
 
-  if (error) return <p className="text-red-700">{error}</p>;
-  if (!data) return <p className="text-slate-500">Loading…</p>;
+  if (error)
+    return (
+      <p role="alert" className="mx-auto max-w-2xl rounded-lg border border-line-strong bg-subtle p-4">
+        {error}
+      </p>
+    );
+  if (!data) return <p className="t-label mx-auto max-w-2xl">loading…</p>;
 
   if (data.status === "running") {
     const pct = Math.round((data.progress.done / Math.max(1, data.progress.total)) * 100);
@@ -66,34 +71,47 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
         seconds: 0,
       };
       return (
-        <div className="space-y-4">
-          <p className="meta flex items-center gap-2 text-slate-500">
-            <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-rose-500" />
-            live · {seconds}s
-          </p>
-          <p className="display text-4xl sm:text-5xl">The explorer is trying your product</p>
+        <div className="mx-auto max-w-4xl space-y-8">
+          <div>
+            <p className="t-label flex items-center gap-2">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+              live · {seconds}s
+            </p>
+            <h1 className="t-h1 mt-4">The explorer is trying your product</h1>
+          </div>
           <JourneyView filesPrefix={data.filesPrefix} journey={journey} live />
         </div>
       );
     }
     return (
-      <div className="mx-auto max-w-xl space-y-5 py-16 text-center">
-        <p className="meta text-slate-400">✱ working · {seconds}s</p>
-        <p className="display text-5xl sm:text-6xl">{data.stage}</p>
-        <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
-          <div className="h-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
+      <div className="mx-auto max-w-2xl space-y-8" aria-live="polite">
+        <div>
+          <p className="t-label flex items-center gap-2">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+            working · {seconds}s
+          </p>
+          <h1 className="t-h1 mt-4">{data.stage}</h1>
         </div>
-        <p className="text-sm text-slate-500">
-          {data.progress.done} of {data.progress.total} customers reviewed
-        </p>
+        <div className="card p-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <p className="flex items-baseline gap-2">
+              <span className="t-number text-5xl">{data.progress.done}</span>
+              <span className="text-faint">of {data.progress.total} customers reviewed</span>
+            </p>
+            <span className="t-label tabular-nums">{pct}%</span>
+          </div>
+          <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full rounded-full bg-accent transition-all duration-200" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
         {data.stage.startsWith("Personas") && data.progress.done === 0 && (
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-muted">
             The first 25 go alone so your site is saved for the rest (that makes the run cheaper). The other 75 then
             review at the same time.
           </p>
         )}
         {data.stage.startsWith("Writing") && (
-          <p className="text-xs text-slate-400">The smarter model is turning the results into ranked fixes. About 15–30 seconds.</p>
+          <p className="text-sm text-muted">The smarter model is turning the results into ranked fixes. About 15–30 seconds.</p>
         )}
       </div>
     );
@@ -101,9 +119,9 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
 
   if (data.status === "error") {
     return (
-      <div className="space-y-2 rounded-lg bg-red-50 p-4 text-red-900">
+      <div role="alert" className="mx-auto max-w-2xl space-y-2 rounded-xl border border-line-strong bg-subtle p-6">
         <p className="font-medium">This run failed.</p>
-        <p className="text-sm">{data.error}</p>
+        <p className="text-sm text-muted">{data.error}</p>
       </div>
     );
   }
