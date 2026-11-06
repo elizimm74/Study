@@ -3,42 +3,42 @@
 @import "tailwindcss";
 
 /*
-  CRAWLER LOOK v4: "midnight" (founder: dark gray / black with dark blue).
-   - near-black page with deep-blue light blobs + faint blue dots at the top
-   - light text, ONE electric-blue accent and ONE glowing button per screen (.btn)
-   - dark-glass cards (.card), navy product panels with a blue glow (.panel / .sky)
-   - heavy sentence-case Archivo headlines (.display), mono labels (.meta), hairlines (.rule)
-  Tailwind color names are RE-POINTED below, and the gray scale is FLIPPED for dark mode:
-  "slate-50" is now the darkest and "slate-900" the lightest, so `text-slate-900` = bright
-  text and `bg-slate-100` = a dark box, on every page without editing each one.
-  "indigo" = electric blue (50-200 are now dark blue tints, 700-900 light blue text).
+  CRAWLER LOOK v3: "fog + glow".
+  Mix of the founder's gray Canva deck (Life OS) and usefastlane.ai:
+   - foggy cool-gray page with soft blurred blue/pink light (the deck)
+   - a halftone dot texture at the top + ONE glowing blue button per screen (Fastlane)
+   - charcoal sentence-case headlines in heavy Archivo (.display)
+   - frosted-glass cards (.card), dark charcoal product panels (.panel / .sky)
+   - thin hairline rules with tiny mono labels (.meta, .rule), like the deck's top line
+  Tailwind color names are RE-POINTED below, so every page follows:
+  "slate" = cool fog grays → charcoal, "indigo" = electric blue, "sky" = soft blue.
 */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Archivo", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-slate-50: #07090f;
-  --color-slate-100: #0e1220;
-  --color-slate-200: #1a2033;
-  --color-slate-300: #2a3148;
-  --color-slate-400: #6b7590;
-  --color-slate-500: #8a93ab;
-  --color-slate-600: #aab2c6;
-  --color-slate-700: #c9cfdc;
-  --color-slate-800: #e3e7ef;
-  --color-slate-900: #f4f6fa;
+  --color-slate-50: #f4f6f9;
+  --color-slate-100: #eceff4;
+  --color-slate-200: #dde2e9;
+  --color-slate-300: #c6cdd7;
+  --color-slate-400: #8e96a3;
+  --color-slate-500: #6a717d;
+  --color-slate-600: #4c525c;
+  --color-slate-700: #383c44;
+  --color-slate-800: #27292e;
+  --color-slate-900: #1c1e22;
 
-  --color-indigo-50: #0f1636;
-  --color-indigo-100: #151f4d;
-  --color-indigo-200: #233080;
+  --color-indigo-50: #eef1ff;
+  --color-indigo-100: #e0e6ff;
+  --color-indigo-200: #c2ccff;
   --color-indigo-300: #96a6ff;
   --color-indigo-400: #6f83ff;
   --color-indigo-500: #4d63ff;
   --color-indigo-600: #3448f5;
-  --color-indigo-700: #a9b6ff;
-  --color-indigo-800: #c7d0ff;
-  --color-indigo-900: #dfe4ff;
+  --color-indigo-700: #2635d1;
+  --color-indigo-800: #1f2ba6;
+  --color-indigo-900: #1a2480;
 
   --color-sky-200: #cfe0ff;
   --color-sky-300: #a9c6ff;
@@ -47,8 +47,7 @@
 }
 
 html {
-  background: #05060a;
-  color-scheme: dark; /* dark scrollbars, dropdowns and checkboxes */
+  background: #e4e8ee;
 }
 body {
   position: relative;
@@ -57,9 +56,9 @@ body {
   color: var(--color-slate-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background: #05060a;
+  background: #e4e8ee;
 }
-/* Deep-blue light blobs. Fixed behind everything, so they don't scroll away. */
+/* The deck's soft blurred light blobs. Fixed behind everything, so they don't scroll away. */
 body::before {
   content: "";
   position: fixed;
@@ -67,13 +66,13 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(620px 420px at 50% -6%, rgba(52, 72, 245, 0.35), transparent 70%),
-    radial-gradient(520px 420px at 88% 30%, rgba(30, 50, 170, 0.28), transparent 70%),
-    radial-gradient(480px 380px at 6% 70%, rgba(40, 60, 190, 0.22), transparent 70%),
-    radial-gradient(700px 420px at 40% 115%, rgba(52, 72, 245, 0.2), transparent 70%);
-  filter: blur(10px);
+    radial-gradient(520px 420px at 82% 18%, rgba(120, 160, 230, 0.55), transparent 70%),
+    radial-gradient(420px 360px at 8% 62%, rgba(232, 190, 214, 0.35), transparent 70%),
+    radial-gradient(600px 420px at 30% 110%, rgba(126, 166, 255, 0.35), transparent 70%),
+    radial-gradient(380px 300px at 10% 0%, rgba(255, 255, 255, 0.7), transparent 70%);
+  filter: blur(20px);
 }
-/* Faint blue halftone dots across the top of the page, fading out downward. */
+/* Fastlane-style halftone dots across the top of the page, fading out downward. */
 body::after {
   content: "";
   position: absolute;
@@ -81,7 +80,7 @@ body::after {
   height: 640px;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(rgba(111, 131, 255, 0.28) 1px, transparent 1.3px) 0 0 / 9px 9px;
+  background: radial-gradient(rgba(52, 72, 245, 0.22) 1.1px, transparent 1.4px) 0 0 / 9px 9px;
   -webkit-mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
   mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
 }
@@ -137,33 +136,32 @@ body::after {
   transform: none;
 }
 
-/* Navy product panel with a blue glow and faint dots: stands out from the black page.
-   (.sky is the old name; it now means the same panel.) */
+/* Dark charcoal product panel with a blue glow and faint dots.
+   (.sky is the old name; it now means the same dark panel.) */
 .panel,
 .sky {
   color: white;
   background:
     radial-gradient(600px 300px at 85% -10%, rgba(77, 99, 255, 0.45), transparent 70%),
     radial-gradient(500px 280px at 0% 110%, rgba(126, 166, 255, 0.18), transparent 70%),
-    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.3px) 0 0 / 14px 14px,
-    linear-gradient(180deg, #0f1638, #0a0f26);
-  border: 1px solid rgba(126, 166, 255, 0.16);
-  box-shadow: 0 30px 80px -30px rgba(52, 72, 245, 0.55);
+    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px) 0 0 / 14px 14px,
+    #1c1e22;
+  box-shadow: 0 30px 80px -30px rgba(52, 72, 245, 0.5);
 }
 
-/* Dark-glass card: slightly lighter than the page, thin light edge. */
+/* Frosted-glass card: see-through white over the fog. */
 .card {
-  background: rgba(20, 26, 46, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 1.25rem;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 40px -20px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 2px rgba(28, 30, 34, 0.04), 0 12px 32px -16px rgba(28, 30, 34, 0.18);
 }
 
 /* Blue gradient text for one highlighted word in a headline. */
 .glow-text {
-  background: linear-gradient(90deg, #5b74ff, #a9c6ff);
+  background: linear-gradient(90deg, #3448f5, #7ea6ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

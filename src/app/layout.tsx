@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body className="min-h-screen">
         {/* Floating pill header */}
         <header className="sticky top-3 z-50 px-3">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-white/10 bg-slate-100/70 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-white/80 bg-white/55 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(28,30,34,0.2)] backdrop-blur-xl">
             <Link href="/" className="display flex items-center gap-1.5 text-xl lowercase">
               <span className="text-indigo-600">✱</span>
               {APP_NAME}
@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
 function NavLink({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
   return (
-    <Link href={href} className={`rounded-full px-3 py-1.5 text-slate-600 hover:bg-white/10 hover:text-slate-900 ${className}`}>
+    <Link href={href} className={`rounded-full px-3 py-1.5 text-slate-600 hover:bg-white/70 hover:text-slate-900 ${className}`}>
       {children}
     </Link>
   );

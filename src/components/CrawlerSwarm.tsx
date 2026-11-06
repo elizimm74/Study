@@ -98,11 +98,11 @@ export default function CrawlerSwarm() {
             <stop offset="100%" stopColor="#7ea6ff" />
           </radialGradient>
           <radialGradient id="agent-no" cx="35%" cy="30%">
-            <stop offset="0%" stopColor="#c9cfdc" />
-            <stop offset="100%" stopColor="#4a5370" />
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#c6cdd7" />
           </radialGradient>
           <filter id="site-shadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="18" stdDeviation="22" floodColor="#3448f5" floodOpacity="0.6" />
+            <feDropShadow dx="0" dy="18" stdDeviation="22" floodColor="#3448f5" floodOpacity="0.35" />
           </filter>
           <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#3448f5" stopOpacity="0" />
@@ -114,7 +114,7 @@ export default function CrawlerSwarm() {
         </defs>
 
         {/* 1. The strings (thin gray lines) */}
-        <g fill="none" stroke="#6f83ff" strokeOpacity="0.28" strokeWidth="1">
+        <g fill="none" stroke="#8e96a3" strokeOpacity="0.45" strokeWidth="1">
           {agents.map((a, i) => (
             <path key={i} d={stringPath(a)} />
           ))}
@@ -129,7 +129,7 @@ export default function CrawlerSwarm() {
               d={stringPath(a)}
               pathLength={100}
               className="swarm-signal"
-              stroke={a.verdict === "yes" ? "#6f83ff" : "#a9c6ff"}
+              stroke={a.verdict === "yes" ? "#3448f5" : "#7ea6ff"}
               style={{ animationDelay: `${-((i * 0.37) % 3)}s`, animationDuration: `${2.4 + (i % 5) * 0.35}s` }}
             />
           ))}
@@ -163,8 +163,8 @@ export default function CrawlerSwarm() {
         <g>
           {agents.map((a, i) => (
             <g key={i} className="swarm-agent" style={{ animationDelay: `${-((i * 0.53) % 4)}s` }}>
-              <circle cx={a.x} cy={a.y} r={a.r + 4} fill="#6f83ff" fillOpacity="0.1" />
-              <circle cx={a.x} cy={a.y} r={a.r} fill={FILL[a.verdict]} stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
+              <circle cx={a.x} cy={a.y} r={a.r + 4} fill="#ffffff" fillOpacity="0.55" />
+              <circle cx={a.x} cy={a.y} r={a.r} fill={FILL[a.verdict]} stroke="#ffffff" strokeWidth="1.5" />
             </g>
           ))}
         </g>
@@ -173,8 +173,8 @@ export default function CrawlerSwarm() {
         <g className="hidden sm:inline">
           {CHIPS.map((c) => (
             <g key={c.text}>
-              <rect x={c.x} y={c.y - 14} width={c.text.length * 6.7 + 20} height="24" rx="12" fill="#141a2e" fillOpacity="0.9" stroke="#ffffff" strokeOpacity="0.1" />
-              <text x={c.x + 10} y={c.y + 2} fontSize="11" fill="#aab2c6" fontFamily="var(--font-mono)">
+              <rect x={c.x} y={c.y - 14} width={c.text.length * 6.7 + 20} height="24" rx="12" fill="#ffffff" fillOpacity="0.85" stroke="#ffffff" />
+              <text x={c.x + 10} y={c.y + 2} fontSize="11" fill="#4c525c" fontFamily="var(--font-mono)">
                 {c.text}
               </text>
             </g>

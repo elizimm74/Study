@@ -55,7 +55,7 @@ export default function ExplorePanel(props: Props) {
                   type="button"
                   onClick={() => set("access", a.value)}
                   className={`rounded-lg border p-3 text-left text-sm ${
-                    s.access === a.value ? "border-indigo-600 bg-indigo-50" : "border-slate-300 bg-slate-100"
+                    s.access === a.value ? "border-indigo-600 bg-indigo-50" : "border-slate-300 bg-white"
                   }`}
                 >
                   <span className="block font-medium">{a.title}</span>
@@ -113,4 +113,4 @@ export default function ExplorePanel(props: Props) {
   );
 }
 
-const inputCls = "w-full rounded-md border border-slate-300 bg-slate-100 px-2 py-1.5 text-sm";
+const inputCls = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";

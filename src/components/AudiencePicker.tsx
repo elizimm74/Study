@@ -141,9 +141,9 @@ export default function AudiencePicker({ audience, onChange, suggested }: Props)
 
 // ---------- small building blocks ----------
 
-const inputCls = "rounded-md border border-slate-300 bg-slate-100 px-2 py-1.5 text-sm";
+const inputCls = "rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";
 const presetBtn =
-  "rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-sm hover:border-slate-500";
+  "rounded-full border border-slate-300 bg-white px-3 py-1 text-sm hover:border-slate-500";
 
 function toggle<T>(list: T[], item: T): T[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -181,7 +181,7 @@ function Chips<T extends string>({
             type="button"
             onClick={() => onToggle(o)}
             className={`rounded-full px-3 py-1 text-sm border ${
-              on ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-100 border-slate-300 text-slate-600"
+              on ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-300 text-slate-600"
             }`}
           >
             {single ? o : `${on ? "✓ " : ""}${o}`}

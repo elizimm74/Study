@@ -336,7 +336,7 @@ function PresetCard({ emoji, name, hint, active, onClick }: { emoji: string; nam
       type="button"
       onClick={onClick}
       className={`rounded-[1.25rem] border p-4 text-left transition ${
-        active ? "border-indigo-600 bg-indigo-50 shadow-[0_0_0_3px_rgba(52,72,245,0.15)]" : "border-slate-200 bg-slate-100 hover:border-slate-400"
+        active ? "border-indigo-600 bg-indigo-50 shadow-[0_0_0_3px_rgba(52,72,245,0.15)]" : "border-slate-200 bg-white hover:border-slate-400"
       }`}
     >
       <span className="text-2xl">{emoji}</span>

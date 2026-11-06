@@ -255,10 +255,10 @@ function AllSegments({ segments, goal }: { segments: Record<string, SegmentRow[]
   );
 }
 
-// Blue shade: 0% = faint, 50%+ = strongest.
+// Green shade: 0% = very light, 50%+ = darkest.
 function heat(rate: number): React.CSSProperties {
   const t = Math.min(1, rate / 0.5);
-  return { background: `rgba(52, 72, 245, ${0.1 + t * 0.85})`, color: t > 0.5 ? "white" : "#c7d0ff" };
+  return { background: `rgba(29, 71, 209, ${0.07 + t * 0.88})`, color: t > 0.5 ? "white" : "#132f86" };
 }
 
 function VerdictBar({ buy, maybe, no, goal }: { buy: number; maybe: number; no: number; goal: string }) {
@@ -282,12 +282,12 @@ function VerdictBar({ buy, maybe, no, goal }: { buy: number; maybe: number; no: 
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-full bg-white px-3 py-1 font-semibold text-indigo-600">{children}</span>;
+  return <span className="rounded-full bg-white px-3 py-1 font-semibold text-indigo-700">{children}</span>;
 }
 
 function Fact({ n, label, value, detail }: { n: string; label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-100 p-4">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <p className="meta flex justify-between text-slate-400">
         <span>{label}</span>
         <span>({n})</span>
@@ -344,7 +344,7 @@ function Quotes({ best, all, goal }: { best: QuoteItem[]; all: QuoteItem[]; goal
     <div>
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((q) => (
-          <figure key={q.personaId} className="rounded-2xl bg-slate-100 p-4">
+          <figure key={q.personaId} className="rounded-2xl bg-white p-4">
             <blockquote className="text-sm text-slate-800">“{q.quote}”</blockquote>
             <figcaption className="mt-1 flex justify-between text-xs text-slate-500">
               <span>{q.label}</span>
@@ -364,7 +364,7 @@ function Quotes({ best, all, goal }: { best: QuoteItem[]; all: QuoteItem[]; goal
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-full border px-3 py-1 text-xs ${filter === f ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300"}`}
+              className={`rounded-full border px-3 py-1 text-xs ${filter === f ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}
             >
               {f === "all" ? "all" : verdictLabel(f)}
             </button>

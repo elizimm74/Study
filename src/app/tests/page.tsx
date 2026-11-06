@@ -8,7 +8,7 @@ type Row = { id: string; url: string; goal: string | null; status: string; score
 
 export default async function MyTests() {
   if (!AUTH_ENABLED) {
-    return <p className="rounded-2xl bg-slate-100 p-5 text-slate-600">Accounts are switched off, so tests aren&apos;t saved to an account.</p>;
+    return <p className="rounded-2xl bg-white p-5 text-slate-600">Accounts are switched off, so tests aren&apos;t saved to an account.</p>;
   }
   const supabase = await supabaseServer();
   const { data, error } = await supabase
@@ -28,7 +28,7 @@ export default async function MyTests() {
       {error && <p className="text-sm text-slate-900">⚠ Couldn&apos;t load your tests: {error.message}</p>}
 
       {tests.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 bg-slate-100 p-10 text-center">
+        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center">
           <p className="display text-4xl">No tests yet</p>
           <p className="mt-2 text-slate-600">
             Your first test is free. Paste your site and see what 100 customers think.
@@ -38,7 +38,7 @@ export default async function MyTests() {
         <ol>
           {tests.map((t, i) => (
             <li key={t.id} className="border-b border-slate-200">
-              <Link href={`/run/${t.id}`} className="flex items-center gap-4 py-5 hover:bg-slate-100 sm:gap-6">
+              <Link href={`/run/${t.id}`} className="flex items-center gap-4 py-5 hover:bg-white sm:gap-6">
                 <span className="meta w-10 text-slate-400">({String(tests.length - i).padStart(3, "0")})</span>
                 <span className="display w-28 text-4xl">
                   {t.status === "done" ? t.score : t.status === "error" ? "×" : "…"}

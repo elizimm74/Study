@@ -10,9 +10,9 @@ const STATUS: Record<Journey["status"], { label: string; cls: string }> = {
   running: { label: "Exploring…", cls: "bg-sky-200 text-indigo-900" },
   completed: { label: "Task completed", cls: "bg-indigo-600 text-white" },
   stuck: { label: "Got stuck", cls: "bg-sky-200 text-indigo-900" },
-  blocked: { label: "Blocked (captcha)", cls: "bg-indigo-600 text-white" },
+  blocked: { label: "Blocked (captcha)", cls: "bg-slate-900 text-white" },
   "out of steps": { label: "Ran out of steps", cls: "bg-sky-200 text-indigo-900" },
-  error: { label: "Error", cls: "bg-indigo-600 text-white" },
+  error: { label: "Error", cls: "bg-slate-900 text-white" },
 };
 
 // filesPrefix: where this test's screenshots are, e.g. "{userId}/tests/{id}".
@@ -48,7 +48,7 @@ export default function JourneyView({ filesPrefix, journey, live }: { filesPrefi
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={fileUrl(filesPrefix, shown.screenshot)} alt={`Step ${shown.n}`} className="w-full" />
-              <div className="bg-slate-100 p-3 text-sm">
+              <div className="bg-white p-3 text-sm">
                 <p className="font-medium">
                   Step {shown.n}: {shown.observation}
                 </p>
@@ -68,7 +68,7 @@ export default function JourneyView({ filesPrefix, journey, live }: { filesPrefi
                 type="button"
                 onClick={() => setPicked(s.n)}
                 className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                  shown?.n === s.n ? "bg-indigo-600 text-white" : "bg-slate-100 hover:bg-slate-200"
+                  shown?.n === s.n ? "bg-slate-900 text-white" : "bg-white hover:bg-slate-50"
                 }`}
               >
                 <span className="font-medium">{s.n}.</span> {s.action}

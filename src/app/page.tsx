@@ -139,8 +139,8 @@ export default async function Landing() {
         </div>
 
         {/* Phone mockup showing the report */}
-        <div className="relative mx-auto -mt-6 w-64 rounded-[2.4rem] border border-white/15 bg-black p-2 shadow-[0_40px_80px_-20px_rgba(52,72,245,0.65)] md:absolute md:-top-10 md:right-0 md:mt-0">
-          <div className="rounded-[2rem] bg-slate-100 px-4 pb-5 pt-3">
+        <div className="relative mx-auto -mt-6 w-64 rounded-[2.4rem] border border-white/70 bg-slate-800 p-2 shadow-[0_40px_80px_-20px_rgba(52,72,245,0.65)] md:absolute md:-top-10 md:right-0 md:mt-0">
+          <div className="rounded-[2rem] bg-slate-50 px-4 pb-5 pt-3">
             <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-slate-300" />
             <p className="meta text-slate-400">{"//"} score</p>
             <p className="display mt-1 text-slate-800">
@@ -156,7 +156,7 @@ export default async function Landing() {
             <p className="meta mt-5 text-slate-400">{"//"} fix first</p>
             <p className="mt-1 font-semibold leading-snug text-slate-800">Let people try it before the waitlist</p>
             <span className="meta mt-2 inline-block rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-700">+9 of 27 maybes</span>
-            <p className="mt-4 rounded-xl bg-slate-200/60 p-3 text-sm text-slate-600">
+            <p className="mt-4 rounded-xl bg-white p-3 text-sm text-slate-600">
               &quot;ok but what does it actually build?&quot;
               <span className="meta mt-1 block text-slate-400">P017 · 16 · phone</span>
             </p>
