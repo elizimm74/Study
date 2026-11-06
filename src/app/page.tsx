@@ -4,6 +4,7 @@ import Link from "next/link";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ProductPreview from "@/components/landing/ProductPreview";
+import Hero from "@/components/landing/Hero";
 import AnalysisFlow from "@/components/landing/AnalysisFlow";
 import UrlForm from "@/components/landing/UrlForm";
 import { EXAMPLE_SITE } from "@/components/landing/example";
@@ -40,17 +41,7 @@ export default async function Landing() {
   return (
     <div className="space-y-24 sm:space-y-32">
       {/* ---------- 1. Hero ---------- */}
-      <section className="max-w-4xl">
-        <p className="t-label">for founders about to launch</p>
-        <h1 className="t-display mt-6">Find out why they won&apos;t buy.</h1>
-        <p className="t-lead mt-6 max-w-xl">
-          Paste your URL. 25 AI customers go through your site and tell you who&apos;d buy, who wouldn&apos;t, and what to fix.
-        </p>
-        <div className="mt-8">
-          <UrlForm id="hero-url" />
-          <p className="t-label mt-4">free · no card · about 2 minutes</p>
-        </div>
-      </section>
+      <Hero />
 
       {/* ---------- 2. Example result (the main visual) ---------- */}
       <section aria-labelledby="example-title" className="-mt-8 sm:-mt-16">
