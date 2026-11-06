@@ -137,7 +137,7 @@ export default function CrawlerSwarm() {
 
         {/* 3. The website in the middle */}
         <g filter="url(#site-shadow)">
-          <rect x={SITE.x} y={SITE.y} width={SITE.w} height={SITE.h} rx="18" fill="#ffffff" stroke="#ffffff" />
+          <rect x={SITE.x} y={SITE.y} width={SITE.w} height={SITE.h} rx="18" fill="#ffffff" stroke="#dde2e9" />
         </g>
         <g clipPath="url(#site-clip)">
           {/* browser top bar */}
@@ -163,7 +163,7 @@ export default function CrawlerSwarm() {
         <g>
           {agents.map((a, i) => (
             <g key={i} className="swarm-agent" style={{ animationDelay: `${-((i * 0.53) % 4)}s` }}>
-              <circle cx={a.x} cy={a.y} r={a.r + 4} fill="#ffffff" fillOpacity="0.55" />
+              <circle cx={a.x} cy={a.y} r={a.r + 4} fill="#3448f5" fillOpacity="0.06" />
               <circle cx={a.x} cy={a.y} r={a.r} fill={FILL[a.verdict]} stroke="#ffffff" strokeWidth="1.5" />
             </g>
           ))}
@@ -173,7 +173,7 @@ export default function CrawlerSwarm() {
         <g className="hidden sm:inline">
           {CHIPS.map((c) => (
             <g key={c.text}>
-              <rect x={c.x} y={c.y - 14} width={c.text.length * 6.7 + 20} height="24" rx="12" fill="#ffffff" fillOpacity="0.85" stroke="#ffffff" />
+              <rect x={c.x} y={c.y - 14} width={c.text.length * 6.7 + 20} height="24" rx="12" fill="#ffffff" stroke="#dde2e9" />
               <text x={c.x + 10} y={c.y + 2} fontSize="11" fill="#4c525c" fontFamily="var(--font-mono)">
                 {c.text}
               </text>

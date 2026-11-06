@@ -3,7 +3,7 @@
 @import "tailwindcss";
 
 /*
-  CRAWLER LOOK v3: "fog + glow".
+  CRAWLER LOOK v3.1: "white + glow" (v3 "fog" with a WHITE page; founder: "turn back to white").
   Mix of the founder's gray Canva deck (Life OS) and usefastlane.ai:
    - foggy cool-gray page with soft blurred blue/pink light (the deck)
    - a halftone dot texture at the top + ONE glowing blue button per screen (Fastlane)
@@ -47,7 +47,7 @@
 }
 
 html {
-  background: #e4e8ee;
+  background: #ffffff;
 }
 body {
   position: relative;
@@ -56,7 +56,7 @@ body {
   color: var(--color-slate-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background: #e4e8ee;
+  background: #ffffff;
 }
 /* The deck's soft blurred light blobs. Fixed behind everything, so they don't scroll away. */
 body::before {
@@ -66,10 +66,8 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(520px 420px at 82% 18%, rgba(120, 160, 230, 0.55), transparent 70%),
-    radial-gradient(420px 360px at 8% 62%, rgba(232, 190, 214, 0.35), transparent 70%),
-    radial-gradient(600px 420px at 30% 110%, rgba(126, 166, 255, 0.35), transparent 70%),
-    radial-gradient(380px 300px at 10% 0%, rgba(255, 255, 255, 0.7), transparent 70%);
+    radial-gradient(700px 380px at 50% -8%, rgba(52, 72, 245, 0.12), transparent 70%),
+    radial-gradient(460px 380px at 92% 30%, rgba(126, 166, 255, 0.14), transparent 70%);
   filter: blur(20px);
 }
 /* Fastlane-style halftone dots across the top of the page, fading out downward. */
@@ -80,7 +78,7 @@ body::after {
   height: 640px;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(rgba(52, 72, 245, 0.22) 1.1px, transparent 1.4px) 0 0 / 9px 9px;
+  background: radial-gradient(rgba(52, 72, 245, 0.16) 1.1px, transparent 1.4px) 0 0 / 9px 9px;
   -webkit-mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
   mask-image: radial-gradient(70% 100% at 50% 0%, #000 10%, transparent 75%);
 }
@@ -149,10 +147,10 @@ body::after {
   box-shadow: 0 30px 80px -30px rgba(52, 72, 245, 0.5);
 }
 
-/* Frosted-glass card: see-through white over the fog. */
+/* White card with a thin gray border and a soft shadow. */
 .card {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  border: 1px solid var(--color-slate-200);
   border-radius: 1.25rem;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
