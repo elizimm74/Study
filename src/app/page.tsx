@@ -178,18 +178,18 @@ function SharePost() {
         <div className="flex h-full flex-col">
           <div className="flex justify-between font-mono text-xs text-[#8b8b94]">
             <span>
-              <span className="text-[#ff5a1f]">✱</span> crawler
+              <span className="text-[#3448f5]">✱</span> crawler
             </span>
             <span>{EXAMPLE_SITE}</span>
           </div>
           <div className="mt-auto">
             <p className="flex items-end gap-2">
-              <span className="t-number text-6xl text-[#ff5a1f] sm:text-7xl">12</span>
+              <span className="t-number text-6xl text-[#3448f5] sm:text-7xl">12</span>
               <span className="t-number pb-1 text-2xl text-[#8b8b94]">/25</span>
               <span className="pb-1 text-sm">would buy</span>
             </p>
             <div className="mt-4 flex h-1.5 gap-1" aria-hidden>
-              <span className="w-[48%] rounded-full bg-[#ff5a1f]" />
+              <span className="w-[48%] rounded-full bg-[#3448f5]" />
               <span className="w-[24%] rounded-full bg-[#fafafa]" />
               <span className="flex-1 rounded-full bg-[#303035]" />
             </div>

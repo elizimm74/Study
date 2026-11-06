@@ -5,7 +5,7 @@
 /*
   CRAWLER DESIGN SYSTEM (v5, "Linear / Vercel" minimal).
   Rules, so the look stays consistent:
-   - Black and white + ONE accent (hot orange). The accent is only for primary
+   - Black and white + ONE accent (electric blue). The accent is only for primary
      buttons and key numbers. Small accent TEXT uses --accent-ink (darker, readable).
    - Colors are CSS variables with a light and a dark value. Tailwind names map
      to them: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
@@ -27,10 +27,10 @@
   --fg-faint: #71717a; /* 4.8:1 on white (AA) */
   --line: #e4e4e7;
   --line-strong: #d4d4d8;
-  --accent: #ff5a1f;
-  --accent-hover: #ff7340;
-  --accent-fg: #0a0a0a; /* text on the accent: 6.7:1 */
-  --accent-ink: #c2410c; /* accent-colored small text: 5.2:1 on white */
+  --accent: #3448f5;
+  --accent-hover: #4a5fff;
+  --accent-fg: #ffffff; /* text on the accent: about 6:1 */
+  --accent-ink: #3448f5; /* accent-colored small text: about 6:1 on white */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.14);
   color-scheme: light;
@@ -47,7 +47,7 @@
     --fg-faint: #8b8b94;
     --line: #232326;
     --line-strong: #303035;
-    --accent-ink: #ff8a5c;
+    --accent-ink: #8fa0ff;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
     color-scheme: dark;
@@ -62,7 +62,7 @@
   --fg-faint: #8b8b94;
   --line: #232326;
   --line-strong: #303035;
-  --accent-ink: #ff8a5c;
+  --accent-ink: #8fa0ff;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
   color-scheme: dark;
