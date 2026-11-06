@@ -5,7 +5,7 @@
 /*
   CRAWLER DESIGN SYSTEM (v5, "Linear / Vercel" minimal).
   Rules, so the look stays consistent:
-   - Black and white + ONE accent (electric blue). The accent is only for primary
+   - Cool grays + ONE accent (electric blue). Page is light gray, cards are white. The accent is only for primary
      buttons and key numbers. Small accent TEXT uses --accent-ink (darker, readable).
    - Colors are CSS variables with a light and a dark value. Tailwind names map
      to them: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
@@ -19,34 +19,38 @@
 
 /* ---------- Color tokens ---------- */
 :root {
-  --bg: #ffffff;
-  --bg-subtle: #fafafa;
-  --bg-raised: #f4f4f5;
-  --fg: #0a0a0a;
-  --fg-muted: #52525b; /* 7.7:1 on white */
-  --fg-faint: #71717a; /* 4.8:1 on white (AA) */
-  --line: #e4e4e7;
-  --line-strong: #d4d4d8;
+  /* page: a soft cool gray, so white cards stand out on it */
+  --bg: #f4f5f7;
+  --surface: #ffffff; /* cards */
+  --bg-subtle: #ebedf1;
+  --bg-raised: #e1e4ea;
+  --fg: #0c0e13;
+  --fg-muted: #4a5160; /* about 7:1 on the page */
+  --fg-faint: #646b7a; /* about 4.9:1 on the page (AA) */
+  --line: #d9dde5;
+  --line-strong: #bfc6d2;
+  /* the one accent: blue */
   --accent: #3448f5;
-  --accent-hover: #4a5fff;
+  --accent-hover: #2a3de0;
   --accent-fg: #ffffff; /* text on the accent: about 6:1 */
-  --accent-ink: #3448f5; /* accent-colored small text: about 6:1 on white */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.14);
+  --accent-ink: #2a3de0; /* blue text on the gray page: about 6:1 */
+  --shadow-sm: 0 1px 2px rgb(12 14 19 / 0.05);
+  --shadow: 0 1px 2px rgb(12 14 19 / 0.05), 0 12px 32px -16px rgb(12 14 19 / 0.18);
   color-scheme: light;
 }
 /* Dark values. Used when the computer is in dark mode (unless the visitor picked light),
    or when the visitor picked dark with the header toggle. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0a0a0a;
-    --bg-subtle: #111113;
-    --bg-raised: #1a1a1d;
-    --fg: #fafafa;
-    --fg-muted: #a1a1aa;
-    --fg-faint: #8b8b94;
-    --line: #232326;
-    --line-strong: #303035;
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --bg-subtle: #12151c;
+    --bg-raised: #1c2029;
+    --fg: #eef0f5;
+    --fg-muted: #a3aabb;
+    --fg-faint: #8a92a4;
+    --line: #262b36;
+    --line-strong: #353b49;
     --accent-ink: #8fa0ff;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
@@ -54,14 +58,15 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0a0a0a;
-  --bg-subtle: #111113;
-  --bg-raised: #1a1a1d;
-  --fg: #fafafa;
-  --fg-muted: #a1a1aa;
-  --fg-faint: #8b8b94;
-  --line: #232326;
-  --line-strong: #303035;
+  --bg: #0d0f14;
+  --surface: #161a22;
+  --bg-subtle: #12151c;
+  --bg-raised: #1c2029;
+  --fg: #eef0f5;
+  --fg-muted: #a3aabb;
+  --fg-faint: #8a92a4;
+  --line: #262b36;
+  --line-strong: #353b49;
   --accent-ink: #8fa0ff;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
@@ -75,6 +80,7 @@
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: var(--bg);
+  --color-surface: var(--surface);
   --color-subtle: var(--bg-subtle);
   --color-raised: var(--bg-raised);
   --color-fg: var(--fg);
@@ -192,13 +198,13 @@ input[type="range"] {
 
   /* ---------- Surfaces ---------- */
   .card {
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
   }
   .card-raised {
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
     box-shadow: var(--shadow);
