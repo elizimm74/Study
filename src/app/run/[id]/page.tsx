@@ -48,7 +48,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
     };
   }, [id]);
 
-  if (error) return <p className="text-red-700">{error}</p>;
+  if (error) return <p className="text-rose-300">{error}</p>;
   if (!data) return <p className="text-slate-500">Loading…</p>;
 
   if (data.status === "running") {
@@ -101,7 +101,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
 
   if (data.status === "error") {
     return (
-      <div className="space-y-2 rounded-lg bg-red-50 p-4 text-red-900">
+      <div className="space-y-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
         <p className="font-medium">This run failed.</p>
         <p className="text-sm">{data.error}</p>
       </div>

@@ -18,7 +18,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
   if (!AUTH_ENABLED) {
     return (
-      <p className="rounded-2xl bg-white p-5 text-sm text-slate-600">
+      <p className="rounded-2xl bg-slate-100 p-5 text-sm text-slate-600">
         Accounts aren&apos;t switched on yet. Add the Supabase keys to <code>.env.local</code> (see the README), then
         restart <code>npm run dev</code>.
       </p>
@@ -55,7 +55,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
   if (checkEmail) {
     return (
-      <div className="rounded-2xl bg-white p-6 text-center">
+      <div className="rounded-2xl bg-slate-100 p-6 text-center">
         <p className="display text-3xl">Check your email</p>
         <p className="mt-2 text-sm text-slate-600">
           We sent a link to <b>{email}</b>. Click it to finish signing up.
@@ -69,7 +69,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       <button
         onClick={google}
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold hover:border-slate-900"
+        className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-5 py-3 font-semibold hover:border-slate-900"
       >
         <span className="text-lg">G</span> Continue with Google
       </button>
@@ -84,7 +84,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@email.com"
           autoComplete="email"
-          className="w-full rounded-full border border-slate-300 bg-white px-5 py-3 outline-none focus:border-slate-900"
+          className="w-full rounded-full border border-slate-300 bg-slate-100 px-5 py-3 outline-none focus:border-slate-900"
         />
         <input
           type="password"
@@ -94,7 +94,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           onChange={(e) => setPassword(e.target.value)}
           placeholder={mode === "signup" ? "Make a password (6+ characters)" : "Password"}
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          className="w-full rounded-full border border-slate-300 bg-white px-5 py-3 outline-none focus:border-slate-900"
+          className="w-full rounded-full border border-slate-300 bg-slate-100 px-5 py-3 outline-none focus:border-slate-900"
         />
         {message && <p className="text-sm text-slate-900">⚠ {message}</p>}
         <button
