@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
+import CrawlerSwarm from "@/components/CrawlerSwarm";
 
 // Honest "badge cards" (Fastlane shows awards here; we show true facts instead).
 const BADGES = [
@@ -93,6 +94,11 @@ export default async function Landing() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* The swarm: AI customers tied by strings to a website */}
+        <div className="-mx-4 mt-10 sm:mx-0">
+          <CrawlerSwarm />
         </div>
       </section>
 

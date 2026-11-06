@@ -166,3 +166,36 @@ body::after {
   background-clip: text;
   color: transparent;
 }
+
+/* ---------- The landing page's agent swarm (src/components/CrawlerSwarm.tsx) ---------- */
+/* A short dash (6 of 100 units) slides from the agent's end of the string to the site. */
+.swarm-signal {
+  stroke-dasharray: 6 94;
+  animation: swarm-flow 3s linear infinite;
+}
+@keyframes swarm-flow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+/* Agents bob up and down a little, each at its own time. */
+.swarm-agent {
+  animation: swarm-bob 4s ease-in-out infinite;
+}
+@keyframes swarm-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+/* The crawler's scan line moves down the page and starts again. */
+.swarm-scan {
+  animation: swarm-scan 3.2s ease-in-out infinite;
+}
+@keyframes swarm-scan {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(220px); opacity: 0; }
+}
+/* People who turned off animations in their settings get a still picture. */
+@media (prefers-reduced-motion: reduce) {
+  .swarm-signal, .swarm-agent, .swarm-scan { animation: none; }
+}
