@@ -1,5 +1,5 @@
 "use client";
-// The hero animation: little bots stream along glowing trails into a website.
+// The hero animation: AI customers (avatar badges) stream along glowing trails into a website.
 // While they arrive, the page's progress bar fills; when it's full a check mark
 // pops in, holds, and the loop starts again.
 //
@@ -319,34 +319,19 @@ export default function BotRush() {
               begin={`${b.delay}s`}
               repeatCount="indefinite"
             />
-            {/* drawn 30% bigger than its basic size */}
-            <g transform="scale(1.3)">
-              <circle
-                r="17"
-                fill="#9fb0ff"
-                opacity="0.5"
-                filter="url(#br-glow)"
-              />
-              <line
-                x1="0"
-                y1="-10"
-                x2="0"
-                y2="-16"
-                stroke="#ffffff"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <circle cx="0" cy="-17" r="2.5" fill="#ffffff" />
-              <rect
-                x="-12"
-                y="-10"
-                width="24"
-                height="20"
-                rx="7"
-                fill="#ffffff"
-              />
-              <circle cx="-5" cy="0" r="2.6" fill={NAVY} />
-              <circle cx="5" cy="0" r="2.6" fill={NAVY} />
+            {/* An avatar badge, drawn around (0,0):
+                soft halo → thin outer ring → white disc → person icon. */}
+            <circle r="24" fill="#9fb0ff" opacity="0.35" filter="url(#br-glow)" />
+            <circle r="19" fill="none" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1.5" />
+            <circle r="15" fill="#ffffff" />
+            <clipPath id={`br-face-${i}`}>
+              <circle r="15" />
+            </clipPath>
+            <g clipPath={`url(#br-face-${i})`} fill={i % 3 === 0 ? BLUE : NAVY}>
+              {/* head */}
+              <circle cx="0" cy="-3.5" r="5" />
+              {/* shoulders */}
+              <ellipse cx="0" cy="13" rx="10" ry="8" />
             </g>
           </g>
         </g>
