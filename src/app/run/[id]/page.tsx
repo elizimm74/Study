@@ -3,6 +3,7 @@
 // then shows the report.
 import { use, useEffect, useState } from "react";
 import Report from "@/components/Report";
+import BotRush from "@/components/landing/BotRush";
 import JourneyView from "@/components/JourneyView";
 import type { Run } from "@/lib/pipeline";
 import type { Journey } from "@/lib/types";
@@ -92,18 +93,11 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
           </p>
           <h1 className="t-h1 mt-4">{data.stage}</h1>
         </div>
-        <div className="card p-6">
-          <div className="flex items-baseline justify-between gap-4">
-            <p className="flex items-baseline gap-2">
-              <span className="t-number text-5xl">{data.progress.done}</span>
-              <span className="text-faint">of {data.progress.total} customers reviewed</span>
-            </p>
-            <span className="t-label tabular-nums">{pct}%</span>
-          </div>
-          <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-            <div className="h-full rounded-full bg-accent transition-all duration-200" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
+        {/* the bots animation, driven by the real progress */}
+        <BotRush live={{ progress: pct / 100, label: `${data.progress.done} of ${data.progress.total} customers` }} />
+        <p className="sr-only" role="status">
+          {data.progress.done} of {data.progress.total} customers reviewed, {pct}%.
+        </p>
         {data.stage.startsWith("Personas") && data.progress.done === 0 && (
           <p className="text-sm text-muted">
             The first 25 go alone so your site is saved for the rest (that makes the run cheaper). The other 75 then

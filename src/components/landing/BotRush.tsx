@@ -27,7 +27,13 @@ const BOTS = Array.from({ length: 12 }, (_, i) => {
 
 const LOOP = "6s"; // how long one "read the site → check" cycle takes
 
-export default function BotRush() {
+// Two modes:
+//  - demo (landing page): loops by itself, bar fills, check pops, repeat.
+//  - live (progress screens): pass live={{ progress: 0..1, label }} and the bar
+//    shows the REAL progress; the check appears only when progress reaches 1.
+type Live = { progress: number; label: string };
+
+export default function BotRush({ live }: { live?: Live }) {
   const ref = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -214,64 +220,84 @@ export default function BotRush() {
         />
       ))}
 
+      {live ? (
+        <>
+          {/* live: the real progress */}
+          <text x={SITE.x + 24} y={SITE.y + 248} fontSize="11" fill={live.progress >= 1 ? BLUE : "#5f6780"} fontFamily="var(--font-mono)">
+            {live.label}
+          </text>
+          <rect x={SITE.x + 24} y={SITE.y + 258} width="202" height="6" rx="3" fill="#e8ebf6" />
+          <rect
+            x={SITE.x + 24}
+            y={SITE.y + 258}
+            width={Math.round(202 * Math.min(1, Math.max(0, live.progress)))}
+            height="6"
+            rx="3"
+            fill={BLUE}
+          />
+        </>
+      ) : (
+        <>
       {/* progress: label + bar that fills, then the label switches to "done" */}
-      <text
-        x={SITE.x + 24}
-        y={SITE.y + 248}
-        fontSize="11"
-        fill="#5f6780"
-        fontFamily="var(--font-mono)"
-      >
-        reading · 25 customers
-        <animate
-          attributeName="opacity"
-          values="1;1;0;0;1"
-          keyTimes="0;0.64;0.66;0.97;1"
-          dur={LOOP}
-          repeatCount="indefinite"
-        />
-      </text>
-      <text
-        x={SITE.x + 24}
-        y={SITE.y + 248}
-        fontSize="11"
-        fill={BLUE}
-        fontFamily="var(--font-mono)"
-        opacity="0"
-      >
-        all checks passed
-        <animate
-          attributeName="opacity"
-          values="0;0;1;1;0"
-          keyTimes="0;0.64;0.66;0.94;1"
-          dur={LOOP}
-          repeatCount="indefinite"
-        />
-      </text>
-      <rect
-        x={SITE.x + 24}
-        y={SITE.y + 258}
-        width="202"
-        height="6"
-        rx="3"
-        fill="#e8ebf6"
-      />
-      <rect
-        x={SITE.x + 24}
-        y={SITE.y + 258}
-        width="0"
-        height="6"
-        rx="3"
-        fill={BLUE}
-      >
-        <animate
-          attributeName="width"
-          values="0;202;202;0"
-          keyTimes="0;0.64;0.94;1"
-          dur={LOOP}
-          repeatCount="indefinite"
-        />
-      </rect>
+          <text
+            x={SITE.x + 24}
+            y={SITE.y + 248}
+            fontSize="11"
+            fill="#5f6780"
+            fontFamily="var(--font-mono)"
+          >
+            reading · 25 customers
+            <animate
+              attributeName="opacity"
+              values="1;1;0;0;1"
+              keyTimes="0;0.64;0.66;0.97;1"
+              dur={LOOP}
+              repeatCount="indefinite"
+            />
+          </text>
+          <text
+            x={SITE.x + 24}
+            y={SITE.y + 248}
+            fontSize="11"
+            fill={BLUE}
+            fontFamily="var(--font-mono)"
+            opacity="0"
+          >
+            all checks passed
+            <animate
+              attributeName="opacity"
+              values="0;0;1;1;0"
+              keyTimes="0;0.64;0.66;0.94;1"
+              dur={LOOP}
+              repeatCount="indefinite"
+            />
+          </text>
+          <rect
+            x={SITE.x + 24}
+            y={SITE.y + 258}
+            width="202"
+            height="6"
+            rx="3"
+            fill="#e8ebf6"
+          />
+          <rect
+            x={SITE.x + 24}
+            y={SITE.y + 258}
+            width="0"
+            height="6"
+            rx="3"
+            fill={BLUE}
+          >
+            <animate
+              attributeName="width"
+              values="0;202;202;0"
+              keyTimes="0;0.64;0.94;1"
+              dur={LOOP}
+              repeatCount="indefinite"
+            />
+          </rect>
+        </>
+      )}
 
       {/* ---------- 4. Bots + a flash where each one lands ---------- */}
       {BOTS.map((b, i) => (
@@ -337,6 +363,8 @@ export default function BotRush() {
         </g>
       ))}
 
+      {!live && (
+        <>
       {/* ---------- 5. The check mark: pops in when the bar is full ---------- */}
       <g transform={`translate(${SITE.x + SITE.w - 6} ${SITE.y + SITE.h - 6})`}>
         <g opacity="0">
@@ -368,6 +396,15 @@ export default function BotRush() {
           />
         </g>
       </g>
+        </>
+      )}
+      {live && live.progress >= 1 && (
+        <g transform={`translate(${SITE.x + SITE.w - 6} ${SITE.y + SITE.h - 6})`}>
+          <circle r="28" fill="#ffffff" />
+          <circle r="22" fill={BLUE} />
+          <path d="M-9 1 l6 6 l12 -14" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      )}
     </svg>
   );
 }

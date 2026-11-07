@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AudiencePicker from "@/components/AudiencePicker";
 import ProfileEditor from "@/components/ProfileEditor";
 import ExplorePanel from "@/components/ExplorePanel";
+import BotRush from "@/components/landing/BotRush";
 import { DEFAULT_AUDIENCE, PRESETS } from "@/lib/presets";
 import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
@@ -418,6 +419,8 @@ function Reading({ url }: { url: string }) {
         <h1 className="t-h1 mt-4">Reading your site…</h1>
         <p className="t-lead mt-4">Usually 15–30 seconds.</p>
       </div>
+      {/* the bots animation, live: the bar is an estimate from the timer (most sites take ~25s) */}
+      <BotRush live={{ progress: Math.min(0.92, seconds / 25), label: "reading your site" }} />
       <ol className="card divide-y divide-line">
         {lines.map((l, i) => (
           <li key={l} className={`flex items-center gap-4 px-6 py-4 text-sm ${i <= active ? "text-fg" : "text-faint"}`}>

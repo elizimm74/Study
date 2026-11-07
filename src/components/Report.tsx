@@ -33,35 +33,37 @@ export default function Report({ run }: { run: Run & { filesPrefix: string } }) 
 
   return (
     <div className="mx-auto max-w-4xl space-y-12">
-      {/* ---------- 1. The answer ---------- */}
-      <section className="card p-6 sm:p-8">
-        <div className="flex items-center justify-between gap-4">
-          <span className="t-label truncate">{run.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
-          <span className="t-label shrink-0">report</span>
-        </div>
-        <div className="mt-8 grid gap-8 md:grid-cols-[auto_1fr] md:items-end md:gap-12">
-          <div>
-            <p className="flex items-end gap-2">
-              <span className="t-number text-8xl text-accent sm:text-9xl">{stats.buy}</span>
-              <span className="t-number pb-2 text-3xl text-faint sm:text-4xl">/{stats.total}</span>
-            </p>
-            <p className="mt-2 text-lg font-medium">would {goal}</p>
+      {/* ---------- 1. The answer, on a full-width torn paper strip ---------- */}
+      <section className="paper bleed py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <span className="t-label truncate">{run.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
+            <span className="t-label shrink-0">report</span>
           </div>
-          <div className="space-y-4">
-            <p className="t-lead text-fg">{firstSentence(advice.summary)}</p>
-            <div className="flex flex-wrap gap-2">
-              {top && (
-                <span className="pill">
-                  Biggest blocker: {top.category} · {pct(top.pctOfNonBuyers)}
-                </span>
-              )}
-              {run.journey && run.journey.steps.length > 0 && (
-                <span className="pill">Product test: {run.journey.status === "completed" ? "worked" : run.journey.status}</span>
-              )}
+          <div className="mt-8 grid gap-8 md:grid-cols-[auto_1fr] md:items-end md:gap-12">
+            <div>
+              <p className="flex items-end gap-2">
+                <span className="t-number text-8xl text-accent sm:text-9xl">{stats.buy}</span>
+                <span className="t-number pb-2 text-3xl text-faint sm:text-4xl">/{stats.total}</span>
+              </p>
+              <p className="mt-2 text-lg font-medium">would {goal}</p>
+            </div>
+            <div className="space-y-4">
+              <p className="t-lead text-fg">{firstSentence(advice.summary)}</p>
+              <div className="flex flex-wrap gap-2">
+                {top && (
+                  <span className="pill">
+                    Biggest blocker: {top.category} · {pct(top.pctOfNonBuyers)}
+                  </span>
+                )}
+                {run.journey && run.journey.steps.length > 0 && (
+                  <span className="pill">Product test: {run.journey.status === "completed" ? "worked" : run.journey.status}</span>
+                )}
+              </div>
             </div>
           </div>
+          <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} goal={goal} />
         </div>
-        <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} goal={goal} />
       </section>
 
       {/* ---------- 2. Fix these first ---------- */}

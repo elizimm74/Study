@@ -9,7 +9,7 @@ type Row = { id: string; url: string; goal: string | null; status: string; score
 export default async function MyTests() {
   if (!AUTH_ENABLED) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="paper mx-auto max-w-3xl px-6 py-12 sm:px-10">
         <h1 className="t-h1">My tests</h1>
         <p className="card mt-8 p-6 text-muted">Accounts are switched off, so tests aren&apos;t saved to an account.</p>
       </div>
@@ -23,7 +23,7 @@ export default async function MyTests() {
   const tests = (data ?? []) as Row[];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="paper mx-auto max-w-3xl space-y-8 px-6 py-12 sm:px-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="t-h1">My tests</h1>
         <Link href="/app" className="btn btn-primary">
