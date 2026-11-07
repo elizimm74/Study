@@ -5,7 +5,7 @@
 /*
   CRAWLER DESIGN SYSTEM (v5, "Linear / Vercel" minimal).
   Rules, so the look stays consistent:
-   - Cool grays + ONE accent (electric blue). Page is light gray, cards are white. The accent is only for primary
+   - Cool grays + ONE accent: the logo blue #1a2aa6. Page is light gray, cards are white. The accent is only for primary
      buttons and key numbers. Small accent TEXT uses --accent-ink (darker, readable).
    - Colors are CSS variables with a light and a dark value. Tailwind names map
      to them: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
@@ -30,10 +30,10 @@
   --line: #d9dde5;
   --line-strong: #bfc6d2;
   /* the one accent: blue */
-  --accent: #3448f5;
-  --accent-hover: #2a3de0;
+  --accent: #1a2aa6;
+  --accent-hover: #141f85;
   --accent-fg: #ffffff; /* text on the accent: about 6:1 */
-  --accent-ink: #2a3de0; /* blue text on the gray page: about 6:1 */
+  --accent-ink: #1a2aa6; /* blue text on the gray page: about 10:1 */
   --shadow-sm: 0 1px 2px rgb(12 14 19 / 0.05);
   --shadow: 0 1px 2px rgb(12 14 19 / 0.05), 0 12px 32px -16px rgb(12 14 19 / 0.18);
   color-scheme: light;
@@ -51,7 +51,9 @@
     --fg-faint: #8a92a4;
     --line: #262b36;
     --line-strong: #353b49;
-    --accent-ink: #8fa0ff;
+    --accent: #4d60f5; /* lighter than the logo blue so it reads on dark */
+    --accent-hover: #6676ff;
+    --accent-ink: #8b9bff;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
     color-scheme: dark;
@@ -67,7 +69,9 @@
   --fg-faint: #8a92a4;
   --line: #262b36;
   --line-strong: #353b49;
-  --accent-ink: #8fa0ff;
+  --accent: #4d60f5;
+  --accent-hover: #6676ff;
+  --accent-ink: #8b9bff;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
   color-scheme: dark;

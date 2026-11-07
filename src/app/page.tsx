@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ProductPreview from "@/components/landing/ProductPreview";
 import Hero from "@/components/landing/Hero";
+import Mark from "@/components/Mark";
 import AnalysisFlow from "@/components/landing/AnalysisFlow";
 import UrlForm from "@/components/landing/UrlForm";
 import { EXAMPLE_SITE } from "@/components/landing/example";
@@ -169,18 +170,18 @@ function SharePost() {
         <div className="flex h-full flex-col">
           <div className="flex justify-between font-mono text-xs text-[#8b8b94]">
             <span>
-              <span className="text-[#3448f5]">✱</span> crawler
+              <Mark size={14} className="text-[#1a2aa6]" /> crawler
             </span>
             <span>{EXAMPLE_SITE}</span>
           </div>
           <div className="mt-auto">
             <p className="flex items-end gap-2">
-              <span className="t-number text-6xl text-[#3448f5] sm:text-7xl">12</span>
+              <span className="t-number text-6xl text-[#1a2aa6] sm:text-7xl">12</span>
               <span className="t-number pb-1 text-2xl text-[#8b8b94]">/25</span>
               <span className="pb-1 text-sm">would buy</span>
             </p>
             <div className="mt-4 flex h-1.5 gap-1" aria-hidden>
-              <span className="w-[48%] rounded-full bg-[#3448f5]" />
+              <span className="w-[48%] rounded-full bg-[#1a2aa6]" />
               <span className="w-[24%] rounded-full bg-[#fafafa]" />
               <span className="flex-1 rounded-full bg-[#303035]" />
             </div>

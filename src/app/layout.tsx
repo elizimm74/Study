@@ -6,6 +6,7 @@ import { APP_NAME } from "@/lib/config";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ThemeToggle, { THEME_SCRIPT } from "@/components/ThemeToggle";
+import Mark from "@/components/Mark";
 
 // Build every page fresh for each visitor, so the header always shows
 // whether THIS person is signed in.
@@ -92,13 +93,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   );
 }
 
-// "✱ crawler": the asterisk mark in the accent, the name lowercase.
+// "crawler" with the hand-drawn asterisk mark in front.
 function Logo({ small }: { small?: boolean }) {
   return (
     <Link href="/" className={`inline-flex min-h-11 items-center gap-2 font-medium tracking-tight text-fg ${small ? "text-sm" : "text-[17px]"}`}>
-      <span className="text-accent" aria-hidden>
-        ✱
-      </span>
+      <Mark size={small ? 18 : 26} className="text-accent" />
       {APP_NAME.toLowerCase()}
     </Link>
   );
