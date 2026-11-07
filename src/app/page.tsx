@@ -6,6 +6,7 @@ import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ProductPreview from "@/components/landing/ProductPreview";
 import Hero from "@/components/landing/Hero";
 import Mark from "@/components/Mark";
+import Claws from "@/components/Claws";
 import UrlForm from "@/components/landing/UrlForm";
 import { EXAMPLE_SITE } from "@/components/landing/example";
 
@@ -135,7 +136,11 @@ export default async function Landing() {
       {/* ---------- 6. Final CTA ---------- */}
       <section className="border-t border-line pt-16 sm:pt-24">
         <div className="grid items-end gap-8 lg:grid-cols-2">
-          <h2 className="t-h1">Know before you launch.</h2>
+          <div className="flex items-end gap-6">
+            <h2 className="t-h1">Know before you launch.</h2>
+            {/* claws scratch in when this scrolls into view */}
+            <Claws delay={0.1} className="hidden h-28 w-24 shrink-0 sm:block" />
+          </div>
           <div className="lg:justify-self-end">
             <UrlForm id="footer-url" />
           </div>

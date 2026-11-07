@@ -12,7 +12,19 @@ export default function UrlForm({ id = "url" }: { id?: string }) {
         </span>
         <input id={id} name="url" placeholder="yourstartup.com" required autoComplete="url" inputMode="url" className="field h-12 pl-20" />
       </div>
-      <button className="btn btn-primary h-12 px-6">Test it</button>
+      <button className="btn btn-primary h-12 px-6">
+        Test it
+        <Arrow />
+      </button>
     </form>
+  );
+}
+
+// A small arrow that nudges right when the button is hovered (.btn-arrow in globals.css).
+export function Arrow() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="btn-arrow" aria-hidden>
+      <path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

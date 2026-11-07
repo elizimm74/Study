@@ -70,7 +70,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           </div>
         </header>
 
-        <main id="main" className="page flex-1 pb-24 pt-12 sm:pt-16">
+        <main id="main" className="page page-enter flex-1 pb-24 pt-12 sm:pt-16">
           {children}
         </main>
 

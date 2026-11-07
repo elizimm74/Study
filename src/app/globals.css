@@ -32,6 +32,7 @@
   --accent-hover: #e4e8ff;
   --accent-fg: #1a2aa6; /* ...with blue text */
   --accent-ink: #ffffff;
+  --sheen: rgb(26 42 166 / 0.16);
   --shadow-sm: 0 1px 2px rgb(5 10 60 / 0.25);
   --shadow: 0 2px 4px rgb(5 10 60 / 0.2), 0 24px 48px -20px rgb(5 10 60 / 0.55);
   color-scheme: light;
@@ -53,6 +54,7 @@
   --accent-hover: #141f85;
   --accent-fg: #ffffff;
   --accent-ink: #1a2aa6;
+  --sheen: rgb(255 255 255 / 0.35);
   color: var(--fg);
 }
 
@@ -196,6 +198,8 @@ input[type="range"] {
 
   /* ---------- Buttons (all 44px tall: easy to tap) ---------- */
   .btn {
+    position: relative;
+    overflow: hidden; /* keeps the shine inside the button */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -212,27 +216,68 @@ input[type="range"] {
       background-color 150ms,
       border-color 150ms,
       color 150ms,
-      opacity 150ms;
+      opacity 150ms,
+      box-shadow 200ms,
+      transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .btn:disabled {
     opacity: 0.5;
     cursor: default;
   }
-  /* THE main action: accent. One per screen. */
+  /* pressing a button pushes it in slightly */
+  .btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+  /* an arrow inside a button nudges forward on hover */
+  .btn-arrow {
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .btn:hover:not(:disabled) .btn-arrow {
+    transform: translateX(3px);
+  }
+
+  /* THE main action. One per screen. White on the blue page, blue inside white cards. */
   .btn-primary {
     background: var(--accent);
     color: var(--accent-fg);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 1px 2px rgb(5 10 60 / 0.2),
+      0 10px 24px -12px rgb(5 10 60 / 0.6);
   }
   .btn-primary:hover:not(:disabled) {
     background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 2px 4px rgb(5 10 60 / 0.2),
+      0 16px 32px -12px rgb(5 10 60 / 0.7);
   }
-  /* Strong but not accent: black (white in dark mode). */
+  /* the shine: a soft light band that sweeps across on hover */
+  .btn-primary::after,
+  .btn-secondary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 35%, var(--sheen) 50%, transparent 65%);
+    transform: translateX(-110%);
+    transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+  .btn-primary:hover:not(:disabled)::after,
+  .btn-secondary:hover:not(:disabled)::after {
+    transform: translateX(110%);
+  }
+
+  /* Strong but not the main action: white on the blue page, near-black in cards. */
   .btn-secondary {
     background: var(--fg);
     color: var(--bg);
+    box-shadow: 0 1px 2px rgb(5 10 60 / 0.2);
   }
   .btn-secondary:hover:not(:disabled) {
-    opacity: 0.85;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -12px rgb(5 10 60 / 0.6);
   }
   /* Outline. */
   .btn-ghost {
@@ -386,4 +431,40 @@ input[type="range"] {
   .bleed {
     margin-inline: calc(50% - 50vw);
   }
+}
+
+/* ---------- Opening animations ---------- */
+/* .rise: fades in while moving up a little. Add .d1 ... .d5 to stagger. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.d1 { animation-delay: 80ms; }
+.d2 { animation-delay: 160ms; }
+.d3 { animation-delay: 240ms; }
+.d4 { animation-delay: 320ms; }
+.d5 { animation-delay: 420ms; }
+/* every page's content rises in gently when it opens */
+.page-enter {
+  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Claws (src/components/Claws.tsx): the mask line's dash slides into view = the scratch draws. */
+@keyframes claw-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.claw-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: claw-draw 650ms cubic-bezier(0.6, 0, 0.2, 1) forwards;
 }

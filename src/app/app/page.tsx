@@ -11,6 +11,7 @@ import AudiencePicker from "@/components/AudiencePicker";
 import ProfileEditor from "@/components/ProfileEditor";
 import ExplorePanel from "@/components/ExplorePanel";
 import BotRush from "@/components/landing/BotRush";
+import { Arrow } from "@/components/landing/UrlForm";
 import { DEFAULT_AUDIENCE, PRESETS } from "@/lib/presets";
 import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
@@ -280,6 +281,7 @@ function Wizard() {
             </button>
             <button onClick={launch} disabled={busy !== null} className="btn btn-primary h-12 px-8">
               {busy === "starting" ? "Starting…" : "Run 100 customers"}
+              {busy !== "starting" && <Arrow />}
             </button>
           </div>
         </section>
