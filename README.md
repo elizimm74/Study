@@ -82,7 +82,28 @@ where id = (select id from auth.users where email = 'YOUR@EMAIL.com');
 - **Privacy:** Row Level Security means each person can only read their own crawls, tests and screenshots. Only the worker (with the secret key) writes, so nobody can fake a score or reset their free test.
 - **Plans:** `profiles.plan` (free = 1 test). The limit is checked inside the database, in a single locked step, so two clicks at once can't both get a free test. Failed tests don't use up the plan.
 - **Email confirmation:** Supabase's built-in email sender only allows a few emails per hour. For testing, you can turn off **Confirm email** in Authentication → Sign In / Providers → Email.
-- **Google sign-in:** create an OAuth client in Google Cloud Console, then paste its ID and secret into Supabase under Authentication → Sign In / Providers → Google.
+- **Google and Apple sign-in:** the buttons are built; each provider must be switched on once (steps below).
+
+### Switching on "Continue with Google" and "Continue with Apple"
+
+Both send people to Google/Apple and back to Supabase at this address (you'll paste it in a few places):
+`https://txoimqedwfsuxoqiguop.supabase.co/auth/v1/callback`
+
+**First, in Supabase** → Authentication → URL Configuration: add `http://localhost:3000/auth/callback` to **Redirect URLs** (and later `https://YOUR-DOMAIN/auth/callback`).
+
+**Google** (free):
+1. Google Cloud Console → create a project → APIs & Services → **OAuth consent screen**: External, app name "crawler", your email.
+2. Credentials → **Create credentials → OAuth client ID** → type **Web application**.
+3. Authorized redirect URI: the Supabase address above.
+4. Copy the **Client ID** and **Client secret** into Supabase → Authentication → Sign In / Providers → **Google** → enable → Save. Paste them only there, never in chat or in the code.
+
+**Apple** (needs a paid Apple Developer account, $99/year):
+1. developer.apple.com → Certificates, IDs & Profiles → **Identifiers**: create an **App ID** with "Sign in with Apple" ticked.
+2. Identifiers → create a **Services ID** (e.g. `app.crawler.web`), tick "Sign in with Apple" → Configure: domain `txoimqedwfsuxoqiguop.supabase.co`, return URL = the Supabase address above.
+3. **Keys** → create a key with "Sign in with Apple" → download the `.p8` file (you can only download it once; keep it safe, never commit it).
+4. Supabase → Sign In / Providers → **Apple** → enable. Client IDs = your Services ID. Secret key: use the generator on Supabase's "Sign in with Apple" docs page with your Team ID, Key ID, Services ID and the `.p8` file → paste the result → Save.
+5. ⚠️ Apple's secret **expires every 6 months**. Set a calendar reminder to make a new one with the same `.p8` file, or Apple sign-in will stop working.
+
 
 ## Quality checks
 
