@@ -5,7 +5,6 @@ import "./globals.css";
 import { APP_NAME } from "@/lib/config";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
-import ThemeToggle, { THEME_SCRIPT } from "@/components/ThemeToggle";
 import Mark from "@/components/Mark";
 
 // Build every page fresh for each visitor, so the header always shows
@@ -21,11 +20,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const user = await currentUser();
 
   return (
-    // suppressHydrationWarning: the theme script may add data-theme before React loads.
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
+    <html lang="en">
       {/* flex column: the footer stays at the bottom even on short pages */}
       <body className="flex min-h-screen flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-bg focus:p-4">
@@ -41,7 +36,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <form action="/auth/signout" method="post" className="hidden sm:block">
                     <button className="btn btn-text text-sm">Sign out</button>
                   </form>
-                  <ThemeToggle />
                   <Link href="/app" className="btn btn-secondary ml-1 text-sm">
                     New test
                   </Link>
@@ -55,7 +49,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                     Pricing
                   </NavLink>
                   <NavLink href="/signin">Sign in</NavLink>
-                  <ThemeToggle />
                   <Link href="/signup" className="btn btn-secondary ml-1 text-sm">
                     Start free
                   </Link>
@@ -68,7 +61,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <NavLink href="/#pricing" className="hidden md:inline-flex">
                     Pricing
                   </NavLink>
-                  <ThemeToggle />
                   <Link href="/app" className="btn btn-secondary ml-1 text-sm">
                     Open app
                   </Link>
@@ -97,7 +89,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 function Logo({ small }: { small?: boolean }) {
   return (
     <Link href="/" className={`inline-flex min-h-11 items-center gap-2 font-medium tracking-tight text-fg ${small ? "text-sm" : "text-[17px]"}`}>
-      <Mark size={small ? 18 : 26} className="text-accent" />
+      <Mark size={small ? 18 : 26} className="text-[#0e1873]" />
       {APP_NAME.toLowerCase()}
     </Link>
   );

@@ -7,7 +7,7 @@ export default function UrlForm({ id = "url" }: { id?: string }) {
         Your website
       </label>
       <div className="relative flex-1">
-        <span className="t-label pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
+        <span className="t-label field-prefix pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
           https://
         </span>
         <input id={id} name="url" placeholder="yourstartup.com" required autoComplete="url" inputMode="url" className="field h-12 pl-20" />

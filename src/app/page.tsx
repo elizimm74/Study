@@ -6,7 +6,6 @@ import { AUTH_ENABLED } from "@/lib/supabase/config";
 import ProductPreview from "@/components/landing/ProductPreview";
 import Hero from "@/components/landing/Hero";
 import Mark from "@/components/Mark";
-import AnalysisFlow from "@/components/landing/AnalysisFlow";
 import UrlForm from "@/components/landing/UrlForm";
 import { EXAMPLE_SITE } from "@/components/landing/example";
 
@@ -55,26 +54,26 @@ export default async function Landing() {
         <ProductPreview />
       </section>
 
-      {/* ---------- 2b. Customers flow into the site, with checks ---------- */}
-      <AnalysisFlow />
-
       {/* ---------- 3. How it works ---------- */}
-      <section id="how" className="grid scroll-mt-24 gap-8 lg:grid-cols-[1fr_2fr] lg:gap-16">
-        <div>
-          <p className="t-label">how it works</p>
-          <h2 className="t-h2 mt-4">Three steps. Two minutes.</h2>
+      {/* A full-width strip of torn white paper (see .paper in globals.css). */}
+      <section id="how" className="paper bleed scroll-mt-24 py-24">
+        <div className="page grid gap-8 lg:grid-cols-[1fr_2fr] lg:gap-16">
+          <div>
+            <p className="t-label">how it works</p>
+            <h2 className="t-h2 mt-4">Three steps. Two minutes.</h2>
+          </div>
+          <ol className="border-b border-line">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="grid gap-2 border-t border-line py-6 sm:grid-cols-[4rem_1fr] sm:gap-4">
+                <span className="t-number text-3xl text-accent">0{i + 1}</span>
+                <div>
+                  <p className="t-h3">{s.title}</p>
+                  <p className="mt-1 text-muted">{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-        <ol className="border-b border-line">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="grid gap-2 border-t border-line py-6 sm:grid-cols-[4rem_1fr] sm:gap-4">
-              <span className="t-label pt-1">0{i + 1}</span>
-              <div>
-                <p className="t-h3">{s.title}</p>
-                <p className="mt-1 text-muted">{s.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
       </section>
 
       {/* ---------- 4. Share card, as it would look in a post ---------- */}
@@ -169,8 +168,8 @@ function SharePost() {
       <div className="mt-4 aspect-[1.91/1] rounded-xl border border-[#232326] bg-[#0a0a0a] p-6 text-[#fafafa]" role="img" aria-label="Scorecard: 12 of 25 would buy. Biggest blocker: price hidden until signup.">
         <div className="flex h-full flex-col">
           <div className="flex justify-between font-mono text-xs text-[#8b8b94]">
-            <span>
-              <Mark size={14} className="text-[#1a2aa6]" /> crawler
+            <span className="inline-flex items-center gap-1">
+              <Mark size={14} className="text-[#4d60f5]" /> crawler
             </span>
             <span>{EXAMPLE_SITE}</span>
           </div>

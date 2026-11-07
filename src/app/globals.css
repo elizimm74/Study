@@ -3,82 +3,61 @@
 @import "tailwindcss";
 
 /*
-  CRAWLER DESIGN SYSTEM (v5, "Linear / Vercel" minimal).
-  Rules, so the look stays consistent:
-   - Cool grays + ONE accent: the logo blue #1a2aa6. Page is light gray, cards are white. The accent is only for primary
-     buttons and key numbers. Small accent TEXT uses --accent-ink (darker, readable).
-   - Colors are CSS variables with a light and a dark value. Tailwind names map
-     to them: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
+  CRAWLER DESIGN SYSTEM (v6, "blue + ripped paper").
+  One look only (no light/dark modes):
+   - The PAGE is the logo blue #1a2aa6 with white text.
+   - CARDS (.card, .card-raised) and torn PAPER strips (.paper) are white with dark text.
+     They work by re-setting the color variables inside themselves, so every
+     component (text-fg, bg-accent, ...) automatically picks the right colors.
+   - On the blue page the main button is WHITE with blue text; inside white cards it's BLUE.
+   - Tailwind names: bg-bg, bg-subtle, bg-raised, text-fg, text-muted, text-faint,
      border-line, border-line-strong, bg-accent, text-accent-fg, text-accent-ink.
-   - Spacing: only the scale 4, 8, 16, 24, 32, 48, 64, 96, 128px
-     (Tailwind 1, 2, 4, 6, 8, 12, 16, 24, 32).
-   - Radius: 8px (rounded-lg) for controls, 12px (rounded-xl) for cards, full for pills/avatars.
-   - Type: Geist, ONLY two weights site-wide: 400 (text) and 500 (headlines, buttons, labels). Scale: .t-*
-   - Motion: 150–250ms, nothing loud.
+   - Spacing: only 4, 8, 16, 24, 32, 48, 64, 96, 128px. Radius 8 (controls) / 12 (cards).
+   - Type: Geist, two weights only (400 text, 500 headlines/buttons). Scale: .t-*
 */
 
-/* ---------- Color tokens ---------- */
+/* ---------- Color tokens: the blue page ---------- */
 :root {
-  /* page: a soft cool gray, so white cards stand out on it */
-  --bg: #f4f5f7;
-  --surface: #ffffff; /* cards */
-  --bg-subtle: #ebedf1;
-  --bg-raised: #e1e4ea;
-  --fg: #0c0e13;
-  --fg-muted: #4a5160; /* about 7:1 on the page */
-  --fg-faint: #646b7a; /* about 4.9:1 on the page (AA) */
-  --line: #d9dde5;
-  --line-strong: #bfc6d2;
-  /* the one accent: blue */
-  --accent: #1a2aa6;
-  --accent-hover: #141f85;
-  --accent-fg: #ffffff; /* text on the accent: about 6:1 */
-  --accent-ink: #1a2aa6; /* blue text on the gray page: about 10:1 */
-  --shadow-sm: 0 1px 2px rgb(12 14 19 / 0.05);
-  --shadow: 0 1px 2px rgb(12 14 19 / 0.05), 0 12px 32px -16px rgb(12 14 19 / 0.18);
+  --brand: #1a2aa6;
+  --bg: #1a2aa6;
+  --surface: #ffffff; /* cards are always white */
+  --bg-subtle: #2333b2;
+  --bg-raised: #2d3cbd;
+  --fg: #ffffff;
+  --fg-muted: #d6dbff; /* about 7:1 on the blue */
+  --fg-faint: #aeb7f6; /* about 5:1 on the blue (AA) */
+  --line: #3f4dbd;
+  --line-strong: #5b67cc;
+  --accent: #ffffff; /* on blue, the main button is white... */
+  --accent-hover: #e4e8ff;
+  --accent-fg: #1a2aa6; /* ...with blue text */
+  --accent-ink: #ffffff;
+  --shadow-sm: 0 1px 2px rgb(5 10 60 / 0.25);
+  --shadow: 0 2px 4px rgb(5 10 60 / 0.2), 0 24px 48px -20px rgb(5 10 60 / 0.55);
   color-scheme: light;
 }
-/* Dark values. Used when the computer is in dark mode (unless the visitor picked light),
-   or when the visitor picked dark with the header toggle. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0d0f14;
-    --surface: #161a22;
-    --bg-subtle: #12151c;
-    --bg-raised: #1c2029;
-    --fg: #eef0f5;
-    --fg-muted: #a3aabb;
-    --fg-faint: #8a92a4;
-    --line: #262b36;
-    --line-strong: #353b49;
-    --accent: #4d60f5; /* lighter than the logo blue so it reads on dark */
-    --accent-hover: #6676ff;
-    --accent-ink: #8b9bff;
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0d0f14;
-  --surface: #161a22;
-  --bg-subtle: #12151c;
-  --bg-raised: #1c2029;
-  --fg: #eef0f5;
-  --fg-muted: #a3aabb;
-  --fg-faint: #8a92a4;
-  --line: #262b36;
-  --line-strong: #353b49;
-  --accent: #4d60f5;
-  --accent-hover: #6676ff;
-  --accent-ink: #8b9bff;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.8);
-  color-scheme: dark;
+
+/* Inside white things, flip to dark-on-white. */
+.card,
+.card-raised,
+.paper {
+  --bg: #ffffff;
+  --bg-subtle: #f3f5fb;
+  --bg-raised: #e8ebf6;
+  --fg: #0c0e1f;
+  --fg-muted: #464e66;
+  --fg-faint: #5f6780; /* 5.6:1 on white */
+  --line: #dfe3ee;
+  --line-strong: #c3c9da;
+  --accent: #1a2aa6;
+  --accent-hover: #141f85;
+  --accent-fg: #ffffff;
+  --accent-ink: #1a2aa6;
+  color: var(--fg);
 }
 
 /* Tailwind names → the variables above ("inline" = utilities read the variable directly,
-   so switching light/dark needs no rebuild). */
+   so a white card can re-set them for everything inside it). */
 @theme inline {
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -104,6 +83,7 @@ html {
 }
 body {
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
@@ -118,7 +98,7 @@ body {
 /* Visible keyboard focus everywhere (mouse clicks don't show it). */
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: 8px;
 }
 input[type="checkbox"],
@@ -277,26 +257,34 @@ input[type="range"] {
   .field {
     width: 100%;
     min-height: 2.75rem;
-    border: 1px solid var(--line-strong);
+    border: 1px solid transparent;
     border-radius: 8px;
-    background: var(--bg);
-    color: var(--fg);
+    background: #ffffff;
+    color: #0c0e1f;
     padding: 0.5rem 1rem;
     font-size: 0.9375rem;
     transition:
       border-color 150ms,
       box-shadow 150ms;
   }
+  .card .field,
+  .paper .field {
+    border-color: var(--line-strong);
+  }
   .field::placeholder {
-    color: var(--fg-faint);
+    color: #5f6780;
+  }
+  /* the grey "https://" text that sits inside the white URL box */
+  .field-prefix {
+    color: #5f6780;
   }
   .field:hover {
-    border-color: color-mix(in oklab, var(--fg) 30%, var(--line-strong));
+    border-color: #c3c9da;
   }
   .field:focus {
     outline: none;
-    border-color: var(--fg);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+    border-color: #1a2aa6;
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.45);
   }
   .field-label {
     display: block;
@@ -363,5 +351,39 @@ input[type="range"] {
     background: var(--fg);
     border-color: var(--fg);
     color: var(--bg);
+  }
+}
+
+/* ---------- Ripped paper strips ----------
+   A full-width white strip with torn top and bottom edges. The torn edge is a small
+   zig-zag picture (SVG) used as a mask and repeated across the width. */
+@layer components {
+  .paper {
+    position: relative;
+    background: #ffffff;
+  }
+  .paper::before,
+  .paper::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 18px;
+    background: #ffffff;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 18'%3E%3Cpath d='M0 18V9l6-5 5 6 6-8 7 6 6-4 7 8 7-6 6 4 7-8 6 6 7-4 7 7 7-6 6 4 7-6 7 7 7-4 7 6V18z'/%3E%3C/svg%3E") repeat-x;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 18'%3E%3Cpath d='M0 18V9l6-5 5 6 6-8 7 6 6-4 7 8 7-6 6 4 7-8 6 6 7-4 7 7 7-6 6 4 7-6 7 7 7-4 7 6V18z'/%3E%3C/svg%3E") repeat-x;
+    -webkit-mask-size: 120px 18px;
+    mask-size: 120px 18px;
+  }
+  .paper::before {
+    top: -17px;
+  }
+  .paper::after {
+    bottom: -17px;
+    transform: scaleY(-1);
+  }
+  /* break out of the centered column to span the full screen width */
+  .bleed {
+    margin-inline: calc(50% - 50vw);
   }
 }
