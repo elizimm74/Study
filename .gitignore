@@ -49,3 +49,6 @@ next-env.d.ts
 
 # compiled worker
 /.worker-build
+
+# Apple "Sign in with Apple" keys: never commit these
+*.p8
