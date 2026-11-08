@@ -13,6 +13,8 @@ import ExplorePanel from "@/components/ExplorePanel";
 import BotRush from "@/components/landing/BotRush";
 import { Arrow } from "@/components/landing/UrlForm";
 import { DEFAULT_AUDIENCE, PRESETS } from "@/lib/presets";
+import { supabaseBrowser } from "@/lib/supabase/browser";
+import { AUTH_ENABLED } from "@/lib/supabase/config";
 import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
 
 type CrawlInfo = {
@@ -93,6 +95,19 @@ function Wizard() {
       setBusy(null);
     }
   }
+
+  // Answered onboarding before signing up? Save those answers to the account now.
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = sessionStorage.getItem("crawler-onboarding");
+    } catch {}
+    if (!saved || !AUTH_ENABLED) return;
+    sessionStorage.removeItem("crawler-onboarding");
+    void supabaseBrowser()
+      .auth.updateUser({ data: { onboarded: true, onboarding: JSON.parse(saved) } })
+      .catch(() => null);
+  }, []);
 
   // Came from the landing page with ?url=...? Start right away.
   useEffect(() => {

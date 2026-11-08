@@ -26,7 +26,9 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   }
 
   // New accounts go through the 3-question onboarding first (it then continues to `next`).
-  const after = mode === "signup" ? `/onboarding?next=${encodeURIComponent(next)}` : next;
+  // ...unless they already gave us their URL (they came from onboarding, so skip it).
+  const hasUrl = new URL(next, "http://x").searchParams.has("url");
+  const after = mode === "signup" && !hasUrl ? `/onboarding?next=${encodeURIComponent(next)}` : next;
   const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(after)}`;
 
   async function submit(e: React.FormEvent) {

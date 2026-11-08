@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { AUTH_ENABLED, SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 
-const PRIVATE_PAGES = ["/app", "/run", "/tests", "/onboarding"];
+const PRIVATE_PAGES = ["/app", "/run", "/tests"];
 const PRIVATE_APIS = ["/api/crawls", "/api/tests", "/api/files"];
 
 export async function middleware(request: NextRequest) {

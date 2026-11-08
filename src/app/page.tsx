@@ -1,43 +1,23 @@
-// The landing page: deliberately minimal.
-//   The promise + URL box (Hero) and one small example result. That's it.
-// Pricing lives on /pricing; new users get a 3-question onboarding after sign-up.
-import Hero from "@/components/landing/Hero";
+// The home page: just the word "crawler" (huge, chunky) and one button.
+// The button starts the onboarding: 3 quick questions, then the first test.
+// (The intro animation that tears the page open lives in layout.tsx.)
+import Link from "next/link";
+import Claws from "@/components/Claws";
+import { Arrow } from "@/components/landing/UrlForm";
 
-// One example result, so visitors see what they'll get. (Made-up site, honest label.)
-const EXAMPLE = {
-  site: "mealmate.app",
-  buy: 46,
-  total: 100,
-  blocker: "Price hidden until signup",
-  fix: "Show the price on the homepage",
-  fixWins: 11,
-};
-
-export default function Landing() {
+export default function Home() {
   return (
-    <div className="space-y-16">
-      <Hero />
-
-      {/* ---------- One small example result ---------- */}
-      <section aria-label="Example result" className="card grid gap-6 p-6 sm:grid-cols-[auto_1fr_1fr] sm:items-center sm:gap-8">
-        <div>
-          <p className="t-label">example · {EXAMPLE.site}</p>
-          <p className="mt-2 flex items-baseline gap-1">
-            <span className="t-number text-5xl text-accent">{EXAMPLE.buy}</span>
-            <span className="text-faint">/ {EXAMPLE.total} would buy</span>
-          </p>
-        </div>
-        <div className="border-t border-line pt-4 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
-          <p className="t-label">biggest blocker</p>
-          <p className="mt-1 font-medium">{EXAMPLE.blocker}</p>
-        </div>
-        <div className="border-t border-line pt-4 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
-          <p className="t-label">fix first</p>
-          <p className="mt-1 font-medium">
-            {EXAMPLE.fix} <span className="text-accent-ink">+{EXAMPLE.fixWins}</span>
-          </p>
-        </div>
-      </section>
-    </div>
+    <section className="relative isolate flex min-h-[calc(100vh-14rem)] flex-col items-center justify-center text-center">
+      {/* faint claw scratches behind the word */}
+      <Claws
+        delay={0.3}
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[22rem] w-72 -translate-x-1/2 -translate-y-1/2 opacity-[0.12] sm:h-[34rem] sm:w-[28rem]"
+      />
+      <h1 className="t-wordmark rise">crawler</h1>
+      <Link href="/onboarding" className="btn btn-primary rise d2 mt-12 h-14 px-8 text-base">
+        Test my site
+        <Arrow />
+      </Link>
+    </section>
   );
 }

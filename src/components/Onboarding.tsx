@@ -4,8 +4,9 @@
 //   1. What's your site?            → the URL to test
 //   2. What is it, and when's launch? → saved to the account (for later features)
 //   3. Who is it for?               → pre-fills "who it's for" in the test
-// The answers are saved on the user's account (Supabase "user metadata"),
-// which also marks onboarding as done so it's only shown once.
+// It's the first thing new visitors see (the home page button), no account needed.
+// The answers are saved on the account (Supabase "user metadata"), which also marks
+// onboarding as done. Signed-out visitors sign up at the end (on the way to the test).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -30,15 +31,24 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
 
   async function finish() {
     setBusy(true);
+    const answers = { url, what, when, who: audience };
     if (AUTH_ENABLED) {
-      // Save the answers + "onboarded" on the account. If this fails, carry on anyway.
-      await supabaseBrowser()
-        .auth.updateUser({ data: { onboarded: true, onboarding: { url, what, when, who: audience } } })
-        .catch(() => null);
+      // Signed in: save the answers + "onboarded" on the account now.
+      // Signed out: keep them in this tab; the test page saves them right after sign-up.
+      const { data } = await supabaseBrowser().auth.getUser();
+      if (data.user) {
+        await supabaseBrowser().auth.updateUser({ data: { onboarded: true, onboarding: answers } }).catch(() => null);
+      } else {
+        try {
+          sessionStorage.setItem("crawler-onboarding", JSON.stringify(answers));
+        } catch {
+          // storage blocked: the answers just aren't saved to the account
+        }
+      }
     }
     const params = new URLSearchParams({ url: url.trim() });
     if (audience) params.set("for", audience);
-    router.push(`/app?${params}`); // the test wizard starts reading the site right away
+    router.push(`/app?${params}`); // signed out → sign-up first, then the test starts reading the site
   }
 
   function next(e: React.FormEvent) {

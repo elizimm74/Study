@@ -1,5 +1,5 @@
-/* Fonts: Geist (text + headlines) and Geist Mono (small labels). */
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap");
+/* Fonts: Geist (text + headlines), Geist Mono (small labels), Archivo 900 (the big "crawler" wordmark only). */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@900&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /*
@@ -529,4 +529,13 @@ input[type="range"] {
 .intro-open .intro-claws {
   opacity: 0;
   transform: scale(1.5);
+}
+
+/* ---------- The home page wordmark: huge, chunky "crawler" ---------- */
+.t-wordmark {
+  font-family: "Archivo", var(--font-sans);
+  font-weight: 900;
+  font-size: clamp(5rem, 21vw, 17rem);
+  letter-spacing: -0.065em;
+  line-height: 0.82;
 }
