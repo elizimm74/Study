@@ -44,6 +44,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <nav className="flex items-center gap-1 text-sm" aria-label="Main">
               {user ? (
                 <>
+                  <NavLink href="/pricing" className="hidden sm:inline-flex">
+                    Pricing
+                  </NavLink>
                   <NavLink href="/tests">My tests</NavLink>
                   <form action="/auth/signout" method="post" className="hidden sm:block">
                     <button className="btn btn-text text-sm">Sign out</button>
@@ -54,10 +57,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 </>
               ) : AUTH_ENABLED ? (
                 <>
-                  <NavLink href="/#how" className="hidden md:inline-flex">
-                    How it works
-                  </NavLink>
-                  <NavLink href="/#pricing" className="hidden md:inline-flex">
+                  <NavLink href="/pricing" className="hidden sm:inline-flex">
                     Pricing
                   </NavLink>
                   <NavLink href="/signin">Sign in</NavLink>
@@ -67,10 +67,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 </>
               ) : (
                 <>
-                  <NavLink href="/#how" className="hidden md:inline-flex">
-                    How it works
-                  </NavLink>
-                  <NavLink href="/#pricing" className="hidden md:inline-flex">
+                  <NavLink href="/pricing" className="hidden sm:inline-flex">
                     Pricing
                   </NavLink>
                   <Link href="/app" className="btn btn-secondary ml-1 text-sm">

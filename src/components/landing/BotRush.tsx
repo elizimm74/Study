@@ -246,7 +246,7 @@ export default function BotRush({ live }: { live?: Live }) {
             fill="#5f6780"
             fontFamily="var(--font-mono)"
           >
-            reading · 25 customers
+            reading · 100 customers
             <animate
               attributeName="opacity"
               values="1;1;0;0;1"

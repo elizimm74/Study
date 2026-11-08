@@ -25,7 +25,9 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     );
   }
 
-  const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  // New accounts go through the 3-question onboarding first (it then continues to `next`).
+  const after = mode === "signup" ? `/onboarding?next=${encodeURIComponent(next)}` : next;
+  const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(after)}`;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +42,7 @@ export default function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     if (error) return setMessage(friendly(error.message));
     // New accounts usually need to confirm their email first.
     if (mode === "signup" && !data.session) return setCheckEmail(true);
-    router.push(next);
+    router.push(after);
     router.refresh(); // update the header (signed in now)
   }
 

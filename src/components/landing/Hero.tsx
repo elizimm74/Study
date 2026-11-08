@@ -37,9 +37,9 @@ export default function Hero() {
           <br className="hidden lg:block" />
           before you launch.
         </h1>
-        <p className="t-lead rise d2 mt-8">
-          Paste your URL. Simulated customers click through your landing page, pricing and signup, then tell you whether
-          they&apos;d buy, what stopped them, and what would change their mind.
+        <p className="t-lead rise d2 mt-8 max-w-xl">
+          Paste your URL. 100 simulated customers try your landing page, pricing and signup, and tell you what&apos;s
+          stopping them.
         </p>
         <div className="rise d3 mt-8">
           <UrlForm id="hero-url" />

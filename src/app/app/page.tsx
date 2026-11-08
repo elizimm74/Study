@@ -72,7 +72,9 @@ function Wizard() {
       if (!res.ok) throw new Error(started.error);
       const data = await waitForCrawl(started.crawlId);
       setCrawl(data.crawl);
-      setProfile(data.profile);
+      // From onboarding (?for=...): the founder's own "who it's for" beats the AI's guess.
+      const forParam = params.get("for");
+      setProfile(forParam && data.profile ? { ...data.profile, whoItsFor: forParam } : data.profile);
       setExplore((e) => ({ ...e, task: data.profile?.tryTask || e.task, startUrl: data.crawl.url }));
       if (data.audience) {
         setSuggested(data.audience);
