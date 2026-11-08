@@ -17,8 +17,9 @@ const INTRO_SCRIPT = `try{var d=document.documentElement;d.dataset.intro=(sessio
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `${APP_NAME.toLowerCase()}: see why visitors won't buy`,
-  description: "Paste your URL. AI customers try your site and tell you who'd buy, who wouldn't, and what to fix.",
+  title: `${APP_NAME.toLowerCase()}: see what stops customers from buying, before you launch`,
+  description:
+    "Paste your URL. Simulated customers browse your landing page, pricing and signup and show what's stopping them from buying: buying-intent insights, not real purchases.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
