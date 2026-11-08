@@ -85,11 +85,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   );
 }
 
-// "crawler" with the hand-drawn asterisk mark in front.
+// "crawler" with the claw-scratch logo in front.
 function Logo({ small }: { small?: boolean }) {
   return (
     <Link href="/" className={`inline-flex min-h-11 items-center gap-2 font-medium tracking-tight text-fg ${small ? "text-sm" : "text-[17px]"}`}>
-      <Mark size={small ? 18 : 26} className="text-[#0e1873]" />
+      <Mark size={small ? 18 : 26} className="text-white" />
       {APP_NAME.toLowerCase()}
     </Link>
   );

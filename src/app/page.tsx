@@ -174,7 +174,7 @@ function SharePost() {
         <div className="flex h-full flex-col">
           <div className="flex justify-between font-mono text-xs text-[#8b8b94]">
             <span className="inline-flex items-center gap-1">
-              <Mark size={14} className="text-[#4d60f5]" /> crawler
+              <Mark size={14} className="text-white" /> crawler
             </span>
             <span>{EXAMPLE_SITE}</span>
           </div>

@@ -1,33 +1,23 @@
-// The Crawler mark: a hand-drawn asterisk, solid blue with a white border.
-// It's the logo from the design files, drawn as code so it stays sharp at any size.
-// `className="text-accent"` colors the blue part (it uses the current text color).
-import { useId } from "react";
+// The Crawler logo: three claw scratches (crawler → claws), tilted like a swipe.
+// A chunkier, still version of the animated scratches (Claws.tsx), so it stays
+// readable even tiny (header, browser tab).
+// It draws in the current text color: `className="text-white"` = white scratches.
+
+// Each scratch is a crescent: thin at both ends, thick in the middle.
+export const LOGO_SCRATCHES = [
+  "M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z",
+  "M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z",
+  "M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z",
+];
 
 export default function Mark({ size = 24, className = "" }: { size?: number; className?: string }) {
-  // Each copy needs its own filter id, so several marks on one page don't clash.
-  const id = useId().replace(/:/g, "");
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" className={className} aria-hidden>
-      <defs>
-        {/* hand-drawn edge: a little wobble on every outline */}
-        <filter id={`wobble-${id}`} x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="noise" />
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </defs>
-      <g filter={`url(#wobble-${id})`} fill="none" strokeLinecap="round">
-        {/* white border (draws first, so it sits underneath) */}
-        <g stroke="#ffffff" strokeWidth={104}>
-          <line x1="256" y1="110" x2="256" y2="402" />
-          <line x1="124" y1="186" x2="388" y2="326" />
-          <line x1="124" y1="326" x2="388" y2="186" />
-        </g>
-        {/* solid blue fill */}
-        <g stroke="currentColor" strokeWidth={84}>
-          <line x1="256" y1="110" x2="256" y2="402" />
-          <line x1="124" y1="186" x2="388" y2="326" />
-          <line x1="124" y1="326" x2="388" y2="186" />
-        </g>
+    <svg width={size} height={size} viewBox="0 0 120 120" className={className} fill="currentColor" aria-hidden>
+      {/* tilted 14° around the center, like a swipe */}
+      <g transform="rotate(14 60 60)">
+        {LOGO_SCRATCHES.map((d) => (
+          <path key={d} d={d} />
+        ))}
       </g>
     </svg>
   );
