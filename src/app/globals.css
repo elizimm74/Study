@@ -447,12 +447,14 @@ input[type="range"] {
 }
 .rise {
   animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* waits for the intro (if it plays) + its own stagger */
+  animation-delay: calc(var(--intro-delay, 0ms) + var(--d, 0ms));
 }
-.d1 { animation-delay: 80ms; }
-.d2 { animation-delay: 160ms; }
-.d3 { animation-delay: 240ms; }
-.d4 { animation-delay: 320ms; }
-.d5 { animation-delay: 420ms; }
+.d1 { --d: 80ms; }
+.d2 { --d: 160ms; }
+.d3 { --d: 240ms; }
+.d4 { --d: 320ms; }
+.d5 { --d: 420ms; }
 /* every page's content rises in gently when it opens */
 .page-enter {
   animation: rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -467,4 +469,56 @@ input[type="range"] {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: claw-draw 650ms cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+/* ---------- Intro: blue claws scratch a white page open (src/components/landing/Intro.tsx) ---------- */
+/* set before the page is drawn by the script in layout.tsx */
+[data-intro="play"] {
+  --intro-delay: 1150ms; /* the hero rises in after the page tears open */
+}
+[data-intro="skip"] .intro {
+  display: none;
+}
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #ffffff; /* solid backing until the tear, so no seam shows between the halves */
+}
+.intro-open {
+  pointer-events: none;
+  background: transparent;
+}
+/* the two halves of the white page; the jagged tear runs down the middle */
+.intro-half {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  transition: transform 800ms cubic-bezier(0.7, 0, 0.2, 1);
+}
+.intro-left {
+  clip-path: polygon(0 0, 54% 0, 50% 11%, 55% 21%, 48% 33%, 53% 45%, 46% 57%, 51% 69%, 44% 81%, 49% 91%, 45% 100%, 0 100%);
+}
+.intro-right {
+  clip-path: polygon(54% 0, 100% 0, 100% 100%, 45% 100%, 49% 91%, 44% 81%, 51% 69%, 46% 57%, 53% 45%, 48% 33%, 55% 21%, 50% 11%);
+}
+.intro-open .intro-left {
+  transform: translateX(-65%) rotate(-4deg);
+}
+.intro-open .intro-right {
+  transform: translateX(65%) rotate(4deg);
+}
+.intro-claws {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity 350ms,
+    transform 700ms cubic-bezier(0.7, 0, 0.2, 1);
+}
+.intro-open .intro-claws {
+  opacity: 0;
+  transform: scale(1.5);
 }

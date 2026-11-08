@@ -6,6 +6,11 @@ import { APP_NAME } from "@/lib/config";
 import { currentUser } from "@/lib/supabase/server";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import Mark from "@/components/Mark";
+import Intro from "@/components/landing/Intro";
+
+// Runs before the page is drawn: should the landing intro play? Once per tab,
+// and never for people who turned off animations. (See src/components/landing/Intro.tsx.)
+const INTRO_SCRIPT = `try{var d=document.documentElement;d.dataset.intro=(sessionStorage.getItem("crawler-intro-seen")||matchMedia("(prefers-reduced-motion: reduce)").matches)?"skip":"play"}catch(e){document.documentElement.dataset.intro="skip"}`;
 
 // Build every page fresh for each visitor, so the header always shows
 // whether THIS person is signed in.
@@ -20,9 +25,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const user = await currentUser();
 
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the intro script below adds data-intro to <html> before React loads.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+      </head>
       {/* flex column: the footer stays at the bottom even on short pages */}
       <body className="flex min-h-screen flex-col">
+        {/* home page only: blue claws scratch a white page open */}
+        <Intro />
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-bg focus:p-4">
           Skip to content
         </a>

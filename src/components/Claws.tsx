@@ -26,7 +26,7 @@ const SCRATCHES = [
   },
 ];
 
-export default function Claws({ className = "", delay = 0 }: { className?: string; delay?: number }) {
+export default function Claws({ className = "", delay = 0, color = "#ffffff" }: { className?: string; delay?: number; color?: string }) {
   // unique ids, so several sets of claws on one page don't share masks
   const id = useId().replace(/:/g, "");
   const ref = useRef<SVGSVGElement>(null);
@@ -47,7 +47,7 @@ export default function Claws({ className = "", delay = 0 }: { className?: strin
     return () => io.disconnect();
   }, []);
   return (
-    <svg ref={ref} viewBox="0 0 184 230" className={`rotate-[16deg] ${className}`} fill="#ffffff" aria-hidden>
+    <svg ref={ref} viewBox="0 0 184 230" className={`rotate-[16deg] ${className}`} fill={color} aria-hidden>
       <defs>
         {SCRATCHES.map((s, i) => (
           <mask key={i} id={`claw-${id}-${i}`} maskUnits="userSpaceOnUse">
