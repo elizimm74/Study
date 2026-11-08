@@ -446,6 +446,12 @@ async function waitForCrawl(crawlId: string) {
     if (!res.ok) throw new Error(data.error);
     if (data.status === "done") return data;
     if (data.status === "error") throw new Error(data.error ?? "Couldn't read that site.");
+    // On your own computer: still "queued" after ~30s means no worker picked it up,
+    // i.e. the worker isn't running. Say so right away instead of spinning for 3 minutes.
+    // (Only in development; real users never see this.)
+    if (process.env.NODE_ENV === "development" && data.status === "queued" && i >= 20) {
+      throw new Error("No worker picked this up after 30 seconds. Start it in a second Terminal window: npm run worker:dev");
+    }
   }
   throw new Error("Reading the site is taking too long. Is the worker running?");
 }
