@@ -479,7 +479,15 @@ input[type="range"] {
 [data-intro="skip"] .intro {
   display: none;
 }
+/* Safety net: this runs in CSS, not JavaScript, so the white overlay always goes away
+   (about 2.6s) even if the script never runs. It can never trap the page. */
+@keyframes intro-failsafe {
+  to {
+    display: none;
+  }
+}
 .intro {
+  animation: intro-failsafe 0s linear 2.6s forwards;
   position: fixed;
   inset: 0;
   z-index: 100;
