@@ -1,6 +1,8 @@
-// The home page's scroll section: every feature, one at a time, on white paper
-// with blue text and blue claw scratches. Each block slowly rises into view
-// as you scroll (<Reveal>). All examples are made up and labeled as examples.
+// The home page's scroll section: a white sheet that slides up over the blue
+// "crawler" screen, then every feature one at a time with blue text, big blue
+// numbers, and every other picture on a solid blue card. A blue stats band
+// runs across the middle. Each block slowly rises into view as you scroll
+// (<Reveal>). All examples are made up and labeled as examples.
 import Link from "next/link";
 import Reveal from "../Reveal";
 import Claws from "../Claws";
@@ -8,55 +10,66 @@ import { Arrow } from "./UrlForm";
 
 const BLUE = "#1a2aa6";
 
-type Feature = { n: string; title: string; text: string; visual: React.ReactNode };
+type Feature = { n: string; title: string; text: string; visual: (blue: boolean) => React.ReactNode };
 
 const FEATURES: Feature[] = [
   {
     n: "01",
     title: "Paste one link.",
     text: "Crawler opens your landing page, finds your pricing and signup, and reads them like a first-time visitor.",
-    visual: <LinkVisual />,
+    visual: (blue) => <LinkVisual blue={blue} />,
   },
   {
     n: "02",
     title: "100 customers walk in.",
     text: "Simulated people with different ages, budgets, devices and patience. Each one decides: buy, maybe, or leave.",
-    visual: <CrowdVisual />,
+    visual: (blue) => <CrowdVisual blue={blue} />,
   },
   {
     n: "03",
     title: "It actually tries your product.",
     text: "An AI explorer clicks, types and scrolls through your app like a new user, and notes where it gets stuck.",
-    visual: <ExplorerVisual />,
+    visual: (blue) => <ExplorerVisual blue={blue} />,
   },
   {
     n: "04",
     title: "See what stopped them.",
     text: "Every “no” comes with a reason. They’re grouped, counted, and tied to the step where people gave up.",
-    visual: <BlockersVisual />,
+    visual: (blue) => <BlockersVisual blue={blue} />,
   },
   {
     n: "05",
     title: "Fixes, ranked.",
     text: "The changes that would win back the most people, in order, with rewritten copy you can paste in.",
-    visual: <FixesVisual />,
+    visual: (blue) => <FixesVisual blue={blue} />,
   },
   {
     n: "06",
     title: "What people say online.",
     text: "Optionally pulls real reviews from Reddit, app stores and review sites into the verdict.",
-    visual: <ReviewsVisual />,
+    visual: (blue) => <ReviewsVisual blue={blue} />,
+  },
+  {
+    n: "07",
+    title: "Apps too.",
+    text: "Drop in your onboarding and paywall screenshots. See which screen loses people, check App Store rules, and A/B test two paywalls on the same customers.",
+    visual: (blue) => <AppVisual blue={blue} />,
   },
 ];
 
 export default function Features() {
   return (
-    <section id="features" className="paper features bleed scroll-mt-16 overflow-x-clip py-24 sm:py-32">
+    // relative z-10: paints OVER the sticky blue screen. The shadow sits on the torn top edge.
+    <section id="features" className="paper features bleed sheet relative z-10 scroll-mt-16 overflow-x-clip py-24 sm:py-32">
       <div className="page space-y-32 sm:space-y-48">
         {FEATURES.map((f, i) => (
-          <article key={f.n} className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
+          <div key={f.n} className="space-y-32 sm:space-y-48">
+          {i === 3 && <StatsBand />}
+          <article className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
             <Reveal className={i % 2 ? "md:order-2" : ""}>
-              <p className="t-label">{f.n} —</p>
+              <p className="t-number text-6xl text-accent sm:text-7xl" aria-hidden>
+                {f.n}
+              </p>
               <h2 className="t-chunk mt-4">{f.title}</h2>
               <p className="t-lead mt-6 max-w-md">{f.text}</p>
             </Reveal>
@@ -65,9 +78,10 @@ export default function Features() {
               {i % 2 === 0 && (
                 <Claws color={BLUE} className="pointer-events-none absolute right-0 -top-12 -z-0 h-48 w-40 opacity-[0.12] sm:-right-6" />
               )}
-              <div className="relative">{f.visual}</div>
+              <div className="relative">{f.visual(i % 2 === 1)}</div>
             </Reveal>
           </article>
+          </div>
         ))}
 
         {/* honest note + the one button */}
@@ -88,11 +102,37 @@ export default function Features() {
   );
 }
 
+// A full-width blue band across the white sheet, with torn edges.
+function StatsBand() {
+  const stats: [string, string][] = [
+    ["100", "simulated customers per test"],
+    ["3", "crowds per app test, for an honest range"],
+    ["0", "credit cards needed to try it"],
+  ];
+  return (
+    <Reveal>
+      <div className="blue-band bleed py-24 text-white sm:py-32">
+        <div className="page grid gap-12 sm:grid-cols-3">
+          {stats.map(([n, label]) => (
+            <div key={label}>
+              {/* inline size: .t-wordmark sets its own (much bigger) size */}
+              <p className="t-wordmark" style={{ fontSize: "clamp(4.5rem, 9vw, 8rem)" }}>
+                {n}
+              </p>
+              <p className="mt-4 max-w-[16rem] text-lg text-[#d6dbff]">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
 // ---------- the little pictures (all made-up examples) ----------
 
-function Frame({ children, label }: { children: React.ReactNode; label: string }) {
+function Frame({ children, label, blue }: { children: React.ReactNode; label: string; blue: boolean }) {
   return (
-    <div className="card-raised p-6 sm:p-8">
+    <div className={`${blue ? "card-blue" : "card-raised"} p-6 sm:p-8`}>
       <p className="t-label mb-6">{label}</p>
       {children}
     </div>
@@ -101,7 +141,7 @@ function Frame({ children, label }: { children: React.ReactNode; label: string }
 
 function CheckDot({ ok = true }: { ok?: boolean }) {
   return (
-    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${ok ? "bg-accent text-white" : "bg-raised text-faint"}`} aria-hidden>
+    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${ok ? "bg-accent text-accent-fg" : "bg-raised text-faint"}`} aria-hidden>
       <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
         <path d={ok ? "M3.5 8.5l3 3 6-7" : "M4.5 4.5l7 7M11.5 4.5l-7 7"} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -109,9 +149,9 @@ function CheckDot({ ok = true }: { ok?: boolean }) {
   );
 }
 
-function LinkVisual() {
+function LinkVisual({ blue }: { blue: boolean }) {
   return (
-    <Frame label="example">
+     <Frame blue={blue} label="example">
       <div className="field flex items-center text-sm">
         <span className="field-prefix mr-1 font-mono text-xs">https://</span>mealmate.app
       </div>
@@ -133,11 +173,11 @@ function LinkVisual() {
   );
 }
 
-function CrowdVisual() {
+function CrowdVisual({ blue }: { blue: boolean }) {
   // 100 dots: 38 buy, 22 maybe, 40 no
   const dots = Array.from({ length: 100 }, (_, i) => (i < 38 ? "buy" : i < 60 ? "maybe" : "no"));
   return (
-    <Frame label="example · 100 simulated customers">
+     <Frame blue={blue} label="example · 100 simulated customers">
       <div className="grid grid-cols-10 gap-2" role="img" aria-label="38 would buy, 22 maybe, 40 no">
         {dots.map((d, i) => (
           <span
@@ -155,7 +195,7 @@ function CrowdVisual() {
   );
 }
 
-function ExplorerVisual() {
+function ExplorerVisual({ blue }: { blue: boolean }) {
   const steps: [string, boolean][] = [
     ["Opened the app", true],
     ["Typed a meal plan request", true],
@@ -163,7 +203,7 @@ function ExplorerVisual() {
     ["Hit a paywall before seeing results", false],
   ];
   return (
-    <Frame label="example · explorer, 4 steps · 21s">
+     <Frame blue={blue} label="example · explorer, 4 steps · 21s">
       <ol className="space-y-4">
         {steps.map(([s, ok], i) => (
           <li key={s} className="flex items-center gap-4 text-sm">
@@ -177,7 +217,7 @@ function ExplorerVisual() {
   );
 }
 
-function BlockersVisual() {
+function BlockersVisual({ blue }: { blue: boolean }) {
   const rows: [string, number][] = [
     ["Price hidden until signup", 34],
     ["Not sure it's trustworthy", 22],
@@ -185,7 +225,7 @@ function BlockersVisual() {
     ["Signup asks too much", 12],
   ];
   return (
-    <Frame label="example · why people said no">
+     <Frame blue={blue} label="example · why people said no">
       <ul className="space-y-6">
         {rows.map(([r, pct]) => (
           <li key={r}>
@@ -203,14 +243,14 @@ function BlockersVisual() {
   );
 }
 
-function FixesVisual() {
+function FixesVisual({ blue }: { blue: boolean }) {
   const fixes: [string, number][] = [
     ["Show the price on the homepage", 11],
     ["Add a free week, no card", 7],
     ["Cut signup to email only", 4],
   ];
   return (
-    <Frame label="example · fix these first">
+     <Frame blue={blue} label="example · fix these first">
       <ol className="divide-y divide-line">
         {fixes.map(([f, n], i) => (
           <li key={f} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
@@ -224,14 +264,14 @@ function FixesVisual() {
   );
 }
 
-function ReviewsVisual() {
+function ReviewsVisual({ blue }: { blue: boolean }) {
   const reviews: [string, string][] = [
     ["Reddit", "“Love the recipes, but the price isn't clear.”"],
     ["App Store", "“Great idea, onboarding was confusing.”"],
     ["Review site", "“Saved me hours of planning every week.”"],
   ];
   return (
-    <Frame label="example · what people say online">
+     <Frame blue={blue} label="example · what people say online">
       <ul className="space-y-4">
         {reviews.map(([src, q]) => (
           <li key={src} className="rounded-lg border border-line p-4 text-sm">
@@ -240,6 +280,32 @@ function ReviewsVisual() {
           </li>
         ))}
       </ul>
+    </Frame>
+  );
+}
+
+function AppVisual({ blue }: { blue: boolean }) {
+  const screens: [string, number][] = [
+    ["Welcome", 4],
+    ["Goals", 9],
+    ["Notifications", 21],
+    ["Paywall", 38],
+  ];
+  return (
+    <Frame blue={blue} label="example · where people quit">
+      <ol className="grid grid-cols-4 gap-2">
+        {screens.map(([name, quit], i) => (
+          <li key={name}>
+            <div className={`flex aspect-[9/16] flex-col rounded-lg border p-2 ${i === 3 ? "border-fg" : "border-line"}`} aria-hidden>
+              <span className="block h-1.5 w-3/4 rounded bg-accent" />
+              <span className="mt-1.5 block h-1.5 w-1/2 rounded bg-raised" />
+              <span className="mt-auto block h-3 w-full rounded bg-accent" />
+            </div>
+            <p className="t-label mt-2 truncate">{name}</p>
+            <p className="t-number text-lg">−{quit}%</p>
+          </li>
+        ))}
+      </ol>
     </Frame>
   );
 }

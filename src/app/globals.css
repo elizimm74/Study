@@ -596,3 +596,52 @@ html {
   --bg-subtle: #f3f5fd;
   --bg-raised: #e6eafb;
 }
+
+/* ---------- More blue inside the white features sheet ---------- */
+/* .card-blue: a solid logo-blue card with white text (the blue page's colors). */
+.card-blue {
+  --bg: #1a2aa6;
+  --bg-subtle: #2333b2;
+  --bg-raised: #3442c2;
+  --fg: #ffffff;
+  --fg-muted: #d6dbff;
+  --fg-faint: #aeb7f6;
+  --line: #3f4dbd;
+  --line-strong: #6b76d6;
+  --accent: #ffffff;
+  --accent-fg: #1a2aa6;
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgb(5 10 60 / 0.2), 0 32px 64px -24px rgb(26 42 166 / 0.6);
+}
+/* .blue-band: a full-width blue strip across the white sheet, torn at top and bottom
+   (the same torn-edge shape as .paper, in blue). */
+.blue-band {
+  position: relative;
+  background: #1a2aa6;
+}
+.blue-band::before,
+.blue-band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: #1a2aa6;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 18'%3E%3Cpath d='M0 18V9l6-5 5 6 6-8 7 6 6-4 7 8 7-6 6 4 7-8 6 6 7-4 7 7 7-6 6 4 7-6 7 7 7-4 7 6L120 9V18z'/%3E%3C/svg%3E") repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 18'%3E%3Cpath d='M0 18V9l6-5 5 6 6-8 7 6 6-4 7 8 7-6 6 4 7-8 6 6 7-4 7 7 7-6 6 4 7-6 7 7 7-4 7 6L120 9V18z'/%3E%3C/svg%3E") repeat-x;
+  -webkit-mask-size: 120px 18px;
+  mask-size: 120px 18px;
+}
+.blue-band::before {
+  top: -17px;
+}
+.blue-band::after {
+  bottom: -17px;
+  transform: scaleY(-1);
+}
+/* the white sheet that slides over the blue home screen: a soft shadow on its torn top edge */
+.sheet {
+  filter: drop-shadow(0 -24px 32px rgb(5 10 60 / 0.35));
+}
