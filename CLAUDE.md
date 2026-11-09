@@ -166,3 +166,10 @@ ranked fixes, quotes). Show me the actual cost of each run in the console.
 - Payments: founder is 15. Stripe/Whop payouts need an adult (18+) account owner, so a parent/guardian must open the account. Stripe plan (Supabase Edge Functions for checkout + webhook, purchases table, tests_bought) is proposed and waiting on that.
 - NEXT: Stripe (one-time Checkout for the packs + webhook that adds tests to the account).
 - Next up: founder tests on real sites; then Milestone 2 (re-run on the same personas, before/after, honest score range, scorecard image).
+- APP TESTING PHASE 1 BUILT (2026-11-09, founder: "as accurate as possible"). Plan + file map: `docs/app-testing-plan.md`.
+  - Flow: /app ALWAYS starts with the questions (founder: "questions first, then analyze"): Q1 = website or app (+ URL), Q2 what/when, Q3 who. Website -> /app?url= (analysis starts); App -> /app?kind=app -> upload screenshots (shrunk in the browser to 1568px JPEG, uploaded to screenshots/{uid}/uploads/{batch}/1.jpg, b1.jpg for version B) -> review screen labels + paywall facts (live store-rule checks) -> audience + iPhone % + where they found it -> launch.
+  - Engine: Haiku labels screens + profile + audience; Sonnet reads paywall facts; 3 samples x 100 customers walk the flow (Haiku, cached images); contradictions fixed in code (normalize.ts); counted in code (range, drop-off per screen, paired A/B sign test: clear win / slight edge / too close to call); benchmark FLAG vs RevenueCat 2025 (median 6.2%, top 10% 20.3% download->trial); Sonnet fixes + paywall copy, win-back counts in code. Store rules say "may be flagged", never "will be rejected".
+  - Migration 0003 applied (upload policy + start_app_analyze). Tests list shows "App onboarding + paywall".
+  - "Reading" screen redesigned: `src/components/Working.tsx` (compact 2 columns, checklist + progress + BotRush) for both website and app. Shared wizard pieces in `src/components/wizard.tsx`.
+  - The founder's account (elizimm44@gmail.com) is now is_admin = unlimited tests.
+  - NOT tested with real AI yet. Next: founder runs an app test on their Mac.

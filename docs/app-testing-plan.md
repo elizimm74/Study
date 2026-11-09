@@ -1,6 +1,10 @@
 # App testing: onboarding + paywalls (Phase 1 plan)
 
-Status: PROPOSED, waiting for the founder's OK. Nothing below is built yet.
+Status: BUILT (2026-11-09), approved by the founder. Not yet tested with real AI calls (needs the founder's Mac + key).
+Code: `src/lib/app/*` (read, personas, evaluate, normalize, aggregate, report, pipeline, checks, validate),
+`src/components/app/*` (AppWizard, PaywallEditor, AppReport), `src/app/api/app-crawls`, worker branches in `src/worker/jobs.ts`,
+bench `scripts/app-bench.cjs` (27 checks, part of `npm run bench`). Notes: Haiku/Sonnet 5.5 don't accept temperature 0,
+so consistency comes from strict schemas + low effort; paired A/B shows A first in half the batches and B first in the other half.
 
 ## Goal
 Founders upload their app's onboarding + paywall screens and get: which screen loses people and why,

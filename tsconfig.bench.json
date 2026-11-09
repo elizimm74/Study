@@ -9,5 +9,5 @@
     "outDir": ".bench-build",
     "rootDir": "src"
   },
-  "files": ["src/lib/crawl.ts", "src/lib/explore.ts"]
+  "files": ["src/lib/crawl.ts", "src/lib/explore.ts", "src/lib/app/checks.ts", "src/lib/app/normalize.ts", "src/lib/app/aggregate.ts", "src/lib/app/validate.ts"]
 }

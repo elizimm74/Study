@@ -6,6 +6,8 @@ import { requireUser, jsonError } from "@/lib/supabase/api";
 import { encryptJson } from "@/lib/crypto";
 import { normalizeUrl } from "@/lib/urls";
 import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/lib/types";
+import type { AppAnalysis, AppSettings } from "@/lib/app/types";
+import { cleanAppSettings } from "@/lib/app/validate";
 
 const PERSONA_COUNT = 100; // the Free plan's size
 
@@ -19,8 +21,21 @@ export async function POST(req: Request) {
     explore?: ExploreSettings;
     credentials?: Credentials;
     ownsProduct?: boolean;
+    app?: Partial<AppSettings>; // app tests: the confirmed screens + paywall facts
   } | null;
   if (!body?.crawlId || !body.audience || !body.profile) return jsonError("Missing the analysis, audience or product profile.");
+
+  // ---------- App test ----------
+  if (body.app) {
+    // Only the screen files of YOUR saved analysis are accepted (RLS: own rows only).
+    const { data: row } = await auth.supabase.from("crawls").select("data").eq("id", body.crawlId).maybeSingle();
+    const analysis = row?.data as AppAnalysis | undefined;
+    if (analysis?.kind !== "app") return jsonError("That app analysis was not found. Upload your screens again.");
+    const app = cleanAppSettings(body.app, analysis.input.screens, analysis.input.screensB);
+    if (!app.sources.length) return jsonError("Pick at least one place people find your app.");
+    const settings = { kind: "app", profile: body.profile, audience: body.audience, app, count: PERSONA_COUNT };
+    return startTest(auth.supabase, body.crawlId, settings, null);
+  }
 
   // "Try the product" settings.
   let explore: ExploreSettings | undefined;
@@ -54,8 +69,18 @@ export async function POST(req: Request) {
   }
 
   const settings = { profile: body.profile, audience: body.audience, explore, count: PERSONA_COUNT };
-  const { data, error } = await auth.supabase.rpc("start_test", {
-    p_crawl_id: body.crawlId,
+  return startTest(auth.supabase, body.crawlId, settings, secret);
+}
+
+// start_test checks your plan's limit and queues the job, in one transaction.
+async function startTest(
+  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  crawlId: string,
+  settings: object,
+  secret: string | null,
+) {
+  const { data, error } = await supabase!.rpc("start_test", {
+    p_crawl_id: crawlId,
     p_settings: settings,
     p_secret: secret,
   });

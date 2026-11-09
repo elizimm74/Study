@@ -1,4 +1,4 @@
-// GET /api/files/{userId}/{crawls|tests}/{id}/{file}.jpg
+// GET /api/files/{userId}/{crawls|tests|uploads}/{id}/{file}.jpg
 // Sends the browser to a short-lived signed link for a screenshot, but only if
 // it's yours (checked here AND by the storage rules in the database).
 import { NextResponse } from "next/server";
@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ path: s
   const valid =
     path.length === 4 &&
     userId === auth.user.id &&
-    (kind === "crawls" || kind === "tests") &&
+    (kind === "crawls" || kind === "tests" || kind === "uploads") &&
     /^[a-z0-9]+$/.test(id) &&
     /^[a-z0-9-]+\.jpg$/.test(file);
   if (!valid) return jsonError("Not found.", 404);

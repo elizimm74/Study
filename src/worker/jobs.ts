@@ -8,6 +8,9 @@ import { logRunCost } from "../lib/cost";
 import { decryptJson } from "../lib/crypto";
 import type { BlobStore } from "../lib/blobs";
 import type { Audience, Crawl, Credentials, ExploreSettings, ProductProfile } from "../lib/types";
+import { readApp } from "../lib/app/read";
+import { runAppTest, type AppRun } from "../lib/app/pipeline";
+import type { AppAnalysis, AppInput, AppSettings } from "../lib/app/types";
 
 export type Job = {
   id: number;
@@ -30,13 +33,16 @@ export type TestSettings = {
   audience: Audience;
   explore?: ExploreSettings;
   count?: number;
+  kind?: "website" | "app";
+  app?: AppSettings; // only for app tests
 };
 
 // ---------- analyze: crawl the site, then understand it ----------
 export async function analyzeJob(job: Job, ctx: Ctx) {
-  const { data: row, error } = await ctx.db.from("crawls").select("url").eq("id", job.ref_id).single();
+  const { data: row, error } = await ctx.db.from("crawls").select("url, data").eq("id", job.ref_id).single();
   if (error || !row) throw new Error(`crawl ${job.ref_id} not found`);
   await ctx.db.from("crawls").update({ status: "running", updated_at: now() }).eq("id", job.ref_id);
+  if (row.url.startsWith("app://")) return analyzeAppJob(job, ctx, (row.data as { input: AppInput }).input);
 
   let crawl: Crawl;
   try {
@@ -67,11 +73,40 @@ export async function analyzeJob(job: Job, ctx: Ctx) {
   if (saveError) throw new Error(`couldn't save crawl: ${saveError.message}`);
 }
 
+// ---------- analyze (app): read the uploaded screenshots ----------
+async function analyzeAppJob(job: Job, ctx: Ctx, input: AppInput) {
+  const filesPrefix = `${job.user_id}/uploads/${input.batch}`;
+  let data: AppAnalysis;
+  try {
+    const r = await readApp(input, { store: ctx.store, prefix: filesPrefix });
+    logRunCost(`analyze app ${job.ref_id}`, r.costs);
+    data = { kind: "app", input, filesPrefix, ...r };
+  } catch (err) {
+    // Still let the founder label the screens by hand.
+    const blank = (file: string) => ({ file, type: "other" as const, title: "", summary: "", asks: [], cta: "", canSkip: false });
+    data = {
+      kind: "app",
+      input,
+      filesPrefix,
+      screens: input.screens.map(blank),
+      screensB: input.screensB.map((f) => ({ ...blank(f), type: "paywall" as const })),
+      paywall: null,
+      paywallB: null,
+      profile: { ...EMPTY_PROFILE, goal: "start a free trial" },
+      audience: null,
+      suggestError: (err as Error).message,
+    };
+  }
+  const { error } = await ctx.db.from("crawls").update({ status: "done", data, updated_at: now() }).eq("id", job.ref_id);
+  if (error) throw new Error(`couldn't save app analysis: ${error.message}`);
+}
+
 // ---------- run: the full test ----------
 export async function runJob(job: Job, ctx: Ctx) {
   const { data: test, error } = await ctx.db.from("tests").select("id, crawl_id, data").eq("id", job.ref_id).single();
   if (error || !test) throw new Error(`test ${job.ref_id} not found`);
   const settings = (test.data as { settings: TestSettings }).settings;
+  if (settings.kind === "app") return runAppJob(job, ctx, test.crawl_id, settings);
   const { data: crawlRow } = await ctx.db.from("crawls").select("data").eq("id", test.crawl_id).single();
   const crawl = (crawlRow?.data as CrawlData | undefined)?.crawl;
   if (!crawl) throw new Error(`crawl ${test.crawl_id} has no data`);
@@ -134,6 +169,60 @@ export async function runJob(job: Job, ctx: Ctx) {
     .eq("id", job.ref_id);
   if (saveError) throw new Error(`couldn't save test: ${saveError.message}`);
   ctx.log("test finished", { test: job.ref_id, status: run.status, score: run.stats?.buy, costUsd: run.totalCostUsd });
+}
+
+// ---------- run (app) ----------
+async function runAppJob(job: Job, ctx: Ctx, crawlId: string, settings: TestSettings) {
+  const { data: crawlRow } = await ctx.db.from("crawls").select("url, data").eq("id", crawlId).single();
+  const analysis = crawlRow?.data as AppAnalysis | undefined;
+  if (!analysis || !settings.app) throw new Error(`app analysis ${crawlId} has no data`);
+
+  let lastSave = 0;
+  let lastStage = "";
+  let pending: Promise<unknown> = Promise.resolve();
+  const saveProgress = (run: AppRun) => {
+    const t = Date.now();
+    if (run.stage === lastStage && t - lastSave < 1000) return;
+    lastSave = t;
+    lastStage = run.stage;
+    const update = { status: "running", stage: run.stage, progress: { done: run.progress.done, total: run.progress.total }, updated_at: now() };
+    pending = pending.then(() => ctx.db.from("tests").update(update).eq("id", job.ref_id));
+  };
+
+  const run = await runAppTest(
+    {
+      id: job.ref_id,
+      userId: job.user_id,
+      crawlId,
+      url: crawlRow!.url,
+      screensPrefix: analysis.filesPrefix,
+      settings: settings.app,
+      profile: settings.profile,
+      audience: settings.audience,
+      perSample: settings.count ?? 100,
+    },
+    { store: ctx.store, onChange: saveProgress },
+  );
+  await pending;
+  if (run.error) ctx.log("app test error", { test: job.ref_id, error: run.error });
+  // The headline is the middle sample: "X of 100 would start a trial".
+  const middle = run.stats ? [...run.stats.converts].sort((a, b) => a - b)[Math.floor((run.stats.converts.length - 1) / 2)] : null;
+  const { error: saveError } = await ctx.db
+    .from("tests")
+    .update({
+      status: run.status,
+      stage: run.stage,
+      error: run.error ? "Something went wrong on our side while running this test. It didn't use up your plan; please try again." : null,
+      score: middle,
+      total: run.stats?.perSample ?? settings.count ?? 100,
+      cost_usd: run.totalCostUsd ?? null,
+      progress: null,
+      data: run,
+      updated_at: now(),
+    })
+    .eq("id", job.ref_id);
+  if (saveError) throw new Error(`couldn't save test: ${saveError.message}`);
+  ctx.log("app test finished", { test: job.ref_id, status: run.status, score: middle, costUsd: run.totalCostUsd });
 }
 
 // When a job can't be finished: tell the user on their crawl / test.

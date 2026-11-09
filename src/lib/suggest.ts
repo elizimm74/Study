@@ -21,17 +21,8 @@ import {
 } from "./types";
 
 // The exact JSON shape we require back. The API is forced to follow it.
-const UnderstandSchema = z.object({
-  // --- product profile ---
-  goal: z.enum(GOALS),
-  whatItIs: z.string(),
-  whoItsFor: z.string(),
-  mainPromise: z.string(),
-  prices: z.array(z.string()),
-  proof: z.array(z.string()),
-  friction: z.array(z.string()),
-  tryTask: z.string(),
-  // --- suggested audience ---
+// The suggested-audience fields. Shared with app tests (src/lib/app/read.ts).
+export const AudienceFields = {
   mode: z.enum(["consumer", "business"]),
   ageMin: z.number(),
   ageMax: z.number(),
@@ -52,7 +43,55 @@ const UnderstandSchema = z.object({
   decisionSelfPct: z.number(),
   companySizes: z.array(z.enum(COMPANY_SIZES)),
   industries: z.array(z.string()),
+};
+type AudienceAnswer = { [K in keyof typeof AudienceFields]: z.infer<(typeof AudienceFields)[K]> };
+
+// The exact JSON shape we require back. The API is forced to follow it.
+const UnderstandSchema = z.object({
+  // --- product profile ---
+  goal: z.enum(GOALS),
+  whatItIs: z.string(),
+  whoItsFor: z.string(),
+  mainPromise: z.string(),
+  prices: z.array(z.string()),
+  proof: z.array(z.string()),
+  friction: z.array(z.string()),
+  tryTask: z.string(),
+  // --- suggested audience ---
+  ...AudienceFields,
 });
+
+// The AI's audience answer -> our Audience shape (with sane limits).
+export function toAudience(s: AudienceAnswer): Audience {
+  return {
+    mode: s.mode,
+    ageMin: clamp(Math.round(s.ageMin), 13, 90),
+    ageMax: clamp(Math.round(s.ageMax), 13, 90),
+    ageSkew: s.ageSkew,
+    genderSplit: { female: s.femalePct, male: s.malePct, nonbinary: s.nonbinaryPct },
+    countries: s.countries,
+    areaMix: { urban: s.urbanPct, suburban: s.suburbanPct, rural: s.ruralPct },
+    occupations: s.occupations,
+    budgets: s.budgets,
+    mindsets: s.mindsets,
+    techComfort: s.techComfort,
+    currentSolutions: s.currentSolutions,
+    business: {
+      roles: s.businessRoles,
+      decisionSelfPct: clamp(Math.round(s.decisionSelfPct), 0, 100),
+      companySizes: s.companySizes,
+      industries: s.industries,
+    },
+  };
+}
+
+// The audience instructions, shared with app tests.
+export const AUDIENCE_INSTRUCTIONS =
+  `- mode: "business" if buyers purchase for a company/team (B2B), else "consumer".\n` +
+  `- Percentages in each group should add up to about 100.\n` +
+  `- budgets: how much they can comfortably spend (tight / okay / comfortable).\n` +
+  `- Give 3-6 occupations and 2-4 current solutions (competitors or workarounds).\n` +
+  `- For consumer products, leave the business fields as empty lists and decisionSelfPct 50.`;
 
 export async function understandSite(
   crawl: Crawl,
@@ -92,11 +131,7 @@ export async function understandSite(
           `- tryTask: one short, concrete first task a new user would try IN the product to see if it's good, ` +
           `e.g. "Find a birthday card template and open it" or "Describe a habit tracker app and see what it builds".\n\n` +
           `PART 2 — Most likely target customer. Fill in every field.\n` +
-          `- mode: "business" if buyers purchase for a company/team (B2B), else "consumer".\n` +
-          `- Percentages in each group should add up to about 100.\n` +
-          `- budgets: how much they can comfortably spend (tight / okay / comfortable).\n` +
-          `- Give 3-6 occupations and 2-4 current solutions (competitors or workarounds).\n` +
-          `- For consumer products, leave the business fields as empty lists and decisionSelfPct 50.`,
+          AUDIENCE_INSTRUCTIONS,
       },
     ],
   });
@@ -115,26 +150,7 @@ export async function understandSite(
     friction: s.friction,
     tryTask: s.tryTask,
   };
-  const audience: Audience = {
-    mode: s.mode,
-    ageMin: clamp(Math.round(s.ageMin), 13, 90),
-    ageMax: clamp(Math.round(s.ageMax), 13, 90),
-    ageSkew: s.ageSkew,
-    genderSplit: { female: s.femalePct, male: s.malePct, nonbinary: s.nonbinaryPct },
-    countries: s.countries,
-    areaMix: { urban: s.urbanPct, suburban: s.suburbanPct, rural: s.ruralPct },
-    occupations: s.occupations,
-    budgets: s.budgets,
-    mindsets: s.mindsets,
-    techComfort: s.techComfort,
-    currentSolutions: s.currentSolutions,
-    business: {
-      roles: s.businessRoles,
-      decisionSelfPct: clamp(Math.round(s.decisionSelfPct), 0, 100),
-      companySizes: s.companySizes,
-      industries: s.industries,
-    },
-  };
+  const audience = toAudience(s);
 
   return { profile, audience, cost: costOfCall("understand site", response.model, response.usage) };
 }

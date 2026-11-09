@@ -5,6 +5,8 @@ import { use, useEffect, useState } from "react";
 import Report from "@/components/Report";
 import BotRush from "@/components/landing/BotRush";
 import JourneyView from "@/components/JourneyView";
+import AppReport from "@/components/app/AppReport";
+import type { AppRun } from "@/lib/app/pipeline";
 import type { Run } from "@/lib/pipeline";
 import type { Journey } from "@/lib/types";
 
@@ -16,7 +18,7 @@ type Progress = {
   filesPrefix: string; // where this test's screenshots are
 };
 
-type Done = Run & { filesPrefix: string };
+type Done = (Run & { filesPrefix: string; kind?: undefined }) | (AppRun & { filesPrefix: string });
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -62,7 +64,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
     // While the explorer works, show it live.
     if (data.stage.startsWith("The explorer")) {
       // Before the first step arrives, show an empty journey ("Opening the product…").
-      const journey: Journey = data.journey ?? {
+      const journey: Journey = ("journey" in data ? data.journey : undefined) ?? {
         task: "",
         access: "public",
         status: "running",
@@ -98,6 +100,11 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
         <p className="sr-only" role="status">
           {data.progress.done} of {data.progress.total} customers reviewed, {pct}%.
         </p>
+        {data.stage.startsWith("Customers are going") && (
+          <p className="text-sm text-muted">
+            3 different crowds of 100 go through your screens one by one, so the report can show an honest range.
+          </p>
+        )}
         {data.stage.startsWith("Personas") && data.progress.done === 0 && (
           <p className="text-sm text-muted">
             The first 25 go alone so your site is saved for the rest (that makes the run cheaper). The other 75 then
@@ -120,5 +127,5 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
     );
   }
 
-  return <Report run={data} />;
+  return data.kind === "app" ? <AppReport run={data} /> : <Report run={data} />;
 }

@@ -6,7 +6,7 @@ import { simulateVisit } from "./behavior";
 
 // A "seeded" random number generator: the same seed always produces the same
 // personas. That makes runs repeatable, which matters for before/after tests.
-function makeRandom(seed: number) {
+export function makeRandom(seed: number) {
   let s = seed >>> 0;
   return () => {
     // mulberry32 — a tiny, well-known algorithm. Returns a number in [0, 1).

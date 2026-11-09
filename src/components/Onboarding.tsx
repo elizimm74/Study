@@ -1,7 +1,7 @@
 "use client";
-// First-run onboarding: 3 quick questions, one per screen, then straight into
-// the first test.
-//   1. What's your site?            → the URL to test
+// The questions asked BEFORE every test (and as first-run onboarding):
+// 3 quick questions, one per screen, then the analysis starts.
+//   1. Website or app? (+ the URL)  → what to test
 //   2. What is it, and when's launch? → saved to the account (for later features)
 //   3. Who is it for?               → pre-fills "who it's for" in the test
 // It's the first thing new visitors see (the home page button), no account needed.
@@ -16,9 +16,10 @@ import { Arrow } from "@/components/landing/UrlForm";
 const WHEN = ["This week", "This month", "Later", "Already live"];
 const WHO = ["Students", "Founders", "Parents", "Small businesses", "Developers", "Everyone"];
 
-export default function Onboarding({ startUrl }: { startUrl: string }) {
+export default function Onboarding({ startUrl, startKind = "website" }: { startUrl: string; startKind?: "website" | "app" }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [kind, setKind] = useState<"website" | "app">(startKind);
   const [url, setUrl] = useState(startUrl);
   const [what, setWhat] = useState("");
   const [when, setWhen] = useState("");
@@ -27,11 +28,11 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
   const [busy, setBusy] = useState(false);
 
   const audience = whoText.trim() || who; // their own words win over the chip
-  const canNext = step === 0 ? url.trim().length > 3 : step === 1 ? what.trim().length > 1 : true;
+  const canNext = step === 0 ? kind === "app" || url.trim().length > 3 : step === 1 ? what.trim().length > 1 : true;
 
   async function finish() {
     setBusy(true);
-    const answers = { url, what, when, who: audience };
+    const answers = { kind, url: kind === "website" ? url : "", what, when, who: audience };
     if (AUTH_ENABLED) {
       // Signed in: save the answers + "onboarded" on the account now.
       // Signed out: keep them in this tab; the test page saves them right after sign-up.
@@ -46,9 +47,11 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
         }
       }
     }
-    const params = new URLSearchParams({ url: url.trim() });
+    // Website: the analysis starts right away. App: next you upload screenshots.
+    const params = new URLSearchParams(kind === "app" ? { kind: "app" } : { url: url.trim() });
     if (audience) params.set("for", audience);
-    router.push(`/app?${params}`); // signed out → sign-up first, then the test starts reading the site
+    if (what.trim()) params.set("what", what.trim());
+    router.push(`/app?${params}`); // signed out → sign-up first, then the test starts
   }
 
   function next(e: React.FormEvent) {
@@ -70,26 +73,54 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
 
       {step === 0 && (
         <div className="mt-2">
-          <h1 className="t-h2">What are you launching?</h1>
-          <p className="mt-2 text-muted">Paste the page people land on. We&apos;ll test it first.</p>
-          <label htmlFor="ob-url" className="sr-only">
-            Your website
-          </label>
-          <div className="relative mt-6">
-            <span className="t-label field-prefix pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
-              https://
-            </span>
-            <input
-              id="ob-url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="yourstartup.com"
-              className="field h-12 pl-20"
-              inputMode="url"
-              autoFocus
-              required
-            />
+          <h1 className="t-h2">What are you testing?</h1>
+          <div className="mt-6 grid grid-cols-2 gap-2" role="radiogroup" aria-label="What are you testing?">
+            {(
+              [
+                ["website", "A website", "Landing page, pricing, signup"],
+                ["app", "A mobile app", "Onboarding + paywall screenshots"],
+              ] as const
+            ).map(([k, name, hint]) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={kind === k}
+                onClick={() => setKind(k)}
+                className={`rounded-xl border p-4 text-left transition-colors duration-150 ${
+                  kind === k ? "border-accent bg-subtle ring-1 ring-accent" : "border-line hover:border-line-strong"
+                }`}
+              >
+                <span className="block font-medium">{name}</span>
+                <span className="mt-1 block text-sm text-muted">{hint}</span>
+              </button>
+            ))}
           </div>
+          {kind === "website" ? (
+            <>
+              <label htmlFor="ob-url" className="field-label mt-6">
+                The page people land on
+              </label>
+              <div className="relative">
+                <span className="t-label field-prefix pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
+                  https://
+                </span>
+                <input
+                  id="ob-url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="yourstartup.com"
+                  className="field h-12 pl-20"
+                  inputMode="url"
+                  autoFocus
+                />
+              </div>
+            </>
+          ) : (
+            <p className="mt-6 text-sm text-muted">
+              After these questions you&apos;ll drop in screenshots of your onboarding and paywall, in order.
+            </p>
+          )}
         </div>
       )}
 
@@ -103,7 +134,7 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
             id="ob-what"
             value={what}
             onChange={(e) => setWhat(e.target.value)}
-            placeholder="e.g. a meal-planning app for busy parents"
+            placeholder={kind === "app" ? "e.g. a habit tracker for students" : "e.g. a meal-planning site for busy parents"}
             className="field"
             autoFocus
           />
@@ -151,7 +182,7 @@ export default function Onboarding({ startUrl }: { startUrl: string }) {
           <span />
         )}
         <button type="submit" disabled={!canNext || busy} className="btn btn-primary px-6">
-          {step < 2 ? "Next" : busy ? "Starting…" : "Run my first test"}
+          {step < 2 ? "Next" : busy ? "Starting…" : kind === "app" ? "Next: add screens" : "Analyze my site"}
           {!busy && <Arrow />}
         </button>
       </div>

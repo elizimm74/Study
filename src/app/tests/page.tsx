@@ -57,7 +57,7 @@ export default async function MyTests() {
                   {t.status === "done" && <span className="text-sm text-faint">/{t.total}</span>}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{t.url.replace(/^https?:\/\//, "")}</span>
+                  <span className="block truncate font-medium">{t.url.startsWith("app://") ? "App onboarding + paywall" : t.url.replace(/^https?:\/\//, "")}</span>
                   <span className="text-sm text-muted">
                     {t.status === "done"
                       ? `would ${t.goal ?? "buy"}`
