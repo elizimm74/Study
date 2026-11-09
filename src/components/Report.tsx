@@ -10,6 +10,7 @@ import { useState } from "react";
 import type { Run } from "@/lib/pipeline";
 import type { QuoteItem, SegmentRow } from "@/lib/aggregate";
 import JourneyView from "@/components/JourneyView";
+import AskBox from "@/components/AskBox";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const STEP_NAMES: Record<string, string> = {
@@ -209,6 +210,9 @@ export default function Report({ run }: { run: Run & { filesPrefix: string } }) 
           <Quotes best={stats.bestQuotes} all={stats.allQuotes} goal={goal} />
         </Fold>
       </section>
+
+      {/* free follow-up questions (and "something's wrong" fixes) */}
+      <AskBox testId={run.id} rerunHref={`/app?url=${encodeURIComponent(run.url)}`} />
 
       {run.totalCostUsd !== undefined && <p className="t-label">run cost ${run.totalCostUsd.toFixed(4)}</p>}
     </div>

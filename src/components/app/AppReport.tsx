@@ -11,6 +11,7 @@ import type { AppRun } from "@/lib/app/pipeline";
 import type { Range } from "@/lib/app/aggregate";
 import { ChecksList } from "./PaywallEditor";
 import { fileUrl } from "@/lib/urls";
+import AskBox from "@/components/AskBox";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const rangeText = (r: Range) => (Math.round(r.low * 100) === Math.round(r.high * 100) ? pct(r.mid) : `${pct(r.low)}–${pct(r.high)}`);
@@ -239,6 +240,9 @@ export default function AppReport({ run }: { run: AppRun }) {
           ))}
         </div>
       </details>
+
+      {/* free follow-up questions (and "something's wrong" fixes) */}
+      <AskBox testId={run.id} rerunHref="/app?kind=app" />
 
       <p className="text-center text-xs text-faint">
         Simulated customers show buying intent, not real purchases. Cost of this test: ${run.totalCostUsd?.toFixed(3) ?? "?"}.
