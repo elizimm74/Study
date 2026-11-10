@@ -1,8 +1,13 @@
 # Makes video/soundtrack.wav: an ORIGINAL soundtrack built from math (no samples,
 # nothing copyrighted): soft chords, a light beat, typing ticks, clicks and whooshes,
 # timed to the scenes in launch.html.   Run:  python3 video/soundtrack.py
+#   MUSIC=0 python3 video/soundtrack.py   -> soundtrack-sfx.wav: effects only, no music
+#   (for posting with a trending sound picked inside TikTok / Instagram)
+import os
 import wave
 import numpy as np
+
+MUSIC = os.environ.get("MUSIC", "1") != "0"
 
 SR = 44100
 DUR = 38.5
@@ -65,7 +70,7 @@ BEAT = 0.5  # 120 beats per minute
 CHORDS = [(45, [57, 60, 64, 67]), (41, [57, 60, 65, 69]), (48, [55, 60, 64, 67]), (43, [55, 59, 62, 67])]
 
 # --- soft pad the whole way through (quiet in the hook, fuller in the product part) ---
-for bar in range(int(DUR / 4) + 1):
+for bar in range(int(DUR / 4) + 1 if MUSIC else 0):
     root, notes = CHORDS[bar % 4]
     t0 = bar * 4.0
     level = 0.05 if t0 < 12 else 0.085
@@ -78,7 +83,7 @@ for bar in range(int(DUR / 4) + 1):
 
 # --- beat: from the logo (13s) to the tagline (33.5s) ---
 b = 13.0
-while b < 33.4:
+while MUSIC and b < 33.4:
     add(kick(), b, 0.5)
     if b >= 15.0:
         add(hat(), b + BEAT / 2, 0.07, pan=0.3)
@@ -86,7 +91,7 @@ while b < 33.4:
     b += BEAT
 # --- plucked notes over the product part (8th notes walking up each chord) ---
 b, step = 15.0, 0
-while b < 33.2:
+while MUSIC and b < 33.2:
     _, notes = CHORDS[int(b // 4) % 4]
     n = notes[[0, 2, 1, 3, 2, 3, 1, 2][step % 8]] + 12
     add(tone(NOTE(n), 0.5, decay=7), b, 0.075, pan=0.5 * np.sin(step))
@@ -105,14 +110,15 @@ for start, cps, count in TYPING:
 for i in range(6):
     add(tone(NOTE(60 + i * 2), 0.18, decay=18), 0.85 + i * 0.165, 0.16)
 add(boom(), 1.85, 0.5)
-add(tone(NOTE(72), 1.2, decay=3), 1.85, 0.12)
+if MUSIC:
+    add(tone(NOTE(72), 1.2, decay=3), 1.85, 0.12)
 
 # --- paper sliding, logo, clicks, the final button ---
 for at in (8.9, 12.45, 14.7, 33.15):
     add(whoosh(), at, 0.11)
 add(whoosh(0.5), 13.0, 0.14)  # the claws scratch
 add(boom(), 13.9, 0.6)
-for k, n in enumerate((57, 64, 69, 72)):
+for k, n in enumerate((57, 64, 69, 72) if MUSIC else ()):
     add(tone(NOTE(n), 2.2, decay=1.6), 13.9 + k * 0.03, 0.09, pan=(k - 1.5) * 0.4)
 for at in (6.7, 17.15, 37.3):  # mouse clicks
     add(tone(1500, 0.06, decay=70, harmonics=(1.0,)), at, 0.25)
@@ -120,17 +126,18 @@ for at in (6.7, 17.15, 37.3):  # mouse clicks
 for i, at in enumerate((19.2, 23.35, 26.55, 29.5)):  # the callout pills popping in
     add(tone(NOTE(79 + (i % 2) * 2), 0.5, decay=9), at, 0.11, pan=0.4)
 add(boom(), 37.3, 0.45)
-for k, n in enumerate((60, 64, 67, 72, 76)):  # the last chord
+for k, n in enumerate((60, 64, 67, 72, 76) if MUSIC else ()):  # the last chord
     add(tone(NOTE(n), 2.0, decay=1.8), 37.3 + k * 0.04, 0.08, pan=(k - 2) * 0.3)
 
 # --- finish: fade in/out, keep it from clipping, save ---
 mix = np.stack([L, R], axis=1)
 t = np.arange(N) / SR
 mix *= (np.minimum(1, t / 0.4) * np.minimum(1, (DUR - t) / 1.0))[:, None]
-mix = np.tanh(mix * 1.6) / np.max(np.abs(np.tanh(mix * 1.6))) * 0.89
-with wave.open(__file__.replace("soundtrack.py", "soundtrack.wav"), "wb") as f:
+mix = np.tanh(mix * 1.6) / np.max(np.abs(np.tanh(mix * 1.6))) * (0.89 if MUSIC else 0.5)  # effects sit quieter, under the song
+out_name = "soundtrack.wav" if MUSIC else "soundtrack-sfx.wav"
+with wave.open(__file__.replace("soundtrack.py", out_name), "wb") as f:
     f.setnchannels(2)
     f.setsampwidth(2)
     f.setframerate(SR)
     f.writeframes((mix * 32767).astype(np.int16).tobytes())
-print("soundtrack.wav written")
+print(out_name, "written")
