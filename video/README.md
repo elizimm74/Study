@@ -2,12 +2,25 @@
 
 `crawler-launch.mp4` is the finished video (38.5 seconds, 1920x1080, 60 frames per second, with sound).
 
+## The three versions
+| File | Sound | Use it for |
+|---|---|---|
+| `crawler-launch-hype.mp4` | Hype, bass-heavy original track | Posting anywhere (X, YouTube, TikTok, Instagram) |
+| `crawler-launch.mp4` | Calm original track | A softer feel, e.g. on the website |
+| `crawler-launch-for-trending-sound.mp4` | Effects only, no music | TikTok / Instagram when you add a trending song inside the app |
+
+To put a different soundtrack on the same picture (no re-recording needed):
+```bash
+ffmpeg -y -i video/crawler-launch.mp4 -i video/soundtrack-hype.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k -shortest video/crawler-launch-hype.mp4
+```
+
 ## How it's made
 | File | What it is |
 |---|---|
 | `launch.html` | The whole video as a web page. Every scene is a function of time: `seek(seconds)` draws that exact moment. All the words and timings are in here. |
 | `render.cjs` | Opens the page in a hidden browser, takes a picture of every frame, and hands them to ffmpeg to make the .mp4. |
-| `soundtrack.py` | Builds the music and sound effects from math (no samples, nothing copyrighted), timed to the scenes. |
+| `soundtrack.py` | Builds the calm music and sound effects from math (no samples, nothing copyrighted), timed to the scenes. `MUSIC=0` makes an effects-only version. |
+| `soundtrack_hype.py` | The HYPE version: 140 beats per minute, heavy 808 bass, kick + clap, rolling hi-hats, a build-up and a drop when the logo lands. Also original. |
 | `fonts/` | The site's fonts (Archivo, Geist, Geist Mono; all open-source), so the video looks the same on any computer. |
 
 ## Change it and re-make it
