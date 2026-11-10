@@ -285,7 +285,7 @@ const HUB = [
 ];
 $("hubpills").innerHTML = HUB.map(([x, y, a, b]) => `<div class="pill hp" style="left:${x}px;top:${y}px;padding:20px 34px 20px 26px;gap:16px"><span class="dot"></span><span><span style="display:block;font-size:32px;letter-spacing:-0.02em">${a}</span><span class="mono" style="display:block;font-size:22px;color:var(--muted)">${b}</span></span></div>`).join("");
 const hubEls = [...document.querySelectorAll(".hp")];
-$("hublines").innerHTML = HUB.map(([x, y]) => { const inner = x < 960 ? 700 : 1220; const edge = x; // the line runs to the pill's middle; the pill covers its end return `<path class="hl" d="M${inner} 610 C ${(inner + edge) / 2} 610, ${(inner + edge) / 2} ${y}, ${edge} ${y}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`; }).join("");
+$("hublines").innerHTML = HUB.map(([x, y]) => { const inner = x < 960 ? 700 : 1220; const edge = x; /* the line runs to the middle of the pill, which covers its end */ return `<path class="hl" d="M${inner} 610 C ${(inner + edge) / 2} 610, ${(inner + edge) / 2} ${y}, ${edge} ${y}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`; }).join("");
 const hubLines = [...document.querySelectorAll(".hl")];
 const bigClaws = [...document.querySelectorAll(".bc")];
 

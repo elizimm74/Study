@@ -24,6 +24,8 @@ const outFile = path.join(__dirname, "crawler-launch.mp4");
     await Promise.all(["900 40px Archivo", "400 40px Geist", "500 40px Geist", "600 40px Geist", '400 40px "Geist Mono"'].map((f) => document.fonts.load(f)));
     await document.fonts.ready;
   });
+  // Stop early with a clear message if the page's script has an error.
+  if (!(await page.evaluate(() => typeof window.seek === "function"))) throw new Error("launch.html has a script error (window.seek is missing). Open it in a browser and check the console.");
   const duration = await page.evaluate(() => window.DURATION);
   const stage = page.locator("#stage");
 
