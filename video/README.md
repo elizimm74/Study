@@ -9,6 +9,19 @@
 | `crawler-launch.mp4` | Calm original track | A softer feel, e.g. on the website |
 | `crawler-launch-for-trending-sound.mp4` | Effects only, no music | TikTok / Instagram when you add a trending song inside the app |
 
+## The vertical hype edit
+`crawler-edit.mp4` is a 15-second vertical (1080x1920) edit for TikTok / Reels / Shorts: big word-by-word captions,
+cuts on the beat, zoom hits, and a Crawler-blue business card. It is fully original (no film footage). Source: `edit.html`.
+```bash
+SFX=0 python3 video/soundtrack_hype.py
+```
+```bash
+ffmpeg -y -ss 10 -t 15 -i video/soundtrack-hype-music.wav -af "afade=t=in:d=0.15,afade=t=out:st=14.2:d=0.8" video/edit-audio.wav
+```
+```bash
+PAGE=edit.html W=1080 H=1920 FPS=30 AUDIO=edit-audio.wav OUT=crawler-edit.mp4 node video/render.cjs
+```
+
 To put a different soundtrack on the same picture (no re-recording needed):
 ```bash
 ffmpeg -y -i video/crawler-launch.mp4 -i video/soundtrack-hype.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k -shortest video/crawler-launch-hype.mp4

@@ -10,14 +10,19 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 
+// Which page to record, and how. Defaults = the launch video. For the vertical edit:
+//   PAGE=edit.html W=1080 H=1920 FPS=30 AUDIO=edit-audio.wav OUT=crawler-edit.mp4 node video/render.cjs
 const FPS = Number(process.env.FPS || 60);
-const page_url = "file://" + path.join(__dirname, "launch.html");
-const audio = path.join(__dirname, "soundtrack.wav");
-const outFile = path.join(__dirname, "crawler-launch.mp4");
+const W = Number(process.env.W || 1920);
+const H = Number(process.env.H || 1080);
+const PAGE = process.env.PAGE || "launch.html";
+const page_url = "file://" + path.join(__dirname, PAGE);
+const audio = path.join(__dirname, process.env.AUDIO || "soundtrack.wav");
+const outFile = path.join(__dirname, process.env.OUT || "crawler-launch.mp4");
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   await page.goto(page_url);
   // Make sure every font is really loaded before the first frame.
   await page.evaluate(async () => {
@@ -25,12 +30,12 @@ const outFile = path.join(__dirname, "crawler-launch.mp4");
     await document.fonts.ready;
   });
   // Stop early with a clear message if the page's script has an error.
-  if (!(await page.evaluate(() => typeof window.seek === "function"))) throw new Error("launch.html has a script error (window.seek is missing). Open it in a browser and check the console.");
+  if (!(await page.evaluate(() => typeof window.seek === "function"))) throw new Error(PAGE + " has a script error (window.seek is missing). Open it in a browser and check the console.");
   const duration = await page.evaluate(() => window.DURATION);
   const stage = page.locator("#stage");
 
   if (process.argv.includes("--preview")) {
-    const dir = path.join(__dirname, "preview");
+    const dir = path.join(__dirname, "preview", PAGE.replace(".html", ""));
     fs.mkdirSync(dir, { recursive: true });
     const times = (process.env.TIMES || "").split(",").filter(Boolean).map(Number);
     const list = times.length ? times : Array.from({ length: Math.ceil(duration / 0.5) }, (_, i) => i * 0.5);

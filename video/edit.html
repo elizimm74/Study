@@ -1,0 +1,247 @@
+<!doctype html>
+<!--
+  Crawler "hype edit" (15 seconds, vertical 1080x1920, for TikTok / Reels / Shorts).
+  Style: big word-by-word captions, cuts on the beat, zoom hits, a business card moment.
+  100% original: our own words, shapes and music. No film footage.
+  Like launch.html, it is recorded frame by frame: window.seek(seconds) draws one exact moment.
+  Record it:  PAGE=edit.html W=1080 H=1920 FPS=30 AUDIO=edit-audio.wav OUT=crawler-edit.mp4 node video/render.cjs
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: "Archivo"; font-weight: 900; src: url("fonts/archivo-900.ttf"); }
+  @font-face { font-family: "Geist"; font-weight: 500; src: url("fonts/geist-500.ttf"); }
+  @font-face { font-family: "Geist Mono"; font-weight: 400; src: url("fonts/geistmono-400.ttf"); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #05081f; font-family: "Geist", sans-serif; font-weight: 500; color: #fff; }
+  .abs { position: absolute; }
+  .fill { position: absolute; inset: 0; }
+  .heavy { font-family: "Archivo", sans-serif; font-weight: 900; letter-spacing: -0.05em; }
+  .mono { font-family: "Geist Mono", monospace; font-weight: 400; }
+  .scene { position: absolute; inset: 0; display: none; }
+  .card { position: absolute; background: #fff; color: #0c0e1f; border-radius: 40px; box-shadow: 0 60px 120px -30px rgba(3, 6, 40, 0.75); }
+  .label { font-family: "Geist Mono", monospace; font-size: 30px; letter-spacing: 0.05em; color: #5f6780; }
+  #bluebg { background: radial-gradient(1200px 1000px at 30% 20%, #3144d6 0%, #1a2aa6 55%, #101a80 100%); }
+  #dots { background-image: radial-gradient(rgba(255,255,255,0.16) 2px, transparent 2.3px); background-size: 30px 30px; }
+  /* captions: chunky white words with a dark edge, so they read on anything */
+  #captions { position: absolute; left: 0; right: 0; top: 1240px; text-align: center; z-index: 30; }
+  .cap { display: block; font-family: "Archivo", sans-serif; font-weight: 900; font-size: 132px; line-height: 0.98; letter-spacing: -0.045em; text-transform: uppercase; color: #fff;
+    text-shadow: 0 6px 0 rgba(3,6,40,0.9), 0 0 40px rgba(3,6,40,0.55); -webkit-text-stroke: 3px rgba(3,6,40,0.9); paint-order: stroke fill; }
+  #flash { position: absolute; inset: 0; background: #fff; z-index: 40; pointer-events: none; }
+  #vignette { position: absolute; inset: 0; z-index: 35; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world" class="fill">
+    <!-- A: before. Dark and flat: a page nobody is buying from. -->
+    <div class="scene" id="sA">
+      <div class="card" id="deadpage" style="left:140px;top:300px;width:800px;height:760px;padding:56px;background:#d9dbe3;filter:grayscale(1)">
+        <div class="label">LAUNCH DAY</div>
+        <div style="margin-top:34px;height:44px;width:78%;border-radius:12px;background:#8f93a3"></div>
+        <div style="margin-top:22px;height:26px;width:58%;border-radius:10px;background:#b9bcc8"></div>
+        <div style="margin-top:14px;height:26px;width:66%;border-radius:10px;background:#b9bcc8"></div>
+        <div style="margin-top:40px;height:86px;width:300px;border-radius:20px;background:#8f93a3"></div>
+        <div class="label" style="margin-top:60px">SALES</div>
+        <svg width="688" height="150" viewBox="0 0 688 150" style="margin-top:10px"><path d="M0 120 L688 120" stroke="#8f93a3" stroke-width="8" stroke-linecap="round"/><path d="M0 148 L688 148" stroke="#b9bcc8" stroke-width="3"/></svg>
+      </div>
+    </div>
+
+    <!-- everything after the drop sits on the blue -->
+    <div class="fill" id="bluebg" style="display:none"><div class="fill" id="dots"></div></div>
+
+    <!-- B: "100" -->
+    <div class="scene" id="sB">
+      <div class="abs heavy" id="hundred" style="left:0;right:0;top:420px;text-align:center;font-size:470px;line-height:1;letter-spacing:-0.06em">100</div>
+    </div>
+
+    <!-- C: the dot grid -->
+    <div class="scene" id="sC">
+      <div class="card" style="left:110px;top:230px;width:860px;height:900px;padding:54px">
+        <div class="label">100 SIMULATED CUSTOMERS</div>
+        <div id="grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:16px;margin-top:34px"></div>
+      </div>
+    </div>
+
+    <!-- D: why people said no -->
+    <div class="scene" id="sD">
+      <div class="card" style="left:110px;top:300px;width:860px;height:760px;padding:54px">
+        <div class="label">WHY PEOPLE SAID NO</div>
+        <div id="bars" style="margin-top:30px"></div>
+      </div>
+    </div>
+
+    <!-- E: fixes -->
+    <div class="scene" id="sE">
+      <div class="card" style="left:110px;top:330px;width:860px;height:700px;padding:54px">
+        <div class="label">FIX THESE FIRST</div>
+        <div id="fixes" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- F: the business card -->
+    <div class="scene" id="sF" style="background:radial-gradient(900px 700px at 50% 38%, #1b2250 0%, #070a1c 70%)">
+      <div class="abs" id="cardshadow" style="left:140px;top:1010px;width:800px;height:90px;border-radius:50%;background:rgba(0,0,0,0.6);filter:blur(40px)"></div>
+      <div class="abs" style="left:90px;top:440px;width:900px;height:520px;perspective:1700px">
+        <div id="bizcard" style="position:relative;width:900px;height:520px;border-radius:34px;overflow:hidden;background:linear-gradient(135deg,#2538cf 0%,#1a2aa6 45%,#12207f 100%);box-shadow:0 2px 0 rgba(255,255,255,0.25) inset, 0 50px 90px -20px rgba(0,0,0,0.7)">
+          <div class="abs" style="inset:0;background-image:radial-gradient(rgba(255,255,255,0.13) 1.6px, transparent 1.9px);background-size:22px 22px"></div>
+          <div class="abs" style="left:64px;top:150px;display:flex;align-items:center;gap:26px">
+            <svg width="150" height="150" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+            <span class="heavy" style="font-size:148px;line-height:1">crawler</span>
+          </div>
+          <div class="abs mono" style="left:66px;bottom:54px;font-size:27px;letter-spacing:0.04em;color:#d6dbff">see what stops customers</div>
+          <div class="abs mono" style="right:66px;bottom:54px;font-size:27px;letter-spacing:0.04em;color:#d6dbff">before you launch</div>
+          <div class="abs mono" style="left:66px;top:54px;font-size:24px;letter-spacing:0.08em;color:#aeb7f6">100 SIMULATED CUSTOMERS</div>
+          <div class="abs" id="glint" style="top:-60px;bottom:-60px;width:220px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);transform:skewX(-20deg)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- G: the end card -->
+    <div class="scene" id="sG">
+      <div class="abs" style="left:0;right:0;top:420px;display:flex;flex-direction:column;align-items:center" id="endlogo">
+        <svg width="330" height="330" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+        <span class="heavy" style="font-size:250px;line-height:1;margin-top:10px">crawler</span>
+      </div>
+      <div class="abs" id="endbtn" style="left:190px;top:1130px;width:700px;height:150px;border-radius:999px;background:#fff;color:#1a2aa6;display:flex;align-items:center;justify-content:center;font-size:58px;letter-spacing:-0.02em;box-shadow:0 40px 90px -20px rgba(0,0,0,0.6)">Test yours free</div>
+      <div class="abs mono" id="endhonest" style="left:0;right:0;top:1340px;text-align:center;font-size:27px;letter-spacing:0.03em;color:#aeb7f6;line-height:1.5">simulated customers<br>buying intent, not real purchases</div>
+    </div>
+  </div>
+
+  <div id="captions"></div>
+  <div id="vignette"></div>
+  <div id="flash"></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const out = (x) => 1 - Math.pow(1 - x, 3);
+const back = (x) => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
+const DURATION = 15;
+
+// The music: the beat drops at 3.9s, then 140 beats per minute. Every cut lands on a beat.
+const DROP = 3.9, BEAT = 60 / 140, BAR = BEAT * 4;
+const at = (bar, beat = 0) => DROP + bar * BAR + beat * BEAT; // time of "bar 2, beat 1" etc.
+const T = { B: at(0), C: at(1), D: at(2), E: at(3), F: at(4), G: at(5.5) }; // when each scene starts
+
+// Captions: groups of big words. Each word has its own start time; the group clears at `end`.
+const CAPTIONS = [
+  { end: 1.4, words: [["Launching", 0.25], ["blind", 0.75]] },
+  { end: 2.5, words: [["isn't", 1.45], ["brave.", 1.85]] },
+  { end: T.B, words: [["It's a", 2.55], ["guess.", 2.95]] },
+  { end: at(0, 2), words: [["customers", at(0, 1)]] },
+  { end: T.C, words: [["test it", at(0, 2)], ["first.", at(0, 3)]] },
+  { end: T.D, words: [["38", at(1, 1)], ["would buy", at(1, 2)]] },
+  { end: T.E, words: [["34%", at(2, 1)], ["price hidden", at(2, 2)]] },
+  { end: T.F, words: [["fix it.", at(3, 1)], ["+11 people", at(3, 2)]] },
+  { end: T.G, words: [["the only", at(4, 2)], ["card", at(4, 3)], ["you need.", at(5, 0)]] },
+];
+
+// ---------- build the repeated pieces once ----------
+const VERDICT = (i) => (i < 38 ? "buy" : i < 60 ? "maybe" : "no");
+$("grid").innerHTML = Array.from({ length: 100 }, () => `<div class="gd" style="aspect-ratio:1;border-radius:50%"></div>`).join("");
+const gridEls = [...document.querySelectorAll(".gd")];
+const BARS = [["Price hidden until signup", 34], ["Not sure it's trustworthy", 22], ["Unclear what it does", 18], ["Signup asks too much", 12]];
+$("bars").innerHTML = BARS.map(([n, v], i) => `<div style="padding:26px 0"><div style="display:flex;justify-content:space-between;font-size:42px;letter-spacing:-0.02em"><span>${n}</span><span class="bval" style="color:${i ? "#5f6780" : "#1a2aa6"}">0%</span></div><div style="margin-top:16px;height:22px;border-radius:11px;background:#e8ebf6;overflow:hidden"><div class="bfill" style="height:100%;border-radius:11px;background:#1a2aa6;width:0"></div></div></div>`).join("");
+const barFills = [...document.querySelectorAll(".bfill")], barVals = [...document.querySelectorAll(".bval")];
+const FIXES = [["Show the price up front", 11], ["Add a free week, no card", 7], ["Cut signup to email only", 4]];
+$("fixes").innerHTML = FIXES.map(([n, v], i) => `<div class="frow" style="display:flex;align-items:center;gap:26px;padding:40px 0;${i ? "border-top:3px solid #eef0f8" : ""}"><span class="mono" style="font-size:30px;color:#5f6780">0${i + 1}</span><span style="flex:1;font-size:44px;letter-spacing:-0.025em;line-height:1.1">${n}</span><span class="fval heavy" style="font-size:92px;color:#1a2aa6">+0</span></div>`).join("");
+const fixRows = [...document.querySelectorAll(".frow")], fixVals = [...document.querySelectorAll(".fval")];
+
+const SCENES = [["sA", 0, T.B], ["sB", T.B, T.C], ["sC", T.C, T.D], ["sD", T.D, T.E], ["sE", T.E, T.F], ["sF", T.F, T.G], ["sG", T.G, 99]];
+
+window.seek = function (t) {
+  // which scene is on (hard cuts, like an edit)
+  let start = 0;
+  for (const [id, a, b] of SCENES) {
+    const on = t >= a && t < b;
+    $(id).style.display = on ? "block" : "none";
+    if (on) start = a;
+  }
+  $("bluebg").style.display = t >= T.B && (t < T.F || t >= T.G) ? "block" : "none";
+  $("dots").style.transform = `translate(${(t * 20) % 30}px, ${(t * 12) % 30}px)`;
+
+  // every beat after the drop gives the whole picture a small zoom "hit"
+  const sinceBeat = t >= DROP ? (t - DROP) % BEAT : 9;
+  const hit = t >= DROP ? 1 + 0.035 * Math.exp(-10 * sinceBeat) : 1;
+  // before the drop: a slow push in, and a shake that grows with the riser
+  const build = seg(t, 2.6, DROP);
+  const shake = t < DROP ? build * build * 14 : 22 * Math.exp(-9 * (t - DROP));
+  const sx = Math.sin(t * 91) * shake, sy = Math.cos(t * 77) * shake;
+  const push = t < DROP ? lerp(1, 1.12, seg(t, 0, DROP)) : 1;
+  $("world").style.transform = `translate(${sx}px, ${sy}px) scale(${hit * push})`;
+  $("world").style.filter = t < DROP ? `brightness(${lerp(0.75, 1.25, build * build)})` : "none";
+
+  // white flash on every cut (strongest on the drop)
+  const sinceCut = t - start;
+  $("flash").style.opacity = start === 0 ? 0 : (start === T.B ? 1 : 0.7) * Math.exp(-13 * sinceCut);
+
+  // --- scene details ---
+  $("deadpage").style.transform = `rotate(${lerp(-2, 1, seg(t, 0, DROP))}deg)`;
+  if (t >= T.B && t < T.C) {
+    const p = seg(t, T.B, T.B + 0.3);
+    $("hundred").style.transform = `scale(${lerp(2.2, 1, out(p))})`;
+  }
+  if (t >= T.C && t < T.D) {
+    gridEls.forEach((el, i) => {
+      const a = T.C + 0.05 + (((i * 37 + 11) % 100) / 100) * 0.8; // shuffled order, always the same
+      const p = seg(t, a, a + 0.16), v = VERDICT(i);
+      el.style.transform = `scale(${p <= 0 ? 0 : lerp(0, 1, back(p))})`;
+      el.style.background = v === "buy" ? "#1a2aa6" : v === "maybe" ? "#9aa6e6" : "transparent";
+      el.style.border = v === "no" ? "4px solid #c4caeb" : "none";
+    });
+  }
+  if (t >= T.D && t < T.E) {
+    BARS.forEach(([, v], i) => {
+      const p = out(seg(t, T.D + 0.05 + i * 0.1, T.D + 0.6 + i * 0.1));
+      barFills[i].style.width = v * 2.6 * p + "%";
+      barVals[i].textContent = Math.round(v * p) + "%";
+    });
+  }
+  if (t >= T.E && t < T.F) {
+    FIXES.forEach(([, v], i) => {
+      const p = out(seg(t, T.E + 0.04 + i * 0.12, T.E + 0.4 + i * 0.12));
+      fixRows[i].style.opacity = p;
+      fixRows[i].style.transform = `translateX(${(1 - p) * 120}px)`;
+      fixVals[i].textContent = "+" + Math.round(v * out(seg(t, T.E + 0.1 + i * 0.12, T.E + 0.8 + i * 0.12)));
+    });
+  }
+  if (t >= T.F && t < T.G) {
+    // the card flips in from its edge, lands, then turns slowly so the light slides across it
+    const land = seg(t, T.F, T.F + 0.75), e = land <= 0 ? 0 : back(land);
+    const float = t - T.F;
+    const ry = lerp(-115, -10, e) + float * 6, rx = lerp(24, 8, e) + Math.sin(float * 1.6) * 2;
+    $("bizcard").style.transform = `translateY(${lerp(420, 0, e)}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${lerp(-10, -3, e)}deg)`;
+    $("glint").style.left = lerp(-320, 1050, seg(t, T.F + 0.85, T.F + 1.55)) + "px";
+    $("cardshadow").style.opacity = out(land);
+    $("cardshadow").style.transform = `scaleX(${lerp(0.3, 1, out(land))})`;
+  }
+  if (t >= T.G) {
+    const p = seg(t, T.G, T.G + 0.35);
+    $("endlogo").style.transform = `scale(${lerp(1.6, 1, out(p))})`;
+    const b = seg(t, T.G + BEAT, T.G + BEAT + 0.4);
+    $("endbtn").style.opacity = clamp(b * 3);
+    $("endbtn").style.transform = `scale(${b <= 0 ? 0.6 : lerp(0.6, 1, back(b))})`;
+    $("endhonest").style.opacity = seg(t, T.G + BEAT * 2, T.G + BEAT * 2 + 0.3);
+  }
+
+  // --- captions: each word slams in ---
+  const group = t >= T.G ? null : CAPTIONS.find((g) => t < g.end && t >= g.words[0][1]);
+  $("captions").innerHTML = !group ? "" : group.words.filter(([, a]) => t >= a).map(([w, a]) => {
+    const p = seg(t, a, a + 0.14);
+    const small = w.length > 9 ? `font-size:${Math.round(132 * 9.6 / w.length)}px;` : ""; // long lines shrink to fit
+    return `<span class="cap" style="${small}opacity:${clamp(p * 2.5)};transform:scale(${lerp(1.7, 1, out(p))}) rotate(${lerp(-4, 0, out(p))}deg)">${w}</span>`;
+  }).join("");
+  // captions sit lower on the card scene so they don't cover the card
+  $("captions").style.top = t >= T.F && t < T.G ? "1180px" : "1240px";
+};
+window.DURATION = DURATION;
+document.fonts.ready.then(() => { window.ready = true; window.seek(0); });
+</script>
+</body>
+</html>

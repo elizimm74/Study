@@ -3,8 +3,12 @@
 # punchy kick + clap, rolling hi-hats, a build-up and a DROP when the logo lands
 # (13.9s), plus the same typing ticks / clicks as the calm version.
 #   Run:  python3 video/soundtrack_hype.py
+#   SFX=0 python3 video/soundtrack_hype.py -> soundtrack-hype-music.wav (music only, no typing ticks; used by edit.html)
+import os
 import wave
 import numpy as np
+
+SFX = os.environ.get("SFX", "1") != "0"
 
 SR = 44100
 DUR = 38.5
@@ -114,7 +118,7 @@ add("bass", bass808(30, 1.6), 1.85, 0.9)  # the "6 MONTHS" hit
 add("drums", kick(), 1.85, 0.9)
 for at in (4.5, 7.2, 9.0):  # a heartbeat under the search + "zero answers"
     add("bass", bass808(30, 0.9), at, 0.6)
-for k in range(6):  # the months counter
+for k in range(6 if SFX else 0):  # the months counter
     add("fx", lead(66 + k * 2, 0.15), 0.85 + k * 0.165, 0.05)
 
 # --- build-up (12 - 13.9s): riser + a clap roll that speeds up ---
@@ -170,14 +174,14 @@ for n in (66, 69, 73, 78):
 TYPING = [(0.25, 20, 9), (2.0, 22, 12), (3.1, 36, 41), (4.95, 19, 27), (7.35, 24, 14), (8.0, 22, 12), (9.75, 26, 37),
           (13.95, 18, 7), (15.55, 26, 14), (16.05, 17, 12), (18.6, 30, 31), (22.0, 28, 21), (25.15, 32, 32), (27.95, 32, 30),
           (30.7, 30, 31), (33.75, 34, 43)]
-for start, cps, count in TYPING:
+for start, cps, count in TYPING if SFX else []:
     loud = 0.05 if start < DROP else 0.03  # quieter once the beat is playing
     for i in range(count):
         add("fx", tick(0.8 + 0.4 * rng.random()), start + i / cps, loud * (0.7 + 0.6 * rng.random()), pan=rng.uniform(-0.3, 0.3))
-for at in (6.7, 17.15, 37.3):
+for at in (6.7, 17.15, 37.3) if SFX else ():
     t = times(0.06)
     add("fx", np.sin(2 * np.pi * 1500 * t) * np.exp(-70 * t), at, 0.25)
-for at in (8.9, 12.45, 14.7, 33.15):
+for at in (8.9, 12.45, 14.7, 33.15) if SFX else ():
     n = int(0.8 * SR)
     add("fx", smooth(rng.standard_normal(n), 60) * np.sin(np.linspace(0, np.pi, n)) ** 2 * 6, at, 0.08)
 
@@ -195,9 +199,10 @@ t = np.arange(N) / SR
 mix *= (np.minimum(1, t / 0.3) * np.minimum(1, (DUR - t) / 0.8))[:, None]
 mix = np.tanh(mix * 1.5)  # soft limiter: loud but never crackling
 mix = mix / np.max(np.abs(mix)) * 0.92
-with wave.open(__file__.replace("soundtrack_hype.py", "soundtrack-hype.wav"), "wb") as f:
+out_name = "soundtrack-hype.wav" if SFX else "soundtrack-hype-music.wav"
+with wave.open(__file__.replace("soundtrack_hype.py", out_name), "wb") as f:
     f.setnchannels(2)
     f.setsampwidth(2)
     f.setframerate(SR)
     f.writeframes((mix * 32767).astype(np.int16).tobytes())
-print("soundtrack-hype.wav written")
+print(out_name, "written")
