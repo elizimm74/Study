@@ -12,11 +12,13 @@ import type { Range } from "@/lib/app/aggregate";
 import { ChecksList } from "./PaywallEditor";
 import { fileUrl } from "@/lib/urls";
 import AskBox from "@/components/AskBox";
+import ShareBox from "@/components/ShareBox";
+import ActualBox from "@/components/ActualBox";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const rangeText = (r: Range) => (Math.round(r.low * 100) === Math.round(r.high * 100) ? pct(r.mid) : `${pct(r.low)}–${pct(r.high)}`);
 
-export default function AppReport({ run }: { run: AppRun }) {
+export default function AppReport({ run, demo = false }: { run: AppRun; demo?: boolean }) {
   const stats = run.stats!;
   const advice = run.advice!;
   const middle = [...stats.converts].sort((a, b) => a - b)[Math.floor((stats.converts.length - 1) / 2)] ?? 0;
@@ -103,12 +105,26 @@ export default function AppReport({ run }: { run: AppRun }) {
             const heavy = s.quit > 0 && s === worst;
             return (
               <li key={s.n} className="w-32 shrink-0 sm:w-36">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={fileUrl(run.screensPrefix, shot.file)}
-                  alt={`Screen ${s.n}: ${s.title || s.type}`}
-                  className={`aspect-[9/16] w-full rounded-lg border object-cover object-top ${heavy ? "border-white ring-2 ring-white" : "border-line"}`}
-                />
+                {demo ? (
+                  // the example report has no real screenshots: draw a simple phone screen
+                  <div
+                    className={`flex aspect-[9/16] w-full flex-col rounded-lg border bg-white p-3 ${heavy ? "border-white ring-2 ring-white" : "border-line"}`}
+                    role="img"
+                    aria-label={`Example screen ${s.n}: ${s.type}`}
+                  >
+                    <span className="block h-2 w-3/4 rounded bg-[#1a2aa6]" />
+                    <span className="mt-2 block h-1.5 w-1/2 rounded bg-[#dfe3f5]" />
+                    <span className="mt-1.5 block h-1.5 w-2/3 rounded bg-[#dfe3f5]" />
+                    <span className="mt-auto block h-5 w-full rounded bg-[#1a2aa6]" />
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={fileUrl(run.screensPrefix, shot.file)}
+                    alt={`Screen ${s.n}: ${s.title || s.type}`}
+                    className={`aspect-[9/16] w-full rounded-lg border object-cover object-top ${heavy ? "border-white ring-2 ring-white" : "border-line"}`}
+                  />
+                )}
                 <p className="t-label mt-2">
                   {s.n} · {s.type}
                 </p>
@@ -242,7 +258,13 @@ export default function AppReport({ run }: { run: AppRun }) {
       </details>
 
       {/* free follow-up questions (and "something's wrong" fixes) */}
-      <AskBox testId={run.id} rerunHref="/app?kind=app" />
+      {!demo && (
+        <>
+          <ShareBox testId={run.id} headline={`${middle} of ${stats.perSample} simulated customers would ${goal} in my app's onboarding + paywall`} />
+          <AskBox testId={run.id} rerunHref="/app?kind=app" />
+          <ActualBox testId={run.id} kind="app" />
+        </>
+      )}
 
       <p className="text-center text-xs text-faint">
         Simulated customers show buying intent, not real purchases. Cost of this test: ${run.totalCostUsd?.toFixed(3) ?? "?"}.

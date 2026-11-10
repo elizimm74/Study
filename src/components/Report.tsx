@@ -11,6 +11,8 @@ import type { Run } from "@/lib/pipeline";
 import type { QuoteItem, SegmentRow } from "@/lib/aggregate";
 import JourneyView from "@/components/JourneyView";
 import AskBox from "@/components/AskBox";
+import ShareBox from "@/components/ShareBox";
+import ActualBox from "@/components/ActualBox";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const STEP_NAMES: Record<string, string> = {
@@ -21,7 +23,7 @@ const STEP_NAMES: Record<string, string> = {
   converted: "converted",
 };
 
-export default function Report({ run }: { run: Run & { filesPrefix: string } }) {
+export default function Report({ run, demo = false }: { run: Run & { filesPrefix: string }; demo?: boolean }) {
   const stats = run.stats!;
   const advice = run.advice!;
   const goal = run.profile?.goal ?? "buy";
@@ -212,7 +214,13 @@ export default function Report({ run }: { run: Run & { filesPrefix: string } }) 
       </section>
 
       {/* free follow-up questions (and "something's wrong" fixes) */}
-      <AskBox testId={run.id} rerunHref={`/app?url=${encodeURIComponent(run.url)}`} />
+      {!demo && (
+        <>
+          <ShareBox testId={run.id} headline={`${stats.buy} of ${stats.total} simulated customers would ${goal} on ${run.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*$/, "")}`} />
+          <AskBox testId={run.id} rerunHref={`/app?url=${encodeURIComponent(run.url)}`} />
+          <ActualBox testId={run.id} kind="website" />
+        </>
+      )}
 
       {run.totalCostUsd !== undefined && <p className="t-label">run cost ${run.totalCostUsd.toFixed(4)}</p>}
     </div>

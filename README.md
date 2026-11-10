@@ -65,16 +65,9 @@ where id = (select id from auth.users where email = 'YOUR@EMAIL.com');
 
 ## Deploy (going live)
 
-1. **Database:** the Supabase project "crawler" is already set up. The schema is in `supabase/migrations/`.
-2. **Web → Vercel:**
-   - import the GitHub repo
-   - add these environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `CREDENTIALS_KEY`
-   - **never** add the secret key or the Anthropic key here
-3. **Worker → Railway, Fly.io or Render:**
-   - create a service from this repo using **`Dockerfile.worker`**
-   - add these environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `ANTHROPIC_API_KEY`, `CREDENTIALS_KEY` (the same value as on Vercel), `WORKER_CONCURRENCY`
-   - more tests waiting? Add more copies of the worker. The queue shares the work.
-4. **Supabase → Authentication → URL Configuration:** set the **Site URL** to your real domain, and add `https://YOUR-DOMAIN/auth/callback` to the redirect URLs.
+The full checklist (Vercel for the website, Fly.io for the worker, which environment variables go where, and what to check before sharing the link) is in **[`docs/deploy.md`](docs/deploy.md)**.
+
+Short version: **Web → Vercel** (never put the Supabase secret key there). **Worker → Fly.io / Railway / Render** from `Dockerfile.worker` (`fly.toml` is included). More tests waiting? Add more copies of the worker; the queue shares the work.
 
 ## Accounts and plans
 
@@ -121,14 +114,20 @@ npm run bench
 
 GitHub runs all of these automatically on every push (`.github/workflows/ci.yml`).
 
-- **`npm run bench`** scores the crawler on 16 practice sites with known answers, and the explorer's actions and safety rules on 4 scripted tests. **If the score drops, the change broke something.**
+- **`npm run bench`** scores the crawler on 16 practice sites with known answers, and the explorer's actions and safety rules on 4 scripted tests, plus 27 checks on app testing (store rules, answer cleanup, counting, the A/B test). **If the score drops, the change broke something.**
 - **`npm run realcheck`** (on your computer) crawls 22 real websites and prints a measured accuracy %.
 
 ## How the code is organized
 
 | Path | What it does |
 |---|---|
-| `src/app/page.tsx` | Landing page |
+| `src/app/page.tsx` | Landing page (the white sheet slides over the blue screen) |
+| `src/app/example/page.tsx`, `src/lib/example.ts` | Example reports (made-up data, run through the real counting code) |
+| `src/app/s/[token]`, `src/app/api/og/[token]`, `src/lib/scorecard.tsx` | Public share cards: scorecard page + the 1200x630 image |
+| `src/app/accuracy/page.tsx`, `src/components/ActualBox.tsx` | Public "predicted vs real" track record |
+| `src/app/tools/paywall-checker` | Free no-sign-up store-rule checker (runs in the browser) |
+| `src/lib/app/*`, `src/components/app/*` | App tests: onboarding + paywall screenshots |
+| `src/lib/chat.ts`, `src/components/AskBox.tsx` | "Ask about this test" (2 free questions) |
 | `src/app/app/page.tsx` | The test tool: URL → analysis → audience → start |
 | `src/app/run/[id]/page.tsx` | Live progress, explorer view, then the report |
 | `src/app/tests/page.tsx` | My tests |

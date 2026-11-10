@@ -5,6 +5,7 @@
 // (<Reveal>). All examples are made up and labeled as examples.
 import Link from "next/link";
 import Reveal from "../Reveal";
+import Faq from "./Faq";
 import Claws from "../Claws";
 import { Arrow } from "./UrlForm";
 
@@ -92,11 +93,18 @@ export default function Features() {
             Crawler shows buying intent from simulated customers, not real purchases. A fast, honest signal on what to fix
             before launch day.
           </p>
-          <Link href="/onboarding" className="btn btn-primary mt-10 h-14 px-8 text-base">
-            Test my site
-            <Arrow />
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/onboarding" className="btn btn-primary h-14 px-8 text-base">
+              Test my product free
+              <Arrow />
+            </Link>
+            <Link href="/example" className="btn btn-secondary h-14 px-8 text-base">
+              See an example report
+            </Link>
+          </div>
         </Reveal>
+
+        <Faq />
       </div>
     </section>
   );

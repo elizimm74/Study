@@ -1,0 +1,16 @@
+# The WORKER on Fly.io (https://fly.io). Deploy with:  fly launch --no-deploy --copy-config  then  fly deploy
+# It has no website, only a background loop, so there is no [http_service].
+# Change "app" to a name nobody else has taken.
+app = "crawler-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[env]
+  WORKER_CONCURRENCY = "2"
+
+# Chromium needs memory: 2 jobs at once is comfortable on 2 GB.
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2gb"
