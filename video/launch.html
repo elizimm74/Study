@@ -1,0 +1,533 @@
+<!doctype html>
+<!--
+  Crawler launch video (38.5 seconds, 1920x1080).
+  This page is NOT played live: video/render.cjs opens it in a browser, calls
+  window.seek(seconds) for every frame and takes a picture. So everything here
+  is a pure function of time: same time in, same picture out.
+  To change the video: edit the words / times below, then run  node video/render.cjs
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: "Archivo"; font-weight: 900; src: url("fonts/archivo-900.ttf"); }
+  @font-face { font-family: "Geist"; font-weight: 400; src: url("fonts/geist-400.ttf"); }
+  @font-face { font-family: "Geist"; font-weight: 500; src: url("fonts/geist-500.ttf"); }
+  @font-face { font-family: "Geist"; font-weight: 600; src: url("fonts/geist-600.ttf"); }
+  @font-face { font-family: "Geist Mono"; font-weight: 400; src: url("fonts/geistmono-400.ttf"); }
+  :root { --blue: #1a2aa6; --ink: #0c0e1f; --muted: #5f6780; --line: #dfe3f5; --pale: #aeb7f6; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Geist", sans-serif; font-weight: 500; color: #fff; background: var(--blue); }
+  .abs { position: absolute; }
+  .fill { position: absolute; inset: 0; }
+  .center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .heavy { font-family: "Archivo", sans-serif; font-weight: 900; letter-spacing: -0.055em; }
+  .mono { font-family: "Geist Mono", monospace; font-weight: 400; }
+  .scene { position: absolute; inset: 0; will-change: transform, opacity, filter; }
+  .cur { display: inline-block; width: 0.5em; height: 0.95em; margin-left: 0.08em; vertical-align: -0.12em; background: currentColor; }
+
+  /* blue background: slow light blobs + a dot pattern */
+  #blob1, #blob2 { position: absolute; border-radius: 50%; filter: blur(120px); }
+  #blob1 { width: 1100px; height: 1100px; background: #3144d6; opacity: 0.75; }
+  #blob2 { width: 900px; height: 900px; background: #0f1a7a; opacity: 0.9; }
+  #dots { position: absolute; inset: -40px; background-image: radial-gradient(rgba(255,255,255,0.16) 1.6px, transparent 1.8px); background-size: 22px 22px; }
+  #bgclaws { position: absolute; left: 50%; top: 50%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; opacity: 0.07; }
+
+  /* the white torn paper sheet that slides over the blue */
+  #paper { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #f6f7fc; color: var(--ink); will-change: transform; }
+  #paper::before, #paper::after { content: ""; position: absolute; left: 0; right: 0; height: 44px; background: #f6f7fc;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 18'%3E%3Cpath d='M0 18V9l6-5 5 6 6-8 7 6 6-4 7 8 7-6 6 4 7-8 6 6 7-4 7 7 7-6 6 4 7-6 7 7 7-4 7 6L120 9V18z'/%3E%3C/svg%3E") repeat-x; -webkit-mask-size: 290px 44px; }
+  #paper::before { top: -43px; }
+  #paper::after { bottom: -43px; transform: scaleY(-1); }
+  #pblob1, #pblob2 { position: absolute; border-radius: 50%; filter: blur(140px); }
+  #pblob1 { width: 900px; height: 700px; background: #c9d1ff; opacity: 0.7; }
+  #pblob2 { width: 800px; height: 600px; background: #e3e8ff; opacity: 0.9; }
+
+  /* shared bits */
+  .card { position: absolute; background: #fff; border-radius: 28px; box-shadow: 0 2px 6px rgba(12,14,31,0.06), 0 50px 100px -30px rgba(26,42,166,0.35); color: var(--ink); }
+  .pill { position: absolute; display: flex; align-items: center; gap: 14px; white-space: nowrap; background: #fff; color: var(--ink); border-radius: 999px; box-shadow: 0 2px 6px rgba(12,14,31,0.08), 0 24px 50px -18px rgba(26,42,166,0.4); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--blue); flex: none; }
+  .label { font-family: "Geist Mono", monospace; font-weight: 400; font-size: 22px; letter-spacing: 0.04em; color: var(--muted); }
+  .caption { position: absolute; left: 0; right: 0; top: 96px; text-align: center; font-size: 54px; letter-spacing: -0.03em; color: var(--ink); }
+  .num { display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 16px; margin-right: 20px; border-radius: 999px; background: var(--blue); color: #fff; font-family: "Geist Mono", monospace; font-size: 24px; vertical-align: 8px; letter-spacing: 0.04em; }
+  #cursor { position: absolute; width: 44px; height: 44px; z-index: 50; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35)); }
+  .ripple { position: absolute; border-radius: 50%; border: 4px solid; z-index: 49; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- ===== blue background ===== -->
+  <div id="blob1"></div><div id="blob2"></div><div id="dots"></div>
+  <svg id="bgclaws" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)">
+    <path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+
+  <!-- ===== S1: the hook ===== -->
+  <div class="scene" id="s1a">
+    <div class="abs" style="left:0;right:0;top:310px;text-align:center;font-size:52px;letter-spacing:-0.02em" id="s1small"></div>
+    <div class="abs heavy" style="left:0;right:0;top:390px;text-align:center;font-size:300px;line-height:1" id="s1big"></div>
+    <div class="abs" style="left:0;right:0;top:730px;text-align:center;font-size:52px;letter-spacing:-0.02em" id="s1after"></div>
+  </div>
+  <div class="scene" id="s1b">
+    <div class="abs" style="left:0;right:0;top:400px;text-align:center;font-size:92px;line-height:1.15;letter-spacing:-0.035em" id="s1btext"></div>
+  </div>
+
+  <!-- ===== S2: the search ===== -->
+  <div class="scene" id="s2a">
+    <div class="abs" id="searchwrap" style="left:310px;top:455px;width:1300px;height:170px;background:#fff;border-radius:44px;box-shadow:0 60px 120px -30px rgba(5,10,60,0.7);color:var(--ink);display:flex;align-items:center;padding:0 40px;gap:30px">
+      <svg width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#0c0e1f" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+      <div id="searchtext" style="flex:1;font-size:62px;letter-spacing:-0.03em;white-space:nowrap;overflow:hidden"></div>
+      <div id="searchbtn" style="flex:none;height:100px;padding:0 46px;border-radius:28px;background:var(--blue);color:#fff;font-size:40px;display:flex;align-items:center">Search</div>
+    </div>
+  </div>
+  <div class="scene" id="s2b">
+    <div class="abs" style="left:170px;top:420px;font-size:92px;letter-spacing:-0.035em;line-height:1.1" id="s2line1"></div>
+    <div class="abs mono" style="left:170px;top:530px;font-size:84px;letter-spacing:-0.02em;color:var(--pale)" id="s2line2"></div>
+    <div id="cascade"></div>
+  </div>
+
+  <!-- ===== the white paper (S3, S5, S6 live on it) ===== -->
+  <div id="paper">
+    <div id="pblob1"></div><div id="pblob2"></div>
+
+    <!-- S3: what if -->
+    <div class="scene" id="s3">
+      <div class="abs" style="left:0;right:0;top:130px;text-align:center;font-size:84px;line-height:1.12;letter-spacing:-0.035em;color:var(--ink)" id="s3text"></div>
+      <div id="wheel" class="abs" style="left:0;right:0;top:640px;height:0"></div>
+    </div>
+
+    <!-- S5: the product, five beats -->
+    <div class="scene" id="s5a">
+      <div class="caption" id="c5a"></div>
+      <div class="card" style="left:360px;top:400px;width:1200px;height:330px;padding:50px 56px">
+        <div class="label">YOUR WEBSITE</div>
+        <div style="display:flex;gap:20px;margin-top:22px">
+          <div style="flex:1;height:112px;border:3px solid var(--line);border-radius:22px;display:flex;align-items:center;padding:0 34px;font-size:50px;letter-spacing:-0.02em"><span class="mono" style="font-size:34px;color:#8a91a8;margin-right:10px">https://</span><span id="urltext"></span></div>
+          <div id="analyzebtn" style="height:112px;width:300px;border-radius:22px;background:var(--blue);color:#fff;font-size:44px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">Analyze</div>
+        </div>
+        <div id="found" style="display:flex;gap:16px;margin-top:30px"></div>
+      </div>
+    </div>
+
+    <div class="scene" id="s5b">
+      <div class="caption" id="c5b"></div>
+      <div class="card" style="left:520px;top:232px;width:680px;height:800px;padding:46px 50px">
+        <div class="label">100 SIMULATED CUSTOMERS</div>
+        <div id="grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:13px;margin-top:28px"></div>
+        <div style="display:flex;gap:36px;margin-top:30px;font-size:27px;color:var(--ink)" id="legend"></div>
+      </div>
+      <div class="pill" id="p5b" style="left:1260px;top:540px;padding:26px 38px;font-size:40px"><span class="dot"></span><span><b id="buycount" style="font-weight:600">0</b> of 100 would sign up</span></div>
+    </div>
+
+    <div class="scene" id="s5c">
+      <div class="caption" id="c5c"></div>
+      <div class="card" style="left:400px;top:270px;width:900px;height:680px;padding:50px 56px">
+        <div class="label">WHY PEOPLE SAID NO</div>
+        <div id="bars" style="margin-top:34px"></div>
+      </div>
+      <div class="pill" id="p5c" style="left:1350px;top:372px;padding:24px 34px;font-size:34px"><span class="dot"></span>fix this one first</div>
+    </div>
+
+    <div class="scene" id="s5d">
+      <div class="caption" id="c5d"></div>
+      <div class="card" style="left:400px;top:290px;width:960px;height:610px;padding:50px 56px">
+        <div class="label">FIX THESE FIRST</div>
+        <div id="fixes" style="margin-top:22px"></div>
+      </div>
+      <div class="pill" id="p5d" style="left:1400px;top:440px;padding:24px 34px;font-size:34px"><span class="dot"></span>copy rewritten for you</div>
+    </div>
+
+    <div class="scene" id="s5e">
+      <div class="caption" id="c5e"></div>
+      <div id="phones" class="abs" style="left:330px;top:260px;width:1000px;height:760px"></div>
+      <div class="pill" id="p5e" style="left:1390px;top:560px;padding:24px 34px;font-size:34px"><span class="dot"></span>App Store rule checks</div>
+    </div>
+
+    <!-- S6: the hub -->
+    <div class="scene" id="s6">
+      <div class="caption" id="c6" style="top:110px;font-size:66px"></div>
+      <svg class="fill" id="hublines" viewBox="0 0 1920 1080" fill="none" stroke="#1a2aa6" stroke-width="3.5" stroke-linecap="round"></svg>
+      <div id="hubpills"></div>
+      <div class="pill" id="hubcenter" style="left:960px;top:610px;padding:30px 54px 30px 40px;gap:20px;font-size:84px;color:var(--blue)">
+        <svg width="92" height="92" viewBox="0 0 120 120" fill="#1a2aa6"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+        <span class="heavy">crawler</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S4: the logo ===== -->
+  <div class="scene" id="s4">
+    <svg id="bigclaws" class="abs" style="left:610px;top:190px;width:700px;height:700px" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)">
+      <path class="bc" d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path class="bc" d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path class="bc" d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+    <div id="ring1" class="abs" style="left:960px;top:540px;border:3px solid rgba(255,255,255,0.5);border-radius:999px"></div>
+    <div id="ring2" class="abs" style="left:960px;top:540px;border:3px solid rgba(255,255,255,0.3);border-radius:999px"></div>
+    <div class="pill" id="logopill" style="left:960px;top:540px;padding:40px 76px 40px 56px;gap:28px;font-size:150px;color:var(--blue)">
+      <svg width="160" height="160" viewBox="0 0 120 120" fill="#1a2aa6"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+      <span class="heavy" id="logotext"></span>
+    </div>
+  </div>
+
+  <!-- ===== S7: tagline + button ===== -->
+  <div class="scene" id="s7a">
+    <div class="abs" style="left:0;right:0;top:390px;text-align:center;font-size:104px;line-height:1.12;letter-spacing:-0.04em" id="s7text"></div>
+  </div>
+  <div class="scene" id="s7b">
+    <div class="abs" style="left:0;right:0;top:250px;display:flex;justify-content:center;align-items:center;gap:30px">
+      <svg width="210" height="210" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+      <span class="heavy" style="font-size:250px;line-height:1">crawler</span>
+    </div>
+    <div id="cta" class="abs" style="left:960px;top:640px;height:124px;border-radius:999px;border:3px solid rgba(255,255,255,0.55);overflow:hidden;font-size:46px;white-space:nowrap">
+      <div id="ctafill" class="abs" style="left:0;top:0;bottom:0;background:#fff"></div>
+      <div id="ctatext" class="abs" style="inset:0;display:flex;align-items:center;justify-content:center;gap:26px;padding:0 56px">Test my product <span style="width:3px;height:52px;background:currentColor;opacity:0.35"></span> Free</div>
+    </div>
+    <div class="abs mono" id="honest" style="left:0;right:0;top:820px;text-align:center;font-size:28px;letter-spacing:0.03em;color:var(--pale)">simulated customers · buying intent, not real purchases</div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M5 2.5l14 9.5-6.2 1.2 3.6 7-2.7 1.4-3.6-7L5 19.5z" fill="#0c0e1f" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  <div id="ripples"></div>
+</div>
+
+<script>
+// ---------- tiny helpers ----------
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a)); // 0 before a, 1 after b
+const lerp = (a, b, p) => a + (b - a) * p;
+const out = (x) => 1 - Math.pow(1 - x, 3); // fast then slow
+const io = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const back = (x) => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2); // small overshoot
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const DURATION = 38.5;
+
+// Typewriter: the word being typed is tinted, then settles. Lines split by "\n".
+function type(el, text, t, start, cps, tint, opts = {}) {
+  const n = Math.floor(clamp((t - start) * cps, 0, text.length));
+  const done = n >= text.length;
+  const shown = text.slice(0, n);
+  const cut = done ? shown.length : Math.max(shown.lastIndexOf(" "), shown.lastIndexOf("\n")) + 1;
+  const blink = done ? Math.floor((t - start) * 2.5) % 2 === 0 : true;
+  const html = esc(shown.slice(0, cut)) + `<span style="color:${tint}">` + esc(shown.slice(cut)) + "</span>";
+  const cursor = opts.noCursor || t < start ? "" : `<span class="cur" style="opacity:${blink ? 1 : 0}"></span>`;
+  el.innerHTML = html.replace(/\n/g, "<br>") + cursor;
+  return done;
+}
+// Fade + blur + slight zoom a whole scene in and out.
+function show(el, t, a, b, fin = 0.35, fout = 0.3) {
+  const p = Math.min(out(seg(t, a, a + fin)), 1 - io(seg(t, b - fout, b)));
+  const on = t >= a - 0.01 && t <= b + 0.01 && p > 0.002;
+  el.style.display = on ? "block" : "none";
+  if (!on) return 0;
+  const leaving = t > b - fout;
+  el.style.opacity = p;
+  el.style.filter = p < 0.995 ? `blur(${(1 - p) * 22}px)` : "none";
+  el.style.transform = `scale(${leaving ? lerp(1.05, 1, p) : lerp(0.96, 1, p)})`;
+  return p;
+}
+// Pop an element in (scale with a small bounce).
+function pop(el, t, at, dur = 0.4, extra = "") {
+  const p = seg(t, at, at + dur);
+  el.style.opacity = clamp(p * 3);
+  el.style.transform = `${extra} scale(${p <= 0 ? 0.6 : lerp(0.6, 1, back(p))})`;
+  el.style.filter = p < 1 ? `blur(${(1 - p) * 10}px)` : "none";
+}
+
+// ---------- build the repeated pieces once ----------
+// S2: the cascade of places founders look for answers
+const CASCADE = ["Reddit thread", "Ask a friend", "Analytics", "X poll", "Gut feeling", "Redesign #4", "Blog post", "Another tab", "Guess again"];
+$("cascade").innerHTML = CASCADE.map((name, i) => `
+  <div class="card casc" style="width:330px;height:210px;border-radius:20px;padding:20px 22px;box-shadow:0 30px 60px -20px rgba(5,10,60,0.7)">
+    <div style="display:flex;gap:7px"><i style="width:11px;height:11px;border-radius:50%;background:#dfe3f5"></i><i style="width:11px;height:11px;border-radius:50%;background:#dfe3f5"></i><i style="width:11px;height:11px;border-radius:50%;background:#dfe3f5"></i></div>
+    <div style="margin-top:16px;font-size:26px;letter-spacing:-0.02em">${name}</div>
+    <div style="margin-top:14px;height:10px;width:${70 - (i % 3) * 14}%;border-radius:5px;background:${i % 2 ? "#1a2aa6" : "#c4caeb"}"></div>
+    <div style="margin-top:10px;height:10px;width:${50 + (i % 4) * 9}%;border-radius:5px;background:#e8ebf6"></div>
+    <div style="margin-top:10px;height:10px;width:${38 + (i % 2) * 20}%;border-radius:5px;background:#e8ebf6"></div>
+  </div>`).join("");
+const cascEls = [...document.querySelectorAll(".casc")];
+
+// S3: the wheel of customers, ending on the logo
+const PEOPLE = [["Student, 19", "#7c8cf0"], ["Busy mom, 38", "#3d49a8"], ["Founder, 31", "#9aa6e6"], ["Skeptic, 45", "#0c0e1f"], ["Teen, 16", "#5a64b5"], ["Impulse buyer, 27", "#1a2aa6"]];
+const person = (c) => `<svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="${c}"/><circle cx="32" cy="25" r="10" fill="#fff"/><path d="M13 53c2-12 10-17 19-17s17 5 19 17" fill="#fff"/></svg>`;
+$("wheel").innerHTML = PEOPLE.map(([n, c]) => `<div class="pill wh" style="left:960px;top:0;padding:22px 44px 22px 24px;font-size:52px;letter-spacing:-0.02em">${person(c)}${n}</div>`).join("") +
+  `<div class="pill wh" style="left:960px;top:0;padding:24px 50px 24px 34px;font-size:70px;color:#1a2aa6;gap:18px"><svg width="78" height="78" viewBox="0 0 120 120" fill="#1a2aa6"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg><span class="heavy">crawler</span></div>`;
+const wheelEls = [...document.querySelectorAll(".wh")];
+
+// S5a: pages found
+$("found").innerHTML = ["Landing", "Pricing", "Signup"].map((p) => `<div class="fnd" style="display:flex;align-items:center;gap:12px;height:58px;padding:0 24px;border-radius:999px;background:#f3f5fd;font-size:28px"><svg width="26" height="26" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#1a2aa6"/><path d="M4.3 8.4l2.4 2.4 5-5.6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${p}</div>`).join("");
+const foundEls = [...document.querySelectorAll(".fnd")];
+
+// S5b: 100 dots. The order they light up in is shuffled (fixed shuffle, so it's repeatable).
+const VERDICT = (i) => (i < 38 ? "buy" : i < 60 ? "maybe" : "no");
+$("grid").innerHTML = Array.from({ length: 100 }, () => `<div class="gd" style="aspect-ratio:1;border-radius:50%"></div>`).join("");
+const gridEls = [...document.querySelectorAll(".gd")];
+const order = Array.from({ length: 100 }, (_, i) => i).sort((a, b) => ((a * 37 + 11) % 100) - ((b * 37 + 11) % 100));
+const rank = []; order.forEach((idx, r) => (rank[idx] = r));
+$("legend").innerHTML = [["#1a2aa6", "38 buy"], ["#9aa6e6", "22 maybe"], ["transparent", "40 no"]].map(([c, l]) => `<span style="display:flex;align-items:center;gap:12px"><i style="width:20px;height:20px;border-radius:50%;background:${c};border:2.5px solid ${c === "transparent" ? "#c4caeb" : c}"></i>${l}</span>`).join("");
+
+// S5c: why people said no
+const BARS = [["Price hidden until signup", 34], ["Not sure it's trustworthy", 22], ["Unclear what it does", 18], ["Signup asks too much", 12]];
+$("bars").innerHTML = BARS.map(([n, v]) => `<div class="brow" style="padding:22px 22px;margin:0 -22px;border-radius:18px"><div style="display:flex;justify-content:space-between;font-size:34px;letter-spacing:-0.02em"><span>${n}</span><span class="bval" style="color:var(--muted)">0%</span></div><div style="margin-top:14px;height:16px;border-radius:8px;background:#e8ebf6;overflow:hidden"><div class="bfill" style="height:100%;border-radius:8px;background:#1a2aa6;width:0"></div></div></div>`).join("");
+const barRows = [...document.querySelectorAll(".brow")], barFills = [...document.querySelectorAll(".bfill")], barVals = [...document.querySelectorAll(".bval")];
+
+// S5d: ranked fixes
+const FIXES = [["Show the price on the homepage", 11], ["Add a free week, no card", 7], ["Cut signup to email only", 4]];
+$("fixes").innerHTML = FIXES.map(([n, v], i) => `<div class="frow" style="display:flex;align-items:center;gap:30px;padding:36px 22px;margin:0 -22px;border-radius:18px;${i ? "border-top:2px solid #eef0f8" : ""}"><span class="mono" style="font-size:26px;color:var(--muted)">0${i + 1}</span><span style="flex:1;font-size:40px;letter-spacing:-0.025em">${n}</span><span class="fval heavy" style="font-size:66px;color:#1a2aa6;letter-spacing:-0.04em">+0</span></div>`).join("");
+const fixRows = [...document.querySelectorAll(".frow")], fixVals = [...document.querySelectorAll(".fval")];
+
+// S5e: app screens
+const SCREENS = [["Welcome", 4], ["Goals", 9], ["Notifications", 21], ["Paywall", 38]];
+$("phones").innerHTML = SCREENS.map(([n, q], i) => `<div class="ph abs" style="left:${i * 250}px;top:0;width:220px"><div class="phs" style="height:440px;border-radius:34px;background:#fff;padding:26px 22px;display:flex;flex-direction:column;box-shadow:0 40px 80px -30px rgba(26,42,166,0.45);border:4px solid ${i === 3 ? "#1a2aa6" : "#fff"}"><i style="height:14px;width:70%;border-radius:7px;background:#1a2aa6"></i><i style="margin-top:14px;height:11px;width:50%;border-radius:6px;background:#e8ebf6"></i><i style="margin-top:10px;height:11px;width:64%;border-radius:6px;background:#e8ebf6"></i>${i === 3 ? '<i style="margin-top:40px;height:64px;border-radius:14px;border:3px solid #1a2aa6"></i><i style="margin-top:12px;height:64px;border-radius:14px;border:3px solid #e8ebf6"></i>' : ""}<i style="margin-top:auto;height:50px;border-radius:14px;background:#1a2aa6"></i></div><div class="mono" style="margin-top:22px;font-size:22px;color:var(--muted);letter-spacing:0.04em">${i + 1} · ${n.toUpperCase()}</div><div class="phq heavy" style="font-size:66px;color:${i === 3 ? "#1a2aa6" : "#0c0e1f"};letter-spacing:-0.04em">−0%</div><div style="font-size:24px;color:var(--muted)">quit here</div></div>`).join("");
+const phEls = [...document.querySelectorAll(".ph")], phQs = [...document.querySelectorAll(".phq")];
+
+// S6: the hub. Pills around the center, joined by curves.
+const HUB = [
+  [330, 380, "Intent score", "38 of 100"], [250, 610, "Blockers", "price · 34%"], [350, 840, "Drop-off", "screen 3"],
+  [1590, 380, "Ranked fixes", "+11 people"], [1670, 610, "Paywall rules", "4 of 6 pass"], [1570, 840, "A/B winner", "version B"],
+];
+$("hubpills").innerHTML = HUB.map(([x, y, a, b]) => `<div class="pill hp" style="left:${x}px;top:${y}px;padding:20px 34px 20px 26px;gap:16px"><span class="dot"></span><span><span style="display:block;font-size:32px;letter-spacing:-0.02em">${a}</span><span class="mono" style="display:block;font-size:22px;color:var(--muted)">${b}</span></span></div>`).join("");
+const hubEls = [...document.querySelectorAll(".hp")];
+$("hublines").innerHTML = HUB.map(([x, y]) => { const inner = x < 960 ? 700 : 1220; const edge = x; // the line runs to the pill's middle; the pill covers its end return `<path class="hl" d="M${inner} 610 C ${(inner + edge) / 2} 610, ${(inner + edge) / 2} ${y}, ${edge} ${y}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`; }).join("");
+const hubLines = [...document.querySelectorAll(".hl")];
+const bigClaws = [...document.querySelectorAll(".bc")];
+
+// ---------- cursor path + clicks ----------
+// [time, x, y]; the cursor is only visible between the first and last time of each group.
+const CURSOR = [
+  [[5.9, 1500, 900], [6.55, 1470, 560], [7.05, 1480, 566]],                 // search button
+  [[16.3, 1700, 950], [17.0, 1400, 560], [17.9, 1410, 566], [18.2, 1480, 640]], // analyze button
+  [[22.4, 1500, 980], [23.1, 760, 410], [24.7, 790, 420]],                  // first bar
+  [[25.5, 1560, 990], [26.3, 900, 440], [27.5, 930, 450]],                  // first fix
+  [[28.6, 1500, 1000], [29.3, 1180, 520], [30.1, 1200, 530]],               // paywall screen
+  [[36.5, 1500, 1000], [37.15, 1010, 712], [38.5, 1016, 716]],              // the button
+];
+const CLICKS = [[6.7, 1478, 548, "#fff"], [17.15, 1408, 548, "#1a2aa6"], [37.3, 1018, 702, "#fff"]];
+$("ripples").innerHTML = CLICKS.map(() => `<div class="ripple"></div><div class="ripple"></div>`).join("");
+const rippleEls = [...document.querySelectorAll(".ripple")];
+
+// ---------- the whole video as a function of time ----------
+window.seek = function (t) {
+  // --- backgrounds ---
+  $("blob1").style.transform = `translate(${200 + Math.sin(t * 0.35) * 260}px, ${-300 + Math.cos(t * 0.28) * 160}px)`;
+  $("blob2").style.transform = `translate(${1100 + Math.cos(t * 0.3) * 240}px, ${420 + Math.sin(t * 0.4) * 140}px)`;
+  $("dots").style.transform = `translate(${(t * 6) % 22}px, ${(t * 3) % 22}px)`;
+  $("bgclaws").style.transform = `rotate(${t * 1.2 - 10}deg) scale(${1 + Math.sin(t * 0.3) * 0.04})`;
+  $("pblob1").style.transform = `translate(${-200 + Math.sin(t * 0.4) * 200}px, ${500 + Math.cos(t * 0.3) * 120}px)`;
+  $("pblob2").style.transform = `translate(${1200 + Math.cos(t * 0.33) * 220}px, ${-150 + Math.sin(t * 0.45) * 120}px)`;
+
+  // The paper slides up over the blue (and off the top again): 0 = covering the screen.
+  let py;
+  if (t < 12.5) py = lerp(1140, 0, io(seg(t, 8.95, 9.65)));
+  else if (t < 13.3) py = lerp(0, -1140, io(seg(t, 12.5, 13.15)));
+  else if (t < 33.2) py = lerp(1140, 0, io(seg(t, 14.75, 15.4)));
+  else py = lerp(0, -1140, io(seg(t, 33.2, 33.85)));
+  $("paper").style.transform = `translateY(${py}px)`;
+
+  // --- S1a: "You spent 6 MONTHS building it." ---
+  if (show($("s1a"), t, 0, 3.0, 0.3)) {
+    type($("s1small"), "You spent", t, 0.25, 20, "#aeb7f6", { noCursor: t > 0.9 });
+    const m = clamp(Math.floor(lerp(1, 6.99, out(seg(t, 0.85, 1.85)))), 1, 6);
+    const big = $("s1big");
+    big.textContent = `${m} MONTH${m > 1 ? "S" : ""}`;
+    const a = seg(t, 0.8, 1.0);
+    const tick = t > 0.85 && t < 1.9 ? 1 + 0.03 * Math.abs(Math.sin(t * 30)) : 1;
+    big.style.opacity = a;
+    big.style.transform = `scale(${lerp(1.5, 1, out(a)) * tick})`;
+    big.style.filter = a < 1 ? `blur(${(1 - a) * 30}px)` : "none";
+    type($("s1after"), "building it.", t, 2.0, 22, "#aeb7f6");
+    $("s1after").style.opacity = t < 2.0 ? 0 : 1;
+  }
+  // --- S1b: "And you're still guessing why nobody buys." ---
+  if (show($("s1b"), t, 3.0, 4.6)) type($("s1btext"), "And you're still guessing\nwhy nobody buys.", t, 3.1, 36, "#aeb7f6");
+
+  // --- S2a: the search bar ---
+  if (show($("s2a"), t, 4.5, 7.25, 0.45)) {
+    const zoom = lerp(1.25, 1, out(seg(t, 4.5, 5.2))) * lerp(1, 1.06, seg(t, 5.2, 7.2));
+    $("searchwrap").style.transform = `scale(${zoom})`;
+    type($("searchtext"), "why is nobody buying my app", t, 4.95, 19, "#1a2aa6", { noCursor: t > 6.6 });
+    const b = seg(t, 5.9, 6.2), press = t > 6.68 && t < 6.86 ? 0.93 : 1;
+    $("searchbtn").style.opacity = b;
+    $("searchbtn").style.transform = `scale(${lerp(0.8, 1, back(b)) * press})`;
+  }
+  // --- S2b: "You guess, but zero answers" + the cascade ---
+  if (show($("s2b"), t, 7.2, 9.3, 0.35, 0.35)) {
+    type($("s2line1"), "You guess, but", t, 7.35, 24, "#aeb7f6", { noCursor: t > 8.0 });
+    type($("s2line2"), "zero answers", t, 8.0, 22, "#fff");
+    $("s2line2").style.opacity = t < 8.0 ? 0 : 1;
+    cascEls.forEach((el, i) => {
+      const p = out(seg(t, 7.25 + i * 0.09, 7.25 + i * 0.09 + 0.55));
+      const drift = (t - 7.2) * 26;
+      const x = 820 + i * 112 + drift, y = 820 - i * 88 - drift * 0.8;
+      el.style.left = x + "px"; el.style.top = lerp(y + 240, y, p) + "px";
+      el.style.opacity = p;
+      el.style.transform = `rotate(${lerp(14, -4 + (i % 3) * 3, p)}deg) scale(${0.72 + i * 0.045})`;
+      el.style.filter = `blur(${Math.abs(i - 4.5) * 0.9 + (1 - p) * 12}px)`;
+      el.style.zIndex = i;
+    });
+  }
+
+  // --- S3: "What if 100 customers tried it first?" + the wheel ---
+  if (show($("s3"), t, 9.3, 12.75)) {
+    type($("s3text"), "What if 100 customers\ntried it first?", t, 9.75, 26, "#1a2aa6");
+    const pos = lerp(-0.6, PEOPLE.length, io(seg(t, 10.0, 12.05))); // which item is in the middle
+    wheelEls.forEach((el, i) => {
+      const d = i - pos, ad = Math.abs(d);
+      const isLogo = i === PEOPLE.length;
+      const land = isLogo ? back(seg(t, 11.75, 12.2)) : 1;
+      el.style.opacity = clamp(1.25 - ad * 0.62);
+      el.style.transform = `translate(-50%, -50%) translateY(${d * 150}px) scale(${clamp(1 - ad * 0.2, 0.3, 1) * (isLogo ? lerp(0.9, 1.12, land) : 1)})`;
+      el.style.filter = ad > 0.25 ? `blur(${Math.min(9, ad * 4)}px)` : "none";
+      el.style.zIndex = 20 - Math.round(ad * 3);
+    });
+  }
+
+  // --- S4: claws scratch, then the logo pill ---
+  if (show($("s4"), t, 12.95, 15.05, 0.2, 0.35)) {
+    bigClaws.forEach((el, i) => {
+      const p = out(seg(t, 13.05 + i * 0.13, 13.4 + i * 0.13));
+      el.style.clipPath = `inset(0 0 ${(1 - p) * 100}% 0)`; // each scratch is revealed top to bottom
+    });
+    const gone = seg(t, 13.75, 14.0);
+    $("bigclaws").style.opacity = 1 - gone;
+    $("bigclaws").style.transform = `scale(${lerp(1, 0.5, io(gone))})`;
+    $("bigclaws").style.filter = gone > 0 ? `blur(${gone * 18}px)` : "none";
+    const pp = seg(t, 13.85, 14.3);
+    $("logopill").style.opacity = clamp(pp * 3);
+    $("logopill").style.transform = `translate(-50%, -50%) scale(${pp <= 0 ? 0.5 : lerp(0.5, 1, back(pp))})`;
+    type($("logotext"), "crawler", t, 13.95, 18, "#1a2aa6", { noCursor: true });
+    [["ring1", 14.25, 900], ["ring2", 14.4, 1300]].forEach(([id, at, max]) => {
+      const r = out(seg(t, at, at + 0.9)), w = lerp(700, max, r);
+      const el = $(id);
+      el.style.width = w + "px"; el.style.height = w * 0.34 + "px";
+      el.style.transform = "translate(-50%, -50%)"; el.style.opacity = t < at ? 0 : 1 - r;
+    });
+  }
+
+  // --- S5a: paste one link ---
+  if (show($("s5a"), t, 15.25, 18.35)) {
+    $("c5a").innerHTML = `<span class="num">01</span><span id="c5at"></span>`;
+    type($("c5at"), "Paste one link", t, 15.55, 26, "#1a2aa6", { noCursor: t > 16.5 });
+    type($("urltext"), "mealmate.app", t, 16.05, 17, "#0c0e1f", { noCursor: t > 17.1 });
+    const pressed = t > 17.13 && t < 17.3 ? 0.94 : 1;
+    $("analyzebtn").style.transform = `scale(${pressed})`;
+    $("analyzebtn").textContent = t > 17.3 ? (t > 18.0 ? "Done ✓" : "Reading…") : "Analyze";
+    foundEls.forEach((el, i) => pop(el, t, 17.45 + i * 0.17, 0.35));
+  }
+
+  // --- S5b: 100 customers walk in ---
+  if (show($("s5b"), t, 18.35, 21.75)) {
+    $("c5b").innerHTML = `<span class="num">02</span><span id="c5bt"></span>`;
+    type($("c5bt"), "100 simulated customers walk in", t, 18.6, 30, "#1a2aa6", { noCursor: t > 19.9 });
+    let buys = 0;
+    gridEls.forEach((el, i) => {
+      const at = 18.85 + (rank[i] / 100) * 1.7;
+      const p = seg(t, at, at + 0.22), v = VERDICT(i);
+      if (p >= 1 && v === "buy") buys++;
+      el.style.transform = `scale(${p <= 0 ? 0 : lerp(0, 1, back(p))})`;
+      el.style.background = v === "buy" ? "#1a2aa6" : v === "maybe" ? "#9aa6e6" : "transparent";
+      el.style.border = v === "no" ? "3px solid #c4caeb" : "none";
+    });
+    $("buycount").textContent = buys;
+    pop($("p5b"), t, 19.2, 0.45);
+    $("legend").style.opacity = seg(t, 20.4, 20.8);
+  }
+
+  // --- S5c: see what stopped them ---
+  if (show($("s5c"), t, 21.75, 24.95)) {
+    $("c5c").innerHTML = `<span class="num">03</span><span id="c5ct"></span>`;
+    type($("c5ct"), "See what stopped them", t, 22.0, 28, "#1a2aa6", { noCursor: t > 23.0 });
+    BARS.forEach(([, v], i) => {
+      const p = out(seg(t, 22.25 + i * 0.16, 23.0 + i * 0.16));
+      barFills[i].style.width = v * 2.6 * p + "%";
+      barVals[i].textContent = Math.round(v * p) + "%";
+      barRows[i].style.background = i === 0 && t > 23.15 ? `rgba(26,42,166,${0.08 * seg(t, 23.15, 23.4)})` : "transparent";
+    });
+    pop($("p5c"), t, 23.35, 0.4);
+  }
+
+  // --- S5d: fixes, ranked ---
+  if (show($("s5d"), t, 24.95, 27.75)) {
+    $("c5d").innerHTML = `<span class="num">04</span><span id="c5dt"></span>`;
+    type($("c5dt"), "Fixes, ranked by people won back", t, 25.15, 32, "#1a2aa6", { noCursor: t > 26.3 });
+    FIXES.forEach(([, v], i) => {
+      const p = out(seg(t, 25.4 + i * 0.2, 25.9 + i * 0.2));
+      fixRows[i].style.opacity = p;
+      fixRows[i].style.transform = `translateY(${(1 - p) * 40}px)`;
+      fixVals[i].textContent = "+" + Math.round(v * out(seg(t, 25.6 + i * 0.2, 26.3 + i * 0.2)));
+      fixRows[i].style.background = i === 0 && t > 26.35 ? `rgba(26,42,166,${0.08 * seg(t, 26.35, 26.6)})` : "transparent";
+    });
+    pop($("p5d"), t, 26.55, 0.4);
+  }
+
+  // --- S5e: apps too ---
+  if (show($("s5e"), t, 27.75, 30.45)) {
+    $("c5e").innerHTML = `<span class="num">05</span><span id="c5et"></span>`;
+    type($("c5et"), "Apps too: onboarding + paywall", t, 27.95, 32, "#1a2aa6", { noCursor: t > 29.0 });
+    SCREENS.forEach(([, q], i) => {
+      const p = seg(t, 28.15 + i * 0.16, 28.6 + i * 0.16);
+      phEls[i].style.opacity = clamp(p * 2.5);
+      phEls[i].style.transform = `translateY(${(1 - out(p)) * 90}px) scale(${i === 3 ? lerp(1, 1.06, io(seg(t, 29.3, 29.7))) : 1})`;
+      phQs[i].textContent = "−" + Math.round(q * out(seg(t, 28.5 + i * 0.16, 29.2 + i * 0.16))) + "%";
+    });
+    pop($("p5e"), t, 29.5, 0.4);
+  }
+
+  // --- S6: the hub ---
+  if (show($("s6"), t, 30.45, 33.35, 0.35, 0.3)) {
+    type($("c6"), "All the answers. Before launch.", t, 30.7, 30, "#1a2aa6");
+    const cp = seg(t, 30.5, 30.95), pulse = 1 + 0.035 * Math.sin(clamp((t - 32.2) * 6, 0, Math.PI));
+    $("hubcenter").style.transform = `translate(-50%, -50%) scale(${lerp(0.6, 1, back(cp)) * pulse})`;
+    $("hubcenter").style.boxShadow = `0 2px 6px rgba(12,14,31,0.08), 0 30px 70px -18px rgba(26,42,166,${lerp(0.4, 0.75, seg(t, 32.0, 32.4))}), 0 0 0 ${lerp(0, 14, seg(t, 32.0, 32.4))}px rgba(26,42,166,0.1)`;
+    HUB.forEach((_, i) => {
+      const at = 30.95 + ((i * 2) % 6 + (i > 2 ? 1 : 0)) * 0.14; // alternate left / right
+      hubLines[i].setAttribute("stroke-dashoffset", 1 - io(seg(t, at, at + 0.45)));
+      const p = seg(t, at + 0.3, at + 0.7);
+      hubEls[i].style.opacity = clamp(p * 3);
+      hubEls[i].style.transform = `translate(-50%, -50%) scale(${p <= 0 ? 0.7 : lerp(0.7, 1, back(p))})`;
+      hubEls[i].style.filter = p < 1 ? `blur(${(1 - p) * 10}px)` : "none";
+    });
+  }
+
+  // --- S7a: tagline ---
+  if (show($("s7a"), t, 33.55, 35.75, 0.3, 0.4)) type($("s7text"), "See what stops customers.\nBefore you launch.", t, 33.75, 34, "#aeb7f6");
+
+  // --- S7b: logo + button ---
+  if (show($("s7b"), t, 35.65, 99, 0.5)) {
+    const w = lerp(120, 640, out(seg(t, 36.05, 36.5)));
+    const cta = $("cta");
+    cta.style.width = w + "px"; cta.style.marginLeft = -w / 2 + "px";
+    cta.style.opacity = seg(t, 36.0, 36.2);
+    const f = io(seg(t, 36.75, 37.2)), press = t > 37.28 && t < 37.45 ? 0.95 : 1;
+    $("ctafill").style.width = f * 100 + "%";
+    $("ctatext").style.color = f > 0.55 ? "#1a2aa6" : "#fff";
+    $("ctatext").style.opacity = seg(t, 36.3, 36.55);
+    cta.style.transform = `scale(${press})`;
+    cta.style.boxShadow = `0 30px 80px -20px rgba(0,0,0,${0.5 * f})`;
+    $("honest").style.opacity = seg(t, 37.5, 37.9);
+  }
+
+  // --- cursor + click ripples (on top of everything) ---
+  let cx = null, cy = null;
+  for (const path of CURSOR) {
+    if (t < path[0][0] || t > path[path.length - 1][0]) continue;
+    for (let i = 0; i < path.length - 1; i++) {
+      const [t0, x0, y0] = path[i], [t1, x1, y1] = path[i + 1];
+      if (t >= t0 && t <= t1) { const p = io(seg(t, t0, t1)); cx = lerp(x0, x1, p); cy = lerp(y0, y1, p); }
+    }
+  }
+  $("cursor").style.display = cx === null ? "none" : "block";
+  if (cx !== null) { $("cursor").style.left = cx + "px"; $("cursor").style.top = cy + "px"; }
+  CLICKS.forEach(([ct, x, y, color], i) => {
+    [0, 0.12].forEach((delay, k) => {
+      const el = rippleEls[i * 2 + k], p = seg(t, ct + delay, ct + delay + 0.6), size = lerp(20, 190, out(p));
+      el.style.display = p > 0 && p < 1 ? "block" : "none";
+      el.style.borderColor = color;
+      el.style.width = el.style.height = size + "px";
+      el.style.left = x + 22 - size / 2 + "px"; el.style.top = y + 22 - size / 2 + "px";
+      el.style.opacity = 1 - p;
+    });
+  });
+};
+window.DURATION = DURATION;
+document.fonts.ready.then(() => { window.ready = true; window.seek(Number(new URLSearchParams(location.search).get("t") || 0)); });
+</script>
+</body>
+</html>
