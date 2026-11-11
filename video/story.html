@@ -1,0 +1,259 @@
+<!doctype html>
+<!--
+  Crawler STORY video maker (vertical 1080x1920, for TikTok / Instagram Reels / YouTube Shorts).
+  The format: a hook, then ONE WORD AT A TIME over fast-changing original visuals, big numbers,
+  and the Crawler logo + handle on every frame. No movie clips, no stock footage, no copyrighted music.
+  You don't open this page yourself: `node video/make-story.cjs <story-name>` feeds it a story
+  (video/stories/<name>.json), records it frame by frame and adds a generated beat.
+  Like the other video pages it is a pure function of time: window.seek(seconds) draws that moment.
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: "Archivo"; font-weight: 900; src: url("fonts/archivo-900.ttf"); }
+  @font-face { font-family: "Geist"; font-weight: 500; src: url("fonts/geist-500.ttf"); }
+  @font-face { font-family: "Geist Mono"; font-weight: 400; src: url("fonts/geistmono-400.ttf"); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0a1050; color: #fff; font-family: "Geist", sans-serif; font-weight: 500; }
+  .abs { position: absolute; }
+  .fill { position: absolute; inset: 0; }
+  .heavy { font-family: "Archivo", sans-serif; font-weight: 900; letter-spacing: -0.05em; }
+  .mono { font-family: "Geist Mono", monospace; font-weight: 400; }
+  .vis { position: absolute; inset: 0; display: none; }
+  .card { position: absolute; background: #fff; color: #0c0e1f; border-radius: 40px; box-shadow: 0 60px 120px -30px rgba(3,6,40,0.75); }
+  .label { font-family: "Geist Mono", monospace; font-size: 30px; letter-spacing: 0.05em; color: #5f6780; }
+  #bg1 { background: radial-gradient(1300px 1100px at 30% 22%, #3144d6 0%, #1a2aa6 55%, #101a80 100%); }
+  #bg2 { background: radial-gradient(1100px 1000px at 70% 30%, #1b2250 0%, #070a1c 75%); }
+  .dots { background-image: radial-gradient(rgba(255,255,255,0.15) 2px, transparent 2.3px); background-size: 30px 30px; }
+  /* the words */
+  #words { position: absolute; left: 90px; right: 90px; text-align: center; z-index: 30; line-height: 1.04; }
+  .w { display: inline-block; font-family: "Archivo", sans-serif; font-weight: 900; letter-spacing: -0.04em; line-height: 1.02; margin: 0 0.12em; color: #fff;
+    text-shadow: 0 6px 0 rgba(3,6,40,0.9), 0 0 40px rgba(3,6,40,0.6); -webkit-text-stroke: 3px rgba(3,6,40,0.9); paint-order: stroke fill; }
+  .w.e { color: #9fb0ff; }
+  #big { position: absolute; left: 0; right: 0; text-align: center; z-index: 25; white-space: nowrap; }
+  #flash { position: absolute; inset: 0; background: #fff; z-index: 60; pointer-events: none; }
+  #vignette { position: absolute; inset: 0; z-index: 40; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%); }
+  /* brand, on every frame */
+  #brand { position: absolute; left: 64px; top: 120px; z-index: 50; display: flex; align-items: center; gap: 14px; }
+  #brand span { font-size: 44px; letter-spacing: -0.05em; }
+  #progress { position: absolute; left: 64px; right: 64px; top: 84px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.22); z-index: 50; }
+  #progressfill { height: 100%; border-radius: 3px; background: #fff; width: 0; }
+  /* top-left under the logo: the bottom ~380px and the right edge are covered by TikTok / Reels buttons and captions */
+  #handle { position: absolute; left: 64px; top: 190px; z-index: 50; font-size: 30px; letter-spacing: -0.01em; color: #d6dbff; text-shadow: 0 2px 12px rgba(3,6,40,0.8); }
+  #source { position: absolute; left: 90px; right: 150px; top: 1490px; z-index: 50; font-family: "Geist Mono", monospace; font-size: 24px; letter-spacing: 0.03em; color: #aeb7f6; text-shadow: 0 2px 10px rgba(3,6,40,0.9); }
+  #end { position: absolute; inset: 0; z-index: 55; display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="fill" id="bg1"><div class="fill dots" id="dots1"></div>
+    <svg id="claws" class="abs" style="left:100px;top:360px;width:900px;height:900px;opacity:0.09" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+  </div>
+  <div class="fill" id="bg2" style="display:none"><div class="fill dots" id="dots2"></div></div>
+
+  <div id="world" class="fill">
+    <!-- visuals: one is on at a time, chosen per line -->
+    <div class="vis" data-v="paper">
+      <div class="card" id="paperCard" style="left:140px;top:300px;width:800px;height:700px;padding:56px;background:#d9dbe3;filter:grayscale(1)">
+        <div class="label">LAUNCH DAY</div>
+        <div style="margin-top:34px;height:44px;width:78%;border-radius:12px;background:#8f93a3"></div>
+        <div style="margin-top:22px;height:26px;width:58%;border-radius:10px;background:#b9bcc8"></div>
+        <div style="margin-top:14px;height:26px;width:66%;border-radius:10px;background:#b9bcc8"></div>
+        <div style="margin-top:40px;height:86px;width:300px;border-radius:20px;background:#8f93a3"></div>
+        <div class="label" style="margin-top:60px">SALES</div>
+        <svg width="688" height="120" viewBox="0 0 688 120" style="margin-top:10px"><path d="M0 100 L688 100" stroke="#8f93a3" stroke-width="8" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <div class="vis" data-v="grid">
+      <div class="card" style="left:110px;top:230px;width:860px;height:860px;padding:54px"><div class="label">100 SIMULATED CUSTOMERS</div><div id="grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:16px;margin-top:34px"></div></div>
+    </div>
+    <div class="vis" data-v="bars">
+      <div class="card" style="left:110px;top:290px;width:860px;height:740px;padding:54px"><div class="label">WHY PEOPLE SAID NO</div><div id="bars" style="margin-top:30px"></div></div>
+    </div>
+    <div class="vis" data-v="fixes">
+      <div class="card" style="left:110px;top:320px;width:860px;height:680px;padding:54px"><div class="label">FIX THESE FIRST</div><div id="fixes" style="margin-top:16px"></div></div>
+    </div>
+    <div class="vis" data-v="phones"><div id="phones" class="abs" style="left:100px;top:330px;width:900px;height:640px"></div></div>
+    <div class="vis" data-v="checklist"><div class="card" style="left:110px;top:270px;width:860px;padding:54px 54px 30px"><div class="label" id="ckLabel">CHECKLIST</div><div id="checks" style="margin-top:20px"></div></div></div>
+    <div class="vis" data-v="stats"><div id="stats" class="abs" style="left:90px;right:90px;top:360px;display:flex;gap:30px;justify-content:center"></div></div>
+    <div class="vis" data-v="claws">
+      <svg id="bigClaws" class="abs" style="left:190px;top:300px;width:700px;height:700px" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path class="bc" d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path class="bc" d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path class="bc" d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+    </div>
+    <div class="vis" data-v="card">
+      <div class="abs" style="left:90px;top:400px;width:900px;height:520px;perspective:1700px"><div id="bizcard" style="position:relative;width:900px;height:520px;border-radius:34px;overflow:hidden;background:linear-gradient(135deg,#2538cf,#1a2aa6 45%,#12207f);box-shadow:0 50px 90px -20px rgba(0,0,0,0.7)">
+        <div class="abs dots" style="inset:0;opacity:0.9"></div>
+        <div class="abs" style="left:64px;top:150px;display:flex;align-items:center;gap:26px"><svg width="150" height="150" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg><span class="heavy" style="font-size:148px;line-height:1">crawler</span></div>
+        <div class="abs mono" style="left:66px;bottom:54px;font-size:27px;color:#d6dbff">see what stops customers</div>
+      </div></div>
+    </div>
+    <div class="vis" data-v="gradient"></div>
+    <div class="vis" data-v="dark"></div>
+  </div>
+
+  <div id="big" class="heavy"></div>
+  <div id="words"></div>
+  <div id="source"></div>
+  <div id="handle" class="mono"></div>
+  <div id="vignette"></div>
+  <div id="brand"><svg width="54" height="54" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg><span class="heavy">crawler</span></div>
+  <div id="progress"><div id="progressfill"></div></div>
+  <div id="end">
+    <div class="fill" id="endbg" style="background:radial-gradient(1300px 1100px at 30% 22%, #3144d6 0%, #1a2aa6 55%, #101a80 100%)"><div class="fill dots"></div></div>
+    <div class="abs" id="endlogo" style="left:0;right:0;top:520px;display:flex;flex-direction:column;align-items:center">
+      <svg width="320" height="320" viewBox="0 0 120 120" fill="#fff"><g transform="rotate(14 60 60)"><path d="M22 10 C 36 40, 40 74, 30 108 C 56 76, 52 38, 22 10 Z"/><path d="M52 4 C 68 38, 72 76, 62 114 C 90 78, 86 36, 52 4 Z"/><path d="M82 14 C 96 42, 98 72, 90 102 C 114 74, 110 42, 82 14 Z"/></g></svg>
+      <span class="heavy" style="font-size:240px;line-height:1;margin-top:10px">crawler</span>
+      <span id="endtag" style="font-size:46px;letter-spacing:-0.02em;margin-top:30px;color:#d6dbff"></span>
+    </div>
+    <div class="abs" id="endbtn" style="left:150px;width:780px;top:1180px;height:150px;border-radius:999px;background:#fff;color:#1a2aa6;display:flex;align-items:center;justify-content:center;font-size:56px;letter-spacing:-0.02em;box-shadow:0 40px 90px -20px rgba(0,0,0,0.6)"></div>
+    <div class="abs mono" id="endhonest" style="left:0;right:0;top:1380px;text-align:center;font-size:27px;letter-spacing:0.03em;color:#aeb7f6;line-height:1.5">simulated customers<br>buying intent, not real purchases</div>
+  </div>
+  <div id="flash"></div>
+</div>
+
+<script src="story-core.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const out = (x) => 1 - Math.pow(1 - x, 3);
+const back = (x) => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
+
+// The story comes from make-story.cjs (window.STORY). Without it, show a tiny demo so the page still works.
+const STORY = window.STORY || { lines: [{ text: "Open this with *make-story.cjs*.", visual: "gradient" }] };
+const BRAND = STORY.brand || { handle: "@crawler", cta: "Test your site free", tagline: "Simulated customers. Real reasons." };
+const TL = buildTimeline(STORY);
+const BEAT = 60 / (STORY.bpm || 140);
+const DROP = STORY.drop != null ? STORY.drop : 0; // before this time: no beat pulses
+
+// ---------- build the repeated visuals once ----------
+const VERDICT = (i) => (i < 38 ? "buy" : i < 60 ? "maybe" : "no");
+$("grid").innerHTML = Array.from({ length: 100 }, () => `<div class="gd" style="aspect-ratio:1;border-radius:50%"></div>`).join("");
+const gridEls = [...document.querySelectorAll(".gd")];
+const BARS = [["Price hidden until signup", 34], ["Not sure it's trustworthy", 22], ["Unclear what it does", 18], ["Signup asks too much", 12]];
+$("bars").innerHTML = BARS.map(([n]) => `<div style="padding:26px 0"><div style="display:flex;justify-content:space-between;font-size:42px;letter-spacing:-0.02em"><span>${n}</span><span class="bval" style="color:#5f6780">0%</span></div><div style="margin-top:16px;height:22px;border-radius:11px;background:#e8ebf6;overflow:hidden"><div class="bfill" style="height:100%;border-radius:11px;background:#1a2aa6;width:0"></div></div></div>`).join("");
+const barFills = [...document.querySelectorAll(".bfill")], barVals = [...document.querySelectorAll(".bval")];
+const FIXES = [["Show the price up front", 11], ["Add a free week, no card", 7], ["Cut signup to email only", 4]];
+$("fixes").innerHTML = FIXES.map(([n], i) => `<div class="frow" style="display:flex;align-items:center;gap:26px;padding:40px 0;${i ? "border-top:3px solid #eef0f8" : ""}"><span class="mono" style="font-size:30px;color:#5f6780">0${i + 1}</span><span style="flex:1;font-size:44px;letter-spacing:-0.025em;line-height:1.1">${n}</span><span class="fval heavy" style="font-size:92px;color:#1a2aa6">+0</span></div>`).join("");
+const fixRows = [...document.querySelectorAll(".frow")], fixVals = [...document.querySelectorAll(".fval")];
+const SCREENS = [["Welcome", 4], ["Goals", 9], ["Alerts", 21], ["Paywall", 38]];
+$("phones").innerHTML = SCREENS.map(([n], i) => `<div class="ph abs" style="left:${i * 225}px;top:0;width:200px"><div style="height:430px;border-radius:32px;background:#fff;padding:24px 20px;display:flex;flex-direction:column;box-shadow:0 40px 80px -30px rgba(3,6,40,0.7);border:4px solid ${i === 3 ? "#9fb0ff" : "#fff"}"><i style="height:14px;width:70%;border-radius:7px;background:#1a2aa6"></i><i style="margin-top:14px;height:11px;width:50%;border-radius:6px;background:#e8ebf6"></i>${i === 3 ? '<i style="margin-top:40px;height:60px;border-radius:14px;border:3px solid #1a2aa6"></i>' : ""}<i style="margin-top:auto;height:48px;border-radius:14px;background:#1a2aa6"></i></div><div class="mono" style="margin-top:20px;font-size:22px;color:#aeb7f6">${i + 1} · ${n.toUpperCase()}</div><div class="phq heavy" style="font-size:64px">−0%</div></div>`).join("");
+const phEls = [...document.querySelectorAll(".ph")], phQs = [...document.querySelectorAll(".phq")];
+const bigClaws = [...document.querySelectorAll(".bc")];
+
+// Data-driven visuals: a line can carry its own items / stats.
+function buildChecklist(line) {
+  $("ckLabel").textContent = (line.title || "CHECKLIST").toUpperCase();
+  $("checks").innerHTML = (line.items || []).map((it) => `<div class="ck" style="display:flex;align-items:center;gap:26px;padding:30px 0;border-top:3px solid #eef0f8"><span class="ckbox" style="width:56px;height:56px;border-radius:50%;border:4px solid #c4caeb;display:flex;align-items:center;justify-content:center;flex:none"><svg width="30" height="30" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span style="font-size:42px;letter-spacing:-0.02em;line-height:1.1">${it}</span></div>`).join("");
+}
+function buildStats(line) {
+  $("stats").innerHTML = (line.stats || []).map((s, i) => `<div class="st card" style="position:relative;flex:1;padding:50px 24px;text-align:center"><div class="stv heavy" style="font-size:${(line.stats.length > 2 ? 110 : 150)}px;color:#1a2aa6;line-height:1">${s.value}</div><div style="margin-top:20px;font-size:34px;letter-spacing:-0.02em;color:#464e66">${s.label}</div></div>`).join("");
+}
+TL.lines.forEach((l) => { if (l.items) buildChecklist(l); if (l.stats) buildStats(l); });
+// (A story keeps ONE checklist and ONE set of stats: lines with visual "checklist" / "stats" show them.)
+
+const visEls = [...document.querySelectorAll(".vis")];
+
+function drawVisual(name, p, tl, line) {
+  if (name === "paper") $("paperCard").style.transform = `rotate(${lerp(-2, 1.5, p)}deg)`;
+  if (name === "grid") gridEls.forEach((el, i) => {
+    const a = 0.04 + (((i * 37 + 11) % 100) / 100) * 0.7, k = seg(p, a, a + 0.12), v = VERDICT(i);
+    el.style.transform = `scale(${k <= 0 ? 0 : lerp(0, 1, back(k))})`;
+    el.style.background = v === "buy" ? "#1a2aa6" : v === "maybe" ? "#9aa6e6" : "transparent";
+    el.style.border = v === "no" ? "4px solid #c4caeb" : "none";
+  });
+  if (name === "bars") BARS.forEach(([, v], i) => { const k = out(seg(p, 0.05 + i * 0.1, 0.55 + i * 0.1)); barFills[i].style.width = v * 2.6 * k + "%"; barVals[i].textContent = Math.round(v * k) + "%"; });
+  if (name === "fixes") FIXES.forEach(([, v], i) => { const k = out(seg(p, 0.04 + i * 0.12, 0.4 + i * 0.12)); fixRows[i].style.opacity = k; fixRows[i].style.transform = `translateX(${(1 - k) * 120}px)`; fixVals[i].textContent = "+" + Math.round(v * out(seg(p, 0.1 + i * 0.12, 0.7 + i * 0.12))); });
+  if (name === "phones") SCREENS.forEach(([, q], i) => { const k = seg(p, 0.03 + i * 0.1, 0.35 + i * 0.1); phEls[i].style.opacity = clamp(k * 2.5); phEls[i].style.transform = `translateY(${(1 - out(k)) * 90}px)`; phQs[i].textContent = "−" + Math.round(q * out(seg(p, 0.15 + i * 0.1, 0.7 + i * 0.1))) + "%"; });
+  if (name === "checklist") [...document.querySelectorAll(".ck")].forEach((el, i, all) => {
+    const k = seg(p, 0.1 + (i / all.length) * 0.7, 0.18 + (i / all.length) * 0.7);
+    el.style.opacity = clamp(0.35 + k);
+    const box = el.querySelector(".ckbox"); box.style.background = k >= 1 ? "#1a2aa6" : "transparent"; box.style.borderColor = k >= 1 ? "#1a2aa6" : "#c4caeb";
+  });
+  if (name === "stats") [...document.querySelectorAll(".st")].forEach((el, i) => { const k = seg(p, 0.05 + i * 0.25, 0.3 + i * 0.25); el.style.opacity = clamp(k * 3); el.style.transform = `scale(${k <= 0 ? 0.6 : lerp(0.6, 1, back(k))})`; });
+  if (name === "claws") bigClaws.forEach((el, i) => { const k = out(seg(p, 0.05 + i * 0.12, 0.35 + i * 0.12)); el.style.clipPath = `inset(0 0 ${(1 - k) * 100}% 0)`; });
+  if (name === "card") $("bizcard").style.transform = `rotateX(8deg) rotateY(${lerp(-70, -8, back(seg(p, 0, 0.4)))}deg) rotateZ(-3deg)`;
+}
+
+window.seek = function (t) {
+  const body = t < TL.bodyEnd;
+  const line = TL.lines.find((l) => t >= l.start && t < l.end) || null;
+  // backgrounds: blue for most visuals, dark when the line asks
+  const dark = line && (line.visual === "dark" || line.visual === "paper");
+  $("bg1").style.display = dark ? "none" : "block";
+  $("bg2").style.display = dark ? "block" : "none";
+  const drift = `${(t * 22) % 30}px, ${(t * 12) % 30}px`;
+  $("dots1").style.transform = `translate(${drift})`;
+  $("dots2").style.transform = `translate(${drift})`;
+  $("claws").style.transform = `rotate(${t * 2 - 10}deg)`;
+
+  // world: a small zoom "hit" on every beat once the beat starts
+  const sinceBeat = t >= DROP ? (t - DROP) % BEAT : 9;
+  const hit = t >= DROP ? 1 + 0.03 * Math.exp(-10 * sinceBeat) : 1 + 0.002 * t;
+  $("world").style.transform = `scale(${hit})`;
+
+  // visuals
+  visEls.forEach((el) => (el.style.display = "none"));
+  if (line && body) {
+    const vname = line.visual || "gradient";
+    const el = visEls.find((e) => e.dataset.v === vname);
+    if (el) el.style.display = "block";
+    drawVisual(vname, seg(t, line.start, line.end), TL, line);
+  }
+
+  // the big word / number
+  const bigEl = $("big");
+  if (line && body && line.big) {
+    const k = seg(t, line.start, line.start + 0.25);
+    bigEl.textContent = line.big;
+    const size = Math.round(clamp(980 / (line.big.length * 0.8), 110, 340)); // as big as fits the screen width
+    bigEl.style.fontSize = size + "px";
+    bigEl.style.top = (line.visual && ["gradient", "dark"].includes(line.visual) || !line.visual ? 420 : 160) + "px";
+    bigEl.style.opacity = clamp(k * 3);
+    bigEl.style.transform = `scale(${lerp(1.8, 1, out(k))})`;
+    bigEl.style.display = "block";
+  } else bigEl.style.display = "none";
+
+  // the words, one at a time (the line builds up; the newest word pops)
+  const wordsEl = $("words");
+  if (line && body) {
+    const chars = line.text.replace(/\*/g, "").length;
+    const size = chars > 60 ? 96 : chars > 36 ? 112 : 128;
+    wordsEl.style.top = (line.visual === "stats" || line.visual === "checklist" || line.visual === "grid" || line.visual === "bars" || line.visual === "fixes" || line.visual === "phones" || line.visual === "card" || line.visual === "paper" ? 1090 : 960) + "px";
+    wordsEl.style.fontSize = size + "px";
+    wordsEl.innerHTML = line.words.filter((w) => t >= w.start).map((w) => {
+      const k = seg(t, w.start, w.start + 0.13);
+      return `<span class="w${w.emph ? " e" : ""}" style="font-size:${size}px;opacity:${clamp(k * 2.5)};transform:scale(${lerp(1.6, 1, out(k))}) rotate(${lerp(-3, 0, out(k))}deg)">${w.w}</span>`;
+    }).join("");
+  } else wordsEl.innerHTML = "";
+
+  // flash on every new line (a "cut")
+  const since = line ? t - line.start : 9;
+  $("flash").style.opacity = line && body ? 0.55 * Math.exp(-14 * since) : 0;
+
+  // source line + handle + progress
+  $("source").textContent = line && (line.source || STORY.source) && body ? (line.source || STORY.source) : "";
+  $("handle").textContent = body ? BRAND.handle : "";
+  $("progressfill").style.width = clamp(t / TL.duration) * 100 + "%";
+
+  // the end card
+  const endK = seg(t, TL.bodyEnd, TL.bodyEnd + 0.35);
+  $("end").style.display = t >= TL.bodyEnd ? "block" : "none";
+  if (t >= TL.bodyEnd) {
+    $("end").style.opacity = endK;
+    $("endlogo").style.transform = `scale(${lerp(1.5, 1, out(endK))})`;
+    $("endtag").textContent = BRAND.tagline;
+    $("endbtn").textContent = BRAND.cta;
+    const b = seg(t, TL.bodyEnd + BEAT, TL.bodyEnd + BEAT + 0.4);
+    $("endbtn").style.opacity = clamp(b * 3);
+    $("endbtn").style.transform = `scale(${b <= 0 ? 0.6 : lerp(0.6, 1, back(b))})`;
+    $("endhonest").style.opacity = seg(t, TL.bodyEnd + BEAT * 2, TL.bodyEnd + BEAT * 2 + 0.3);
+  }
+};
+window.DURATION = TL.duration;
+document.fonts.ready.then(() => { window.ready = true; window.seek(0); });
+</script>
+</body>
+</html>

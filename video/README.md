@@ -65,3 +65,11 @@ Needs `ffmpeg` and Python with `numpy` on the computer that records it.
 | 33.5–38.5s | "See what stops customers. Before you launch." and the button |
 
 All numbers shown (38 of 100, 34%, +11...) are the same made-up example the website uses, and the last frame says "simulated customers · buying intent, not real purchases".
+
+## Story videos for TikTok / Instagram / Shorts
+Vertical (1080x1920) one-word-at-a-time stories, with the logo and handle on every frame:
+```bash
+node video/make-story.cjs launch-blind
+```
+Ready stories: `launch-blind`, `ten-seconds`, `paywall-flags`, `card-trials`, `three-friends` (in `video/stories/`).
+How to write your own, what to post and how to stay safe: `docs/content-plan.md`.

@@ -1,0 +1,12 @@
+{
+  "title": "Invite 3 friends, unlock the full test",
+  "style": "hype",
+  "wps": 3.2,
+  "lines": [
+    { "text": "Want *100 simulated customers* to test your launch?", "visual": "dark", "big": "FREE" },
+    { "text": "Invite *3 friends*.", "visual": "gradient" },
+    { "text": "They sign up. You *unlock* the full test.", "visual": "grid" },
+    { "text": "See what stops people from buying. *Before* launch.", "visual": "bars" },
+    { "text": "Link in bio.", "visual": "claws" }
+  ]
+}

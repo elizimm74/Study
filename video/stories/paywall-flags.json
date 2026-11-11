@@ -1,0 +1,18 @@
+{
+  "title": "Will your paywall get flagged?",
+  "style": "hype",
+  "wps": 3.2,
+  "source": "Source: Apple App Store Review Guidelines 3.1.2 · Google Play subscriptions policy",
+  "lines": [
+    { "text": "Your paywall *might* get flagged.", "visual": "dark", "big": "FLAGGED?" },
+    { "text": "Apple and Google ask apps to show clear subscription terms.", "visual": "gradient" },
+    {
+      "text": "Price. Billing period. Restore. Terms. Privacy.",
+      "visual": "checklist",
+      "title": "Paywall must-haves",
+      "items": ["Price + how often it bills", "Price after the free trial", "Renews automatically + how to cancel", "Restore purchases button", "Terms + Privacy links"]
+    },
+    { "text": "Miss one? It *may* get flagged. That can cost you *days*.", "visual": "paper" },
+    { "text": "Check yours in *30 seconds*. Free. No sign-up.", "visual": "claws" }
+  ]
+}

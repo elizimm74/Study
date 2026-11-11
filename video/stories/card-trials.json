@@ -1,0 +1,18 @@
+{
+  "title": "Card required for the trial?",
+  "style": "hype",
+  "wps": 3.2,
+  "source": "Source: Totango data, via Chargebee (vendor data, one data set)",
+  "lines": [
+    { "text": "Free trial that needs a *card*?", "visual": "dark", "big": "CARD?" },
+    {
+      "text": "In one data set, about *2%* of visitors start it.",
+      "visual": "stats",
+      "stats": [{ "value": "~2%", "label": "card required" }, { "value": "~10%", "label": "no card" }]
+    },
+    { "text": "No card? About *10%*.", "visual": "stats" },
+    { "text": "But more trials isn't always more *money*.", "visual": "dark" },
+    { "text": "So *test both*.", "visual": "gradient" },
+    { "text": "Crawler shows where people drop off.", "visual": "bars" }
+  ]
+}

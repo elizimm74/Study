@@ -17,13 +17,16 @@ const W = Number(process.env.W || 1920);
 const H = Number(process.env.H || 1080);
 const PAGE = process.env.PAGE || "launch.html";
 const page_url = "file://" + path.join(__dirname, PAGE);
-const audio = path.join(__dirname, process.env.AUDIO || "soundtrack.wav");
-const outFile = path.join(__dirname, process.env.OUT || "crawler-launch.mp4");
+const audio = process.env.AUDIO ? path.resolve(process.env.AUDIO) : path.join(__dirname, "soundtrack.wav");
+const outFile = process.env.OUT ? path.resolve(__dirname, process.env.OUT) : path.join(__dirname, "crawler-launch.mp4");
 
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+  // A story video: hand the story to the page before it loads (see make-story.cjs).
+  if (process.env.STORY) await page.addInitScript((story) => (window.STORY = story), JSON.parse(fs.readFileSync(process.env.STORY, "utf8")));
   await page.goto(page_url);
+  await page.waitForFunction(() => window.ready === true, null, { timeout: 30000 });
   // Make sure every font is really loaded before the first frame.
   await page.evaluate(async () => {
     await Promise.all(["900 40px Archivo", "400 40px Geist", "500 40px Geist", "600 40px Geist", '400 40px "Geist Mono"'].map((f) => document.fonts.load(f)));
@@ -35,7 +38,7 @@ const outFile = path.join(__dirname, process.env.OUT || "crawler-launch.mp4");
   const stage = page.locator("#stage");
 
   if (process.argv.includes("--preview")) {
-    const dir = path.join(__dirname, "preview", PAGE.replace(".html", ""));
+    const dir = path.join(__dirname, "preview", process.env.PREVIEW_NAME || PAGE.replace(".html", ""));
     fs.mkdirSync(dir, { recursive: true });
     const times = (process.env.TIMES || "").split(",").filter(Boolean).map(Number);
     const list = times.length ? times : Array.from({ length: Math.ceil(duration / 0.5) }, (_, i) => i * 0.5);

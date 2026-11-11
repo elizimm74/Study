@@ -1,0 +1,15 @@
+{
+  "title": "Launch blind (brand hook)",
+  "style": "hype",
+  "wps": 3.2,
+  "lines": [
+    { "text": "You spent *6 months* building it.", "visual": "dark", "big": "6 MONTHS" },
+    { "text": "Launch day. Nobody *buys*.", "visual": "paper" },
+    { "text": "Not because it's bad.", "visual": "dark" },
+    { "text": "Because nobody told you what was *wrong*.", "visual": "claws" },
+    { "text": "So we built *100 simulated customers* that will.", "visual": "grid" },
+    { "text": "They visit your site. They say *no*. They tell you *why*.", "visual": "bars" },
+    { "text": "Then you fix it. *Before* launch.", "visual": "fixes" },
+    { "text": "Apps too: onboarding, paywall, *everything*.", "visual": "phones" }
+  ]
+}

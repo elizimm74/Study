@@ -1,0 +1,14 @@
+{
+  "title": "The 10-second rule",
+  "style": "hype",
+  "wps": 3.2,
+  "source": "Source: Nielsen Norman Group, How long do users stay on web pages?",
+  "lines": [
+    { "text": "People decide in about *10 seconds*.", "visual": "dark", "big": "10 SEC" },
+    { "text": "They skim headlines. Not *paragraphs*.", "visual": "gradient" },
+    { "text": "If your first screen doesn't say what it is, they *leave*.", "visual": "paper" },
+    { "text": "One line: what it is, and who it's for.", "visual": "dark" },
+    { "text": "Then one *button*.", "visual": "gradient" },
+    { "text": "Test your first screen *free*.", "visual": "claws" }
+  ]
+}
