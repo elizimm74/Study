@@ -10,6 +10,8 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AudiencePicker from "@/components/AudiencePicker";
 import Working from "@/components/Working";
+import { MyMindsCards, SaveMind } from "@/components/dashboard/minds";
+import { StarterNote, usePlan } from "@/components/dashboard/usePlan";
 import { Arrow } from "@/components/landing/UrlForm";
 import { Chevron, ErrorNote, Heading, Nav, PRESET_HINT, PresetCard, Stepper, Summary, waitForCrawl } from "@/components/wizard";
 import PaywallEditor, { ChecksList } from "./PaywallEditor";
@@ -28,6 +30,8 @@ export default function AppWizard() {
   const router = useRouter();
   const params = useSearchParams();
   const [step, setStep] = useState(0);
+  const plan = usePlan(); // how many customers per crowd this account gets (25 starter / 100 full)
+  const customers = plan?.customers ?? 100;
   const [shots, setShots] = useState<Shot[]>([]);
   const [shotsB, setShotsB] = useState<Shot[]>([]);
   const [busy, setBusy] = useState<null | "uploading" | "reading" | "starting">(null);
@@ -252,6 +256,7 @@ export default function AppWizard() {
             {suggested && (
               <PresetCard name="AI suggestion" hint="Based on your screens" tag="auto" active={presetName === "AI suggestion"} onClick={() => (setAudience(suggested), setPresetName("AI suggestion"))} />
             )}
+            <MyMindsCards presetName={presetName} onPick={(name, a) => (setAudience(a), setPresetName(name))} />
             {Object.entries(PRESETS).map(([name, preset]) => (
               <PresetCard
                 key={name}
@@ -296,6 +301,7 @@ export default function AppWizard() {
               <AudiencePicker audience={audience} onChange={(a) => (setAudience(a), setPresetName("Custom"))} suggested={suggested} />
             </div>
           </details>
+          <SaveMind audience={audience} />
           <ErrorNote error={sources.length ? null : "Pick at least one place people find your app."} />
           <Nav onBack={() => setStep(1)} onNext={() => sources.length && setStep(3)} nextLabel="Next" />
         </section>
@@ -304,12 +310,13 @@ export default function AppWizard() {
       {/* ---------- 4. Launch ---------- */}
       {step === 3 && profile && (
         <section className="space-y-8">
-          <Heading n={4} title="Ready to launch" sub="100 customers, run 3 times with different people, so you get an honest range instead of one lucky number." />
+          <Heading n={4} title="Ready to launch" sub={`${customers} customers, run 3 times with different people, so you get an honest range instead of one lucky number.`} />
           <dl className="card grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Summary label="Screens" value={`${screens.length}${screensB.length ? ` + B (${screensB.length})` : ""}`} />
-            <Summary label="Audience" value={`100 × 3 · ${presetName}`} />
+            <Summary label="Audience" value={`${customers} × 3 · ${presetName}`} />
             <Summary label="Goal" value={hasPaywall ? `Would ${profile.goal}` : "Finish onboarding"} />
           </dl>
+          <StarterNote plan={plan} />
           <ErrorNote error={error} />
           <div className="flex items-center justify-between gap-4 border-t border-line pt-6">
             <button onClick={() => setStep(2)} className="btn btn-text">

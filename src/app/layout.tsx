@@ -62,7 +62,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <NavLink href="/pricing" className="hidden sm:inline-flex">
                     Pricing
                   </NavLink>
-                  <NavLink href="/tests">My tests</NavLink>
+                  <NavLink href="/dashboard">Dashboard</NavLink>
+                  <NavLink href="/tests" className="hidden sm:inline-flex">
+                    My tests
+                  </NavLink>
                   <form action="/auth/signout" method="post" className="hidden sm:block">
                     <button className="btn btn-text text-sm">Sign out</button>
                   </form>

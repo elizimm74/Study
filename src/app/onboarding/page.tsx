@@ -6,8 +6,8 @@ import Onboarding from "@/components/Onboarding";
 
 export const metadata = { title: "crawler: welcome" };
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string; kind?: string }> }) {
-  const { next, kind } = await searchParams;
+export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string; kind?: string; mind?: string; preset?: string }> }) {
+  const { next, kind, mind, preset } = await searchParams;
   // Only allow going back to pages on OUR site.
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/app";
 
@@ -16,5 +16,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
 
   // Came from the landing page's URL box (next = /app?url=...)? Pre-fill that URL.
   const startUrl = new URL(safeNext, "http://x").searchParams.get("url") ?? "";
-  return <Onboarding startUrl={startUrl} startKind={kind === "app" ? "app" : "website"} />;
+  return <Onboarding startUrl={startUrl} startKind={kind === "app" ? "app" : "website"} mind={mind && /^[0-9a-f-]{36}$/.test(mind) ? mind : undefined} preset={preset?.slice(0, 40)} />;
 }

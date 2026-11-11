@@ -23,8 +23,8 @@ const eslintConfig = [
     ],
   },
   {
-    // Plain Node.js scripts (like the bench) use require() on purpose.
-    files: ["scripts/**/*.cjs"],
+    // Plain Node.js scripts (like the bench and the video recorder) use require() on purpose.
+    files: ["scripts/**/*.cjs", "video/**/*.cjs"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
 ];

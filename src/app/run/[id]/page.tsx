@@ -102,12 +102,12 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
         </p>
         {data.stage.startsWith("Customers are going") && (
           <p className="text-sm text-muted">
-            3 different crowds of 100 go through your screens one by one, so the report can show an honest range.
+            3 different crowds go through your screens one by one, so the report can show an honest range.
           </p>
         )}
         {data.stage.startsWith("Personas") && data.progress.done === 0 && (
           <p className="text-sm text-muted">
-            The first 25 go alone so your site is saved for the rest (that makes the run cheaper). The other 75 then
+            The first batch goes alone so your site is saved for the rest (that makes the run cheaper). The remaining customers then
             review at the same time.
           </p>
         )}

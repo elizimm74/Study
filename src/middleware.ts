@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { AUTH_ENABLED, SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 
-const PRIVATE_PAGES = ["/app", "/run", "/tests"];
+const PRIVATE_PAGES = ["/app", "/run", "/tests", "/dashboard"];
 const PRIVATE_APIS = ["/api/crawls", "/api/tests", "/api/files"];
 
 export async function middleware(request: NextRequest) {
@@ -42,6 +42,13 @@ export async function middleware(request: NextRequest) {
     url.pathname = fromLanding ? "/signup" : "/signin";
     url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
+  }
+  // Arrived through a friend's invite link and now signed in? Credit the friend once, then forget the cookie.
+  // (The database only accepts brand-new accounts and never your own code.)
+  const ref = request.cookies.get("crawler_ref")?.value;
+  if (user && ref) {
+    await supabase.rpc("claim_referral", { p_code: ref });
+    response.cookies.delete("crawler_ref");
   }
   return response;
 }

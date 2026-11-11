@@ -16,7 +16,7 @@ import { Arrow } from "@/components/landing/UrlForm";
 const WHEN = ["This week", "This month", "Later", "Already live"];
 const WHO = ["Students", "Founders", "Parents", "Small businesses", "Developers", "Everyone"];
 
-export default function Onboarding({ startUrl, startKind = "website" }: { startUrl: string; startKind?: "website" | "app" }) {
+export default function Onboarding({ startUrl, startKind = "website", mind, preset }: { startUrl: string; startKind?: "website" | "app"; mind?: string; preset?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [kind, setKind] = useState<"website" | "app">(startKind);
@@ -51,6 +51,8 @@ export default function Onboarding({ startUrl, startKind = "website" }: { startU
     const params = new URLSearchParams(kind === "app" ? { kind: "app" } : { url: url.trim() });
     if (audience) params.set("for", audience);
     if (what.trim()) params.set("what", what.trim());
+    if (mind) params.set("mind", mind); // from the dashboard: "Test with this mind"
+    if (preset) params.set("preset", preset);
     router.push(`/app?${params}`); // signed out → sign-up first, then the test starts
   }
 

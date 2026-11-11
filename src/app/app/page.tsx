@@ -13,6 +13,8 @@ import ProfileEditor from "@/components/ProfileEditor";
 import ExplorePanel from "@/components/ExplorePanel";
 import Working from "@/components/Working";
 import Onboarding from "@/components/Onboarding";
+import { MyMindsCards, SaveMind } from "@/components/dashboard/minds";
+import { StarterNote, usePlan } from "@/components/dashboard/usePlan";
 import AppWizard from "@/components/app/AppWizard";
 import { Chevron, ErrorNote, Heading, Nav, PRESET_HINT, PresetCard, Stepper, Summary, waitForCrawl } from "@/components/wizard";
 import { Arrow } from "@/components/landing/UrlForm";
@@ -76,6 +78,8 @@ function Wizard() {
   const [credentials, setCredentials] = useState<Credentials>({ email: "", password: "" });
   const [ownsProduct, setOwnsProduct] = useState(false);
   const autoStarted = useRef(false);
+  const plan = usePlan(); // how many customers this account's test gets (25 starter / 100 full)
+  const customers = plan?.customers ?? 100;
 
   async function analyze(target = url) {
     setBusy("analyzing");
@@ -248,6 +252,13 @@ function Wizard() {
                 }}
               />
             )}
+            <MyMindsCards
+              presetName={presetName}
+              onPick={(name, a) => {
+                setAudience(a);
+                setPresetName(name);
+              }}
+            />
             {Object.entries(PRESETS).map(([name, preset]) => (
               <PresetCard
                 key={name}
@@ -281,6 +292,7 @@ function Wizard() {
               />
             </div>
           </details>
+          <SaveMind audience={audience} />
           <Nav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Next" />
         </section>
       )}
@@ -291,7 +303,7 @@ function Wizard() {
           <Heading n={4} title="Ready to launch" sub="Optional: let an AI explorer actually use your product first." />
           <dl className="card grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Summary label="Site" value={crawl.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} />
-            <Summary label="Audience" value={`100 · ${presetName}`} />
+            <Summary label="Audience" value={`${customers} · ${presetName}`} />
             <Summary label="Goal" value={`Would ${profile.goal}`} />
           </dl>
           <div className="card p-6">
@@ -304,13 +316,14 @@ function Wizard() {
               onOwnsProduct={setOwnsProduct}
             />
           </div>
+          <StarterNote plan={plan} />
           <ErrorNote error={error} />
           <div className="flex items-center justify-between gap-4 border-t border-line pt-6">
             <button onClick={() => setStep(2)} className="btn btn-text">
               Back
             </button>
             <button onClick={launch} disabled={busy !== null} className="btn btn-primary h-12 px-8">
-              {busy === "starting" ? "Starting…" : "Run 100 customers"}
+              {busy === "starting" ? "Starting…" : `Run ${customers} customers`}
               {busy !== "starting" && <Arrow />}
             </button>
           </div>

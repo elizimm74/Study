@@ -15,6 +15,10 @@ export type Plan = {
 };
 
 export const CUSTOMERS_PER_TEST = 100;
+// Free accounts start with a smaller "starter" test; inviting friends unlocks the full size.
+// These two numbers must match starter_customers() and referrals_needed() in migration 0007.
+export const STARTER_CUSTOMERS = 25;
+export const INVITES_TO_UNLOCK = 3;
 
 export const PLANS: Plan[] = [
   {
@@ -23,7 +27,11 @@ export const PLANS: Plan[] = [
     priceUsd: 0,
     tests: 1,
     note: "See what Crawler finds on your site.",
-    features: ["1 test", `${CUSTOMERS_PER_TEST} simulated customers`, "Full report with ranked fixes"],
+    features: [
+      `1 starter test (${STARTER_CUSTOMERS} simulated customers)`,
+      `Invite ${INVITES_TO_UNLOCK} friends: +1 test, ${CUSTOMERS_PER_TEST} customers`,
+      "Full report with ranked fixes",
+    ],
   },
   {
     id: "launch",

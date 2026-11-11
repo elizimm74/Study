@@ -63,6 +63,11 @@ export default function Report({ run, demo = false }: { run: Run & { filesPrefix
                   <span className="pill">Product test: {run.journey.status === "completed" ? "worked" : run.journey.status}</span>
                 )}
               </div>
+              {!demo && (
+                <a href="#share" className="btn btn-primary h-11 px-5 text-sm">
+                  Send this score
+                </a>
+              )}
             </div>
           </div>
           <VerdictBar buy={stats.buy} maybe={stats.maybe} no={stats.no} goal={goal} />

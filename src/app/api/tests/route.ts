@@ -9,7 +9,7 @@ import type { Audience, Credentials, ExploreSettings, ProductProfile } from "@/l
 import type { AppAnalysis, AppSettings } from "@/lib/app/types";
 import { cleanAppSettings } from "@/lib/app/validate";
 
-const PERSONA_COUNT = 100; // the Free plan's size
+const PERSONA_COUNT = 100; // only a request: start_test() decides the real size (25 starter / 100 full) for this account
 
 export async function POST(req: Request) {
   const auth = await requireUser();

@@ -163,7 +163,7 @@ function AppleMark() {
 
 // Only allow going back to pages on OUR site (never a link to another website).
 function safeNext(next: string | null) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 }
 
 function friendly(msg: string) {

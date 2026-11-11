@@ -57,6 +57,11 @@ export default function AppReport({ run, demo = false }: { run: AppRun; demo?: b
                 {stats.hasPaywall && <span className="pill">Reached the paywall: {rangeText(stats.reachedPaywall)}</span>}
                 {failed.some((c) => c.kind === "store rule") && <span className="pill pill-no">Store rules may be flagged</span>}
               </div>
+              {!demo && (
+                <a href="#share" className="btn btn-primary h-11 px-5 text-sm">
+                  Send this score
+                </a>
+              )}
             </div>
           </div>
           {stats.benchmark && (
