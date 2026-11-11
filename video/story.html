@@ -22,6 +22,7 @@
   .heavy { font-family: "Archivo", sans-serif; font-weight: 900; letter-spacing: -0.05em; }
   .mono { font-family: "Geist Mono", monospace; font-weight: 400; }
   .vis { position: absolute; inset: 0; display: none; }
+  .mediaImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .card { position: absolute; background: #fff; color: #0c0e1f; border-radius: 40px; box-shadow: 0 60px 120px -30px rgba(3,6,40,0.75); }
   .label { font-family: "Geist Mono", monospace; font-size: 30px; letter-spacing: 0.05em; color: #5f6780; }
   #bg1 { background: radial-gradient(1300px 1100px at 30% 22%, #3144d6 0%, #1a2aa6 55%, #101a80 100%); }
@@ -88,6 +89,10 @@
         <div class="abs mono" style="left:66px;bottom:54px;font-size:27px;color:#d6dbff">see what stops customers</div>
       </div></div>
     </div>
+    <!-- your own photo / clip / licensed stock, full screen (see video/media/README.md) -->
+    <div class="vis" data-v="media"><img id="mediaImg" class="mediaImg" alt=""><div class="fill" style="background:linear-gradient(180deg, rgba(5,8,32,0.55) 0%, rgba(5,8,32,0) 22%, rgba(5,8,32,0) 42%, rgba(5,8,32,0.82) 100%)"></div></div>
+    <!-- illustrated, fictional "simulated customers" (original characters, drawn in code) -->
+    <div class="vis" data-v="people"><div id="people" class="abs" style="left:60px;right:60px;top:270px;display:grid;grid-template-columns:1fr 1fr;gap:24px"></div></div>
     <div class="vis" data-v="gradient"></div>
     <div class="vis" data-v="dark"></div>
   </div>
@@ -143,6 +148,51 @@ $("phones").innerHTML = SCREENS.map(([n], i) => `<div class="ph abs" style="left
 const phEls = [...document.querySelectorAll(".ph")], phQs = [...document.querySelectorAll(".phq")];
 const bigClaws = [...document.querySelectorAll(".bc")];
 
+// ---------- illustrated characters (original, drawn in code: no real people, no copyrighted characters) ----------
+const CAST = STORY.people || [
+  { name: "Maya", age: 17, skin: "#c98f6b", hair: "#2b1b17", style: "long", shirt: "#1a2aa6", quote: "Where's the price?" },
+  { name: "Dev", age: 34, skin: "#a8714f", hair: "#16110f", style: "short", glasses: true, shirt: "#3d49a8", quote: "Who else uses this?" },
+  { name: "Tom", age: 52, skin: "#f0c8a8", hair: "#9aa0a8", style: "short", shirt: "#0c0e1f", quote: "Too many steps." },
+  { name: "Aisha", age: 24, skin: "#8a5a3c", hair: "#1b1210", style: "bun", shirt: "#7c8cf0", quote: "I'd pay $5. Not $19." },
+];
+function avatar(c) {
+  const hairBack = c.style === "long" ? `<path d="M52 92 C 44 150, 56 168, 76 172 L 124 172 C 144 168, 156 150, 148 92 Z" fill="${c.hair}"/>` : "";
+  const hairTop =
+    c.style === "bun" ? `<circle cx="100" cy="34" r="20" fill="${c.hair}"/><path d="M58 84 C 58 44, 142 44, 142 84 C 128 66, 72 66, 58 84 Z" fill="${c.hair}"/>`
+    : c.style === "long" ? `<path d="M56 90 C 52 42, 148 42, 144 90 C 132 64, 68 64, 56 90 Z" fill="${c.hair}"/>`
+    : `<path d="M60 88 C 56 48, 144 48, 140 88 C 128 70, 72 70, 60 88 Z" fill="${c.hair}"/>`;
+  const glasses = c.glasses ? `<g fill="none" stroke="#0c0e1f" stroke-width="3.5"><circle cx="83" cy="100" r="13"/><circle cx="117" cy="100" r="13"/><path d="M96 100 H104"/></g>` : "";
+  return `<svg viewBox="0 0 200 200" width="150" height="150"><circle cx="100" cy="100" r="100" fill="#dfe3f5"/>${hairBack}
+    <path d="M30 200 C 30 160, 62 148, 100 148 C 138 148, 170 160, 170 200 Z" fill="${c.shirt}"/>
+    <rect x="88" y="124" width="24" height="30" rx="10" fill="${c.skin}"/>
+    <ellipse cx="100" cy="98" rx="38" ry="44" fill="${c.skin}"/>${hairTop}
+    <circle cx="85" cy="100" r="4.5" fill="#0c0e1f"/><circle cx="115" cy="100" r="4.5" fill="#0c0e1f"/>${glasses}
+    <path d="M88 122 Q 100 131 112 122" fill="none" stroke="#0c0e1f" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+}
+$("people").innerHTML = CAST.slice(0, 4).map((c) => `<div class="pc card" style="position:relative;padding:26px 22px 24px;text-align:center"><div style="display:flex;justify-content:center">${avatar(c)}</div><div style="margin-top:14px;font-size:36px;letter-spacing:-0.03em">${c.name}, ${c.age}</div><div style="margin-top:10px;font-size:30px;line-height:1.15;letter-spacing:-0.02em;color:#1a2aa6">"${c.quote}"</div><div class="mono" style="margin-top:14px;font-size:17px;letter-spacing:0.06em;color:#5f6780">SIMULATED CUSTOMER</div></div>`).join("");
+const pcEls = [...document.querySelectorAll(".pc")];
+
+// ---------- your own media ----------
+// An image shows with a slow zoom. A video arrives as numbered pictures (make-story.cjs cut it up),
+// because the recording browser can't play video files itself. whenReady() makes the recorder
+// wait until the picture for this exact moment has loaded.
+const FPS = STORY.fps || 30;
+let mediaKey = "";
+let pending = null;
+function showMedia(line, t) {
+  const m = line.media;
+  if (!m) return;
+  const img = $("mediaImg");
+  const src = m.kind === "frames" ? `${m.dir}/f${String(1 + Math.min(m.count - 1, Math.floor((t - line.start) * FPS))).padStart(5, "0")}.jpg` : m.src;
+  if (src !== mediaKey) {
+    mediaKey = src;
+    img.src = src;
+    pending = img.decode().catch(() => null);
+  }
+  img.style.transform = m.kind === "frames" ? "none" : `scale(${lerp(1.03, 1.18, seg(t, line.start, line.end))})`;
+}
+window.whenReady = () => pending || Promise.resolve();
+
 // Data-driven visuals: a line can carry its own items / stats.
 function buildChecklist(line) {
   $("ckLabel").textContent = (line.title || "CHECKLIST").toUpperCase();
@@ -174,6 +224,7 @@ function drawVisual(name, p, tl, line) {
   });
   if (name === "stats") [...document.querySelectorAll(".st")].forEach((el, i) => { const k = seg(p, 0.05 + i * 0.25, 0.3 + i * 0.25); el.style.opacity = clamp(k * 3); el.style.transform = `scale(${k <= 0 ? 0.6 : lerp(0.6, 1, back(k))})`; });
   if (name === "claws") bigClaws.forEach((el, i) => { const k = out(seg(p, 0.05 + i * 0.12, 0.35 + i * 0.12)); el.style.clipPath = `inset(0 0 ${(1 - k) * 100}% 0)`; });
+  if (name === "people") pcEls.forEach((el, i) => { const k = seg(p, 0.04 + i * 0.16, 0.3 + i * 0.16); el.style.opacity = clamp(k * 3); el.style.transform = `translateY(${(1 - out(k)) * 70}px) scale(${k <= 0 ? 0.85 : lerp(0.85, 1, back(k))})`; });
   if (name === "card") $("bizcard").style.transform = `rotateX(8deg) rotateY(${lerp(-70, -8, back(seg(p, 0, 0.4)))}deg) rotateZ(-3deg)`;
 }
 
@@ -201,6 +252,7 @@ window.seek = function (t) {
     const el = visEls.find((e) => e.dataset.v === vname);
     if (el) el.style.display = "block";
     drawVisual(vname, seg(t, line.start, line.end), TL, line);
+    if (vname === "media") showMedia(line, t);
   }
 
   // the big word / number
@@ -221,7 +273,7 @@ window.seek = function (t) {
   if (line && body) {
     const chars = line.text.replace(/\*/g, "").length;
     const size = chars > 60 ? 96 : chars > 36 ? 112 : 128;
-    wordsEl.style.top = (line.visual === "stats" || line.visual === "checklist" || line.visual === "grid" || line.visual === "bars" || line.visual === "fixes" || line.visual === "phones" || line.visual === "card" || line.visual === "paper" ? 1090 : 960) + "px";
+    wordsEl.style.top = (line.visual === "stats" || line.visual === "checklist" || line.visual === "grid" || line.visual === "bars" || line.visual === "fixes" || line.visual === "phones" || line.visual === "card" || line.visual === "paper" || line.visual === "people" ? 1090 : line.visual === "media" ? 1130 : 960) + "px";
     wordsEl.style.fontSize = size + "px";
     wordsEl.innerHTML = line.words.filter((w) => t >= w.start).map((w) => {
       const k = seg(t, w.start, w.start + 0.13);

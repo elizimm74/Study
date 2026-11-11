@@ -44,6 +44,7 @@ const outFile = process.env.OUT ? path.resolve(__dirname, process.env.OUT) : pat
     const list = times.length ? times : Array.from({ length: Math.ceil(duration / 0.5) }, (_, i) => i * 0.5);
     for (const t of list) {
       await page.evaluate((t) => window.seek(t), t);
+      await page.evaluate(() => (window.whenReady ? window.whenReady() : null)); // wait for photos / clip frames
       await stage.screenshot({ path: path.join(dir, `t${t.toFixed(2).padStart(5, "0")}.jpg`), type: "jpeg", quality: 80 });
     }
     console.log(`${list.length} preview frames in ${dir}`);
@@ -57,6 +58,7 @@ const outFile = process.env.OUT ? path.resolve(__dirname, process.env.OUT) : pat
   const started = Date.now();
   for (let f = 0; f < total; f++) {
     await page.evaluate((t) => window.seek(t), f / FPS);
+    await page.evaluate(() => (window.whenReady ? window.whenReady() : null)); // wait for photos / clip frames
     await stage.screenshot({ path: path.join(frames, `f${String(f).padStart(5, "0")}.jpg`), type: "jpeg", quality: 95 });
     if (f % 300 === 0) console.log(`frame ${f}/${total} (${Math.round((Date.now() - started) / 1000)}s)`);
   }

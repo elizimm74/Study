@@ -18,9 +18,30 @@ if (!fs.existsSync(storyFile)) throw new Error(`No story called "${name}". Looke
 const story = JSON.parse(fs.readFileSync(storyFile, "utf8"));
 const brand = JSON.parse(fs.readFileSync(path.join(__dirname, "brand.json"), "utf8"));
 story.brand = { ...brand, ...(story.brand || {}) };
+story.fps = Number(process.env.FPS || 30);
 const tl = buildTimeline(story);
 const out = path.join(__dirname, "out");
 fs.mkdirSync(out, { recursive: true });
+// Your own photos and clips (video/media/...): check they exist, and cut clips into numbered pictures.
+const VIDEO = /\.(mp4|mov|m4v|webm|mkv)$/i;
+tl.lines.forEach((line, i) => {
+  if (!line.media) return;
+  const m = typeof line.media === "string" ? { src: line.media } : line.media;
+  const file = path.join(__dirname, m.src);
+  if (!fs.existsSync(file)) throw new Error(`Line ${i + 1} uses "${m.src}" but that file doesn't exist. Put it in video/media/ (see video/media/README.md).`);
+  if (VIDEO.test(m.src)) {
+    const dir = path.join(out, "frames", name, String(i));
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    const secs = Math.max(0.5, line.end - line.start);
+    const r = spawnSync("ffmpeg", ["-y", "-v", "error", "-ss", String(m.start || 0), "-t", String(secs), "-i", file, "-vf", `fps=${story.fps},scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`, "-q:v", "3", path.join(dir, "f%05d.jpg")], { stdio: "inherit" });
+    if (r.status !== 0) throw new Error(`ffmpeg couldn't read "${m.src}"`);
+    story.lines[i].media = { kind: "frames", dir: `out/frames/${name}/${i}`, count: fs.readdirSync(dir).length };
+  } else {
+    story.lines[i].media = { kind: "image", src: m.src };
+  }
+  if (m.credit) story.lines[i].source = m.credit; // shown small on screen (credit the photographer / site)
+});
 const withStory = path.join(out, `${name}.story.json`);
 fs.writeFileSync(withStory, JSON.stringify(story));
 console.log(`${name}: ${tl.lines.length} lines, ${tl.duration}s`);

@@ -26,7 +26,7 @@ That makes `video/out/launch-blind.mp4` (1080x1920, with a generated beat). To j
 ```bash
 node video/make-story.cjs launch-blind --preview
 ```
-Five stories are ready: `launch-blind`, `ten-seconds`, `paywall-flags`, `card-trials`, `three-friends`.
+Six stories are ready: `launch-blind`, `ten-seconds`, `paywall-flags`, `card-trials`, `three-friends`, `meet-your-customers`. (`footage-demo` shows how your own photos and clips drop in.)
 
 ### Write your own story
 Copy a file in `video/stories/`, change the lines, and run the command with its name.
@@ -45,8 +45,19 @@ Copy a file in `video/stories/`, change the lines, and run the command with its 
 - `*word*` makes a word light blue (emphasis). `wps` = words per second (3.2 is quick; 2.6 is calmer).
 - `style`: `hype` (140 bpm, heavy bass) or `chill` (92 bpm).
 - `big`: a giant word or number above the caption.
-- `visual` (what's behind the words): `dark`, `gradient`, `paper` (a dead launch page), `claws`, `grid` (100 customers), `bars` (why people said no), `fixes`, `phones` (where app users quit), `card` (the blue business card), `checklist` (add `"title"` and `"items": [...]`), `stats` (add `"stats": [{"value":"~2%","label":"..."}]`).
+- `visual` (what's behind the words): `media` (your photo/clip), `people` (illustrated customers), `dark`, `gradient`, `paper` (a dead launch page), `claws`, `grid` (100 customers), `bars` (why people said no), `fixes`, `phones` (where app users quit), `card` (the blue business card), `checklist` (add `"title"` and `"items": [...]`), `stats` (add `"stats": [{"value":"~2%","label":"..."}]`).
 - `handle`, button text and tagline live in `video/brand.json`. **Change `@crawler.app` to your real account name.**
+
+### Use real faces and footage (the safe way, and it's fast)
+Drop files in `video/media/` and point a line at them (full guide: `video/media/README.md`):
+```json
+{ "text": "I'm 15 and I built *this*.", "visual": "media", "media": "media/me-at-desk.jpg" }
+```
+- **You on camera is the best asset this account has.** A 15-year-old building a product with AI is the story. Film vertical on your phone: 3 short clips (you at your desk, you reacting to a test result, you pressing the button).
+- **Screen recordings of Crawler** (phone: Control Center > Screen Recording). Real product footage beats stock.
+- **Licensed stock** from Pexels, Pixabay, Mixkit, or Canva's library. Read each license. Credit with `"credit"`.
+- **Illustrated customers:** `"visual": "people"` shows original fictional characters (see `stories/meet-your-customers.json`). Put "simulated customer" on them, which the cards already do.
+- **Not allowed here:** movie / TV clips, other creators' edits, and photos of real founders or celebrities used to sell Crawler (it looks like they endorse you).
 
 ## 3. Rules that keep the account safe and trusted
 - **No movie clips, no songs you don't own, no real people's faces.** Use the generated beat, or add a trending sound inside the app when posting (the app holds that license).

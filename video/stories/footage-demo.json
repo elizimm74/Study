@@ -1,0 +1,10 @@
+{
+  "title": "How to use your own photos and clips (placeholder media)",
+  "style": "hype",
+  "wps": 3.0,
+  "lines": [
+    { "text": "A *photo* of you, full screen.", "visual": "media", "media": "media/demo/demo-photo.jpg" },
+    { "text": "A *clip* of you, or your screen.", "visual": "media", "media": { "src": "media/demo/demo-clip.mp4", "start": 0, "credit": "Credit the photographer or site here" } },
+    { "text": "Then cut back to the *product*.", "visual": "bars" }
+  ]
+}

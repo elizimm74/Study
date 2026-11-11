@@ -1,0 +1,13 @@
+{
+  "title": "Meet your first customers (illustrated, simulated)",
+  "style": "hype",
+  "wps": 3.2,
+  "lines": [
+    { "text": "Meet your first *customers*.", "visual": "people" },
+    { "text": "They're not real people.", "visual": "dark", "big": "SIMULATED" },
+    { "text": "That's the point. You can find what *stops* them before launch.", "visual": "gradient" },
+    { "text": "100 of them. Every age. Every *budget*.", "visual": "grid" },
+    { "text": "Each one says *why*.", "visual": "bars" },
+    { "text": "Then you fix it.", "visual": "fixes" }
+  ]
+}
