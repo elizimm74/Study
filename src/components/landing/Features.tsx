@@ -6,6 +6,12 @@
 import Link from "next/link";
 import Reveal from "../Reveal";
 import Faq from "./Faq";
+import Manifesto from "./motion/Manifesto";
+import PinnedSteps from "./motion/PinnedSteps";
+import ScrollMarquee from "./motion/ScrollMarquee";
+import SplitReveal from "./motion/SplitReveal";
+import CountUp from "./motion/CountUp";
+import Magnetic from "./motion/Magnetic";
 import Claws from "../Claws";
 import { Arrow } from "./UrlForm";
 
@@ -59,19 +65,40 @@ const FEATURES: Feature[] = [
 ];
 
 export default function Features() {
+  // Steps 01-05 become the pinned story; 06-07 stay as normal blocks below it.
+  const story = FEATURES.slice(0, 5).map((f, i) => ({ n: f.n, title: f.title, text: f.text, visual: f.visual(i % 2 === 1) }));
+  const rest = FEATURES.slice(5);
   return (
     // relative z-10: paints OVER the sticky blue screen. The shadow sits on the torn top edge.
-    <section id="features" className="paper features bleed sheet relative z-10 scroll-mt-16 overflow-x-clip py-24 sm:py-32">
+    <section id="features" className="paper features bleed sheet relative z-10 scroll-mt-16 space-y-24 overflow-x-clip py-24 sm:space-y-32 sm:py-32">
+      {/* 1. a statement that lights up word by word as you scroll */}
+      <div className="page">
+        <Manifesto
+          className="text-center"
+          text="Most launches fail quietly. Nobody tells you *why*. Crawler sends 100 simulated customers in first, and they tell you *everything*."
+        />
+      </div>
+
+      {/* 2. the pinned story: the stage stays, the picture changes as you scroll */}
+      <div className="page">
+        <PinnedSteps steps={story} />
+      </div>
+
+      {/* 3. giant words that speed up when you scroll */}
+      <ScrollMarquee
+        label="Common reasons people don't buy"
+        items={["Price hidden", "No proof", "Too many fields", "Unclear promise", "Card required", "No close button"]}
+      />
+
       <div className="page space-y-32 sm:space-y-48">
-        {FEATURES.map((f, i) => (
-          <div key={f.n} className="space-y-32 sm:space-y-48">
-          {i === 3 && <StatsBand />}
-          <article className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
+        <StatsBand />
+        {rest.map((f, i) => (
+          <article key={f.n} className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
             <Reveal className={i % 2 ? "md:order-2" : ""}>
               <p className="t-number text-6xl text-accent sm:text-7xl" aria-hidden>
                 {f.n}
               </p>
-              <h2 className="t-chunk mt-4">{f.title}</h2>
+              <SplitReveal text={f.title} className="t-chunk mt-4" />
               <p className="t-lead mt-6 max-w-md">{f.text}</p>
             </Reveal>
             <Reveal delay={150} className="relative">
@@ -79,25 +106,26 @@ export default function Features() {
               {i % 2 === 0 && (
                 <Claws color={BLUE} className="pointer-events-none absolute right-0 -top-12 -z-0 h-48 w-40 opacity-[0.12] sm:-right-6" />
               )}
-              <div className="relative">{f.visual(i % 2 === 1)}</div>
+              <div className="relative">{f.visual(i % 2 === 0)}</div>
             </Reveal>
           </article>
-          </div>
         ))}
 
-        {/* honest note + the one button */}
+        {/* honest note + the buttons */}
         <Reveal className="relative mx-auto max-w-3xl text-center">
           <Claws color={BLUE} className="mx-auto mb-8 h-32 w-28" />
-          <h2 className="t-chunk">Simulated customers. Real reasons.</h2>
+          <SplitReveal text="Simulated customers. Real reasons." className="t-chunk" />
           <p className="t-lead mx-auto mt-6 max-w-xl">
             Crawler shows buying intent from simulated customers, not real purchases. A fast, honest signal on what to fix
             before launch day.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/onboarding" className="btn btn-primary h-14 px-8 text-base">
-              Test my product free
-              <Arrow />
-            </Link>
+            <Magnetic>
+              <Link href="/onboarding" className="btn btn-primary h-14 px-8 text-base">
+                Test my product free
+                <Arrow />
+              </Link>
+            </Magnetic>
             <Link href="/example" className="btn btn-secondary h-14 px-8 text-base">
               See an example report
             </Link>
@@ -112,10 +140,10 @@ export default function Features() {
 
 // A full-width blue band across the white sheet, with torn edges.
 function StatsBand() {
-  const stats: [string, string][] = [
-    ["100", "simulated customers per test"],
-    ["3", "crowds per app test, for an honest range"],
-    ["0", "credit cards needed to try it"],
+  const stats: [number, string][] = [
+    [100, "simulated customers per test"],
+    [3, "crowds per app test, for an honest range"],
+    [0, "credit cards needed to try it"],
   ];
   return (
     <Reveal>
@@ -125,7 +153,7 @@ function StatsBand() {
             <div key={label}>
               {/* inline size: .t-wordmark sets its own (much bigger) size */}
               <p className="t-wordmark" style={{ fontSize: "clamp(4.5rem, 9vw, 8rem)" }}>
-                {n}
+                <CountUp to={n} />
               </p>
               <p className="mt-4 max-w-[16rem] text-lg text-[#d6dbff]">{label}</p>
             </div>

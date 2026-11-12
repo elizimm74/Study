@@ -8,6 +8,9 @@ import Claws from "@/components/Claws";
 import { Arrow } from "@/components/landing/UrlForm";
 import Features from "@/components/landing/Features";
 import ScrollLift from "@/components/landing/ScrollLift";
+import SmoothScroll from "@/components/landing/motion/SmoothScroll";
+import Magnetic from "@/components/landing/motion/Magnetic";
+import HomeOutro from "@/components/landing/HomeOutro";
 
 export default function Home() {
   return (
@@ -23,10 +26,14 @@ export default function Home() {
           />
           <h1 className="t-wordmark rise">crawler</h1>
           <p className="t-lead rise d1 mt-8 max-w-md px-4">Simulated customers test your website or app before launch day.</p>
-          <Link href="/onboarding" className="btn btn-primary rise d2 mt-10 h-14 px-8 text-base">
-            Test my product
-            <Arrow />
-          </Link>
+          <div className="rise d2 mt-10">
+            <Magnetic>
+              <Link href="/onboarding" className="btn btn-primary h-14 px-8 text-base">
+                Test my product
+                <Arrow />
+              </Link>
+            </Magnetic>
+          </div>
           {/* a small hint that there's more below; glides down when clicked */}
           <a href="#features" className="t-label rise d4 absolute bottom-8 flex flex-col items-center gap-2 text-white/80 hover:text-white">
             scroll
@@ -38,6 +45,9 @@ export default function Home() {
       </section>
 
       <Features />
+      <HomeOutro />
+      {/* inertial scrolling for mouse / trackpad (phones keep native scrolling) */}
+      <SmoothScroll />
     </>
   );
 }

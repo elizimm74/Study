@@ -1,6 +1,7 @@
 // The honest FAQ at the bottom of the home page. The answers say what Crawler
 // is and isn't, because trust is what makes people try it.
 import Reveal from "../Reveal";
+import SplitReveal from "./motion/SplitReveal";
 
 const QA: [string, string][] = [
   [
@@ -28,7 +29,7 @@ export default function Faq() {
       <p className="t-number text-6xl text-accent sm:text-7xl" aria-hidden>
         ?
       </p>
-      <h2 className="t-chunk mt-4">Fair questions.</h2>
+      <SplitReveal text="Fair questions." className="t-chunk mt-4" />
       <div className="mt-10 divide-y divide-line border-y border-line">
         {QA.map(([q, a]) => (
           <details key={q} className="group py-2">
