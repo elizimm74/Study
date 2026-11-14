@@ -1,4 +1,5 @@
 // The frame around every page: <html>, <body>, the top bar and the footer.
+import CalmToggle from "@/components/CalmToggle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
@@ -10,7 +11,7 @@ import Intro from "@/components/landing/Intro";
 
 // Runs before the page is drawn: should the landing intro play? Once per tab,
 // and never for people who turned off animations. (See src/components/landing/Intro.tsx.)
-const INTRO_SCRIPT = `try{var d=document.documentElement;d.dataset.intro=(sessionStorage.getItem("crawler-intro-seen")||matchMedia("(prefers-reduced-motion: reduce)").matches)?"skip":"play"}catch(e){document.documentElement.dataset.intro="skip"}`;
+const INTRO_SCRIPT = `try{var d=document.documentElement,c=localStorage.getItem("crawler-calm")==="1";if(c)d.dataset.calm="1";d.dataset.intro=(c||sessionStorage.getItem("crawler-intro-seen")||matchMedia("(prefers-reduced-motion: reduce)").matches)?"skip":"play"}catch(e){document.documentElement.dataset.intro="skip"}`;
 
 // Build every page fresh for each visitor, so the header always shows
 // whether THIS person is signed in.
@@ -124,6 +125,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 Accuracy
               </Link>
             </nav>
+            <CalmToggle />
             <span>© {new Date().getFullYear()}</span>
           </div>
         </footer>

@@ -14,6 +14,9 @@ import CountUp from "./motion/CountUp";
 import Magnetic from "./motion/Magnetic";
 import Claws from "../Claws";
 import { Arrow } from "./UrlForm";
+import HeadlineCheck from "./HeadlineCheck";
+import UseCases from "./UseCases";
+import { Customers, Research, Compare } from "./Sections";
 
 const BLUE = "#1a2aa6";
 
@@ -110,6 +113,12 @@ export default function Features() {
             </Reveal>
           </article>
         ))}
+
+        <HeadlineCheck />
+        <Customers />
+        <UseCases />
+        <Research />
+        <Compare />
 
         {/* honest note + the buttons */}
         <Reveal className="relative mx-auto max-w-3xl text-center">

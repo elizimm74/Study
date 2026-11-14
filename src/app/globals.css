@@ -682,3 +682,13 @@ html {
     transform: none;
   }
 }
+
+/* "Calmer motion" (footer switch): same as the system's reduce-motion setting, chosen on the page. */
+html[data-calm] *,
+html[data-calm] *::before,
+html[data-calm] *::after {
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}

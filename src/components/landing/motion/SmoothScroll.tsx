@@ -62,6 +62,7 @@ export default function SmoothScroll() {
     };
 
     const onWheel = (e: WheelEvent) => {
+      if (root.dataset.calm) return; // "Calmer motion" switch in the footer: use normal scrolling
       if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       if (canScrollInside(e.target, e.deltaY)) return;
       e.preventDefault();
