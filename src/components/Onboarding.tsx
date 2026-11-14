@@ -1,9 +1,8 @@
 "use client";
 // The questions asked BEFORE every test (and as first-run onboarding):
-// 3 quick questions, one per screen, then the analysis starts.
-//   1. Website or app? (+ the URL)  → what to test
-//   2. What is it, and when's launch? → saved to the account (for later features)
-//   3. Who is it for?               → pre-fills "who it's for" in the test
+// ONE screen, ONE required answer: website or app (+ the URL). Fewer questions = more people
+// reach their result. What it is, when it launches and who it's for are OPTIONAL (a fold that
+// opens on request); they only make the simulated customers a bit more accurate.
 // It's the first thing new visitors see (the home page button), no account needed.
 // The answers are saved on the account (Supabase "user metadata"), which also marks
 // onboarding as done. Signed-out visitors sign up at the end (on the way to the test).
@@ -18,7 +17,6 @@ const WHO = ["Students", "Founders", "Parents", "Small businesses", "Developers"
 
 export default function Onboarding({ startUrl, startKind = "website", mind, preset }: { startUrl: string; startKind?: "website" | "app"; mind?: string; preset?: string }) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
   const [kind, setKind] = useState<"website" | "app">(startKind);
   const [url, setUrl] = useState(startUrl);
   const [what, setWhat] = useState("");
@@ -28,7 +26,7 @@ export default function Onboarding({ startUrl, startKind = "website", mind, pres
   const [busy, setBusy] = useState(false);
 
   const audience = whoText.trim() || who; // their own words win over the chip
-  const canNext = step === 0 ? kind === "app" || url.trim().length > 3 : step === 1 ? what.trim().length > 1 : true;
+  const canNext = kind === "app" || url.trim().length > 3;
 
   async function finish() {
     setBusy(true);
@@ -58,135 +56,113 @@ export default function Onboarding({ startUrl, startKind = "website", mind, pres
 
   function next(e: React.FormEvent) {
     e.preventDefault();
-    if (!canNext) return;
-    if (step < 2) setStep(step + 1);
-    else void finish();
+    if (canNext) void finish();
   }
 
   return (
     <form onSubmit={next} className="paper mx-auto max-w-lg px-6 py-12 sm:px-10">
-      {/* progress: 3 short bars */}
-      <div className="flex items-center gap-2" aria-label={`Question ${step + 1} of 3`}>
-        {[0, 1, 2].map((i) => (
-          <span key={i} className={`h-1 flex-1 rounded-full transition-colors duration-200 ${i <= step ? "bg-accent" : "bg-line"}`} />
+      <p className="t-label">takes about a minute</p>
+      <h1 className="t-h2 mt-2">What are you testing?</h1>
+      <div className="mt-6 grid grid-cols-2 gap-2" role="radiogroup" aria-label="What are you testing?">
+        {(
+          [
+            ["website", "A website", "Landing page, pricing, signup"],
+            ["app", "A mobile app", "Onboarding + paywall screenshots"],
+          ] as const
+        ).map(([k, name, hint]) => (
+          <button
+            key={k}
+            type="button"
+            role="radio"
+            aria-checked={kind === k}
+            onClick={() => setKind(k)}
+            className={`rounded-xl border p-4 text-left transition-colors duration-150 ${
+              kind === k ? "border-accent bg-subtle ring-1 ring-accent" : "border-line hover:border-line-strong"
+            }`}
+          >
+            <span className="block font-medium">{name}</span>
+            <span className="mt-1 block text-sm text-muted">{hint}</span>
+          </button>
         ))}
       </div>
-      <p className="t-label mt-6">question {step + 1} of 3</p>
 
-      {step === 0 && (
-        <div className="mt-2">
-          <h1 className="t-h2">What are you testing?</h1>
-          <div className="mt-6 grid grid-cols-2 gap-2" role="radiogroup" aria-label="What are you testing?">
-            {(
-              [
-                ["website", "A website", "Landing page, pricing, signup"],
-                ["app", "A mobile app", "Onboarding + paywall screenshots"],
-              ] as const
-            ).map(([k, name, hint]) => (
-              <button
-                key={k}
-                type="button"
-                role="radio"
-                aria-checked={kind === k}
-                onClick={() => setKind(k)}
-                className={`rounded-xl border p-4 text-left transition-colors duration-150 ${
-                  kind === k ? "border-accent bg-subtle ring-1 ring-accent" : "border-line hover:border-line-strong"
-                }`}
-              >
-                <span className="block font-medium">{name}</span>
-                <span className="mt-1 block text-sm text-muted">{hint}</span>
-              </button>
-            ))}
-          </div>
-          {kind === "website" ? (
-            <>
-              <label htmlFor="ob-url" className="field-label mt-6">
-                The page people land on
-              </label>
-              <div className="relative">
-                <span className="t-label field-prefix pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
-                  https://
-                </span>
-                <input
-                  id="ob-url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="yourstartup.com"
-                  className="field h-12 pl-20"
-                  inputMode="url"
-                  autoFocus
-                />
-              </div>
-            </>
-          ) : (
-            <p className="mt-6 text-sm text-muted">
-              After these questions you&apos;ll drop in screenshots of your onboarding and paywall, in order.
-            </p>
-          )}
-        </div>
-      )}
-
-      {step === 1 && (
-        <div className="mt-2">
-          <h1 className="t-h2">What is it, and when does it launch?</h1>
-          <label htmlFor="ob-what" className="field-label mt-6">
-            In a few words
+      {kind === "website" ? (
+        <>
+          <label htmlFor="ob-url" className="field-label mt-6">
+            The page people land on
           </label>
-          <input
-            id="ob-what"
-            value={what}
-            onChange={(e) => setWhat(e.target.value)}
-            placeholder={kind === "app" ? "e.g. a habit tracker for students" : "e.g. a meal-planning site for busy parents"}
-            className="field"
-            autoFocus
-          />
-          <p className="field-label mt-6">Launching</p>
-          <div className="flex flex-wrap gap-2">
-            {WHEN.map((w) => (
-              <button key={w} type="button" aria-pressed={when === w} onClick={() => setWhen(when === w ? "" : w)} className="chip">
-                {w}
-              </button>
-            ))}
+          <div className="relative">
+            <span className="t-label field-prefix pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" aria-hidden>
+              https://
+            </span>
+            <input
+              id="ob-url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="yourstartup.com"
+              className="field h-12 pl-20"
+              inputMode="url"
+              autoFocus
+            />
           </div>
-        </div>
+        </>
+      ) : (
+        <p className="mt-6 text-sm text-muted">After this you&apos;ll drop in screenshots of your onboarding and paywall, in order.</p>
       )}
 
-      {step === 2 && (
-        <div className="mt-2">
-          <h1 className="t-h2">Who is it for?</h1>
-          <p className="mt-2 text-muted">We&apos;ll use this to pick your simulated customers. You can fine-tune it later.</p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {WHO.map((w) => (
-              <button key={w} type="button" aria-pressed={who === w} onClick={() => setWho(who === w ? "" : w)} className="chip">
-                {w}
-              </button>
-            ))}
+      {/* optional: makes the simulated customers a little more accurate */}
+      <details className="mt-6 rounded-xl border border-line">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-medium">
+          Add details for a sharper test
+          <span className="text-faint">optional</span>
+        </summary>
+        <div className="space-y-5 border-t border-line p-4">
+          <div>
+            <label htmlFor="ob-what" className="field-label">What is it?</label>
+            <input
+              id="ob-what"
+              value={what}
+              onChange={(e) => setWhat(e.target.value)}
+              placeholder={kind === "app" ? "e.g. a habit tracker for students" : "e.g. a meal-planning site for busy parents"}
+              className="field"
+            />
           </div>
-          <label htmlFor="ob-who" className="field-label mt-6">
-            Or describe them <span className="field-hint">(optional)</span>
-          </label>
-          <input
-            id="ob-who"
-            value={whoText}
-            onChange={(e) => setWhoText(e.target.value)}
-            placeholder="e.g. college students who cook on a budget"
-            className="field"
-          />
+          <div>
+            <p className="field-label">Launching</p>
+            <div className="flex flex-wrap gap-2">
+              {WHEN.map((w) => (
+                <button key={w} type="button" aria-pressed={when === w} onClick={() => setWhen(when === w ? "" : w)} className="chip">
+                  {w}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="field-label">Who is it for?</p>
+            <div className="flex flex-wrap gap-2">
+              {WHO.map((w) => (
+                <button key={w} type="button" aria-pressed={who === w} onClick={() => setWho(who === w ? "" : w)} className="chip">
+                  {w}
+                </button>
+              ))}
+            </div>
+            <input
+              value={whoText}
+              onChange={(e) => setWhoText(e.target.value)}
+              placeholder="or describe them, e.g. college students who cook on a budget"
+              className="field mt-3"
+              aria-label="Describe who it is for"
+            />
+          </div>
         </div>
-      )}
+      </details>
 
-      <div className="mt-10 flex items-center justify-between gap-4">
-        {step > 0 ? (
-          <button type="button" onClick={() => setStep(step - 1)} className="btn btn-text -ml-3">
-            Back
-          </button>
-        ) : (
-          <span />
-        )}
-        <button type="submit" disabled={!canNext || busy} className="btn btn-primary px-6">
-          {step < 2 ? "Next" : busy ? "Starting…" : kind === "app" ? "Next: add screens" : "Analyze my site"}
+      <div className="mt-8">
+        <button type="submit" disabled={!canNext || busy} className="btn btn-primary w-full px-6">
+          {busy ? "Starting…" : kind === "app" ? "Next: add screens" : "Analyze my site"}
           {!busy && <Arrow />}
         </button>
+        <p className="mt-3 text-center text-xs text-faint">Free first test. Simulated customers, buying intent, not real purchases.</p>
       </div>
     </form>
   );
