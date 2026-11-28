@@ -13,6 +13,11 @@
 // COMPACT mode (home page, 2026-11-27 conversion redesign): no tall track and no pin. The block is
 // one screen-ish high and plays the four stages by itself on a loop (about 16 seconds) while it's on
 // screen, so the page stays short.
+// STEPS mode (home page, 2026-11-28, founder: "when you get to the diagram you should have to stop, and
+// scrolling goes to the next 1/4, 2/4"): the block is pinned in the middle of the screen inside a glass
+// frame. The track is 4 stops long (data-scroll-stops="4"): SmoothScroll parks the page on each stop and
+// one scroll gesture moves one stop (mouse, trackpad, keyboard). On phones, CSS scroll-snap markers do the
+// same. Stage pills under the picture ("1/4 Your crowd") show where you are and jump to a stage.
 // Reduced motion (system setting) or the footer's "Calmer motion": no pin and no loop; the
 // finished picture is drawn once and the four notes are listed under it (the CSS does the
 // layout from the very first paint, see globals.css "LAB").
@@ -49,6 +54,7 @@ export default function LabSequence({
   stages,
   mix,
   compact = false,
+  steps = false,
 }: {
   id: string;
   index: string;
@@ -60,6 +66,7 @@ export default function LabSequence({
   stages: LabStage[];
   mix: Mix;
   compact?: boolean;
+  steps?: boolean;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const pin = useRef<HTMLDivElement>(null);
@@ -110,6 +117,13 @@ export default function LabSequence({
 
     const target = () => {
       const r = el.getBoundingClientRect();
+      if (steps) {
+        // stop k (0..3) = the track's top k steps above the top of the screen = stage k+1 finished
+        const step = Math.max(1, (r.height - window.innerHeight) / (stages.length - 1));
+        const scrolled = -r.top;
+        if (scrolled < 0) return Math.max(0, 1 + scrolled / (window.innerHeight * 0.7)); // arriving: 0 -> 1
+        return Math.min(stages.length, 1 + scrolled / step);
+      }
       const total = Math.max(1, r.height - box.offsetHeight);
       const p = Math.min(1, Math.max(0, -r.top / total));
       return Math.min(1, Math.max(0, (p - START) / SPAN)) * 4;
@@ -121,7 +135,8 @@ export default function LabSequence({
       ctx.clearRect(0, 0, w, h);
       draw(ctx, s, t);
       box.style.setProperty("--s", s.toFixed(3));
-      const st = s < 0.06 ? 0 : Math.min(stages.length, Math.floor(s) + 1);
+      // steps mode parks ON whole numbers (s = 2 means stage 2 is showing); the others play through them
+      const st = s < 0.06 ? 0 : Math.min(stages.length, steps ? Math.max(1, Math.ceil(s - 0.05)) : Math.floor(s) + 1);
       if (st !== lastStage) {
         if (lastStage >= 0) setDir(st > lastStage ? "down" : "up");
         lastStage = st;
@@ -178,9 +193,120 @@ export default function LabSequence({
       ro.disconnect();
       io.disconnect();
     };
-  }, [scene, buy, maybe, no, stages.length, still, compact]);
+  }, [scene, buy, maybe, no, stages.length, still, compact, steps]);
 
   const now = stage > 0 ? stages[stage - 1] : null;
+  const stepped = steps && !still;
+
+  // A stage pill: scroll to that stop (SmoothScroll glides there on desktop; phones scroll smoothly).
+  const goTo = (k: number) => {
+    const el = track.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const step = (r.height - window.innerHeight) / (stages.length - 1);
+    const y = Math.round(r.top + window.scrollY + step * k);
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches && !document.documentElement.dataset.calm) {
+      window.dispatchEvent(new CustomEvent("crawler:step-to", { detail: y }));
+    } else {
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
+  const frame = (
+    <div
+      ref={pin}
+      className="lab-pin"
+      style={{ "--s": 0 } as React.CSSProperties}
+    >
+      <canvas ref={canvas} className="lab-canvas" aria-hidden />
+      <div className="lab-head">
+        <div className="lab-id">
+          <p className="lab-tag">
+            {index} / {name}
+          </p>
+          <h2 id={`${id}-title`} className="lab-h">
+            {heading}
+          </h2>
+        </div>
+        <div className="lab-panel" aria-hidden>
+          <div className="lab-ticks">
+            {stages.map((_, k) => (
+              <i key={k} style={{ "--k": k } as React.CSSProperties} />
+            ))}
+          </div>
+          {now && (
+            <div key={stage} className="lab-note" data-dir={dir}>
+              <p className="lab-code">
+                {now.code}
+                <span> / {stages[stages.length - 1].code}</span>
+              </p>
+              <p className="lab-title">{now.title}</p>
+              <p className="lab-text">{now.text}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <p className="lab-hint" data-on={stage === 0 ? "1" : undefined} aria-hidden>
+        {hint}
+        <span />
+      </p>
+      <p className="lab-foot">{note}</p>
+    </div>
+  );
+
+  if (steps) {
+    return (
+      <section
+        id={id}
+        className={`lab-seq is-steps${still ? " is-still" : ""}`}
+        aria-labelledby={`${id}-title`}
+      >
+        <div ref={track} className="lab-track" data-scroll-stops={stepped ? stages.length : undefined}>
+          {/* phones: one snap point per stage, so a swipe stops at each one */}
+          {stepped &&
+            stages.map((st, k) => (
+              <span key={st.code} className="lab-snap" style={{ "--k": k } as React.CSSProperties} aria-hidden />
+            ))}
+          <div className="lab-sticky">
+            <div className="lab-glass">
+              {frame}
+              <div className="lab-steps" role="group" aria-label="Stages">
+                {stages.map((st, k) => (
+                  <button
+                    key={st.code}
+                    type="button"
+                    className="lab-step"
+                    aria-current={stage === k + 1 ? "step" : undefined}
+                    data-done={stage > k + 1 ? "1" : undefined}
+                    onClick={() => goTo(k)}
+                  >
+                    <span className="lab-step-n">
+                      {k + 1}/{stages.length}
+                    </span>
+                    <span className="lab-step-t">{st.title}</span>
+                  </button>
+                ))}
+                {stepped && (
+                  <span className="lab-step-hint" aria-hidden>
+                    {stage >= stages.length ? "Keep scrolling" : "Scroll for the next stage"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <ol className="lab-list">
+          {stages.map((st) => (
+            <li key={st.code}>
+              <p className="lab-code">{st.code}</p>
+              <p className="lab-title">{st.title}</p>
+              <p className="lab-text">{st.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    );
+  }
 
   return (
     <section

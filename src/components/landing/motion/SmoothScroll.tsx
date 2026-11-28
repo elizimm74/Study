@@ -9,7 +9,10 @@
 //     so the two never fight.
 //   - Scrollable boxes inside the page, text fields and pinch-zoom are left alone.
 //   - Links like <a href="#features"> glide to their spot and stop just below the floating nav.
-//   - It never locks or "snaps" the page: stop scrolling and it stops.
+//   - It never locks or "snaps" the page, EXCEPT inside a "stepped" block (data-scroll-stops="4"):
+//     there the page parks on each stop, and one scroll gesture moves exactly one stop (1/4 -> 2/4 ...).
+//     A gesture that keeps going (trackpad momentum) is ignored until you pause, so you can't fly past.
+//     Past the last stop (or before the first) the page scrolls normally again.
 import { useEffect } from "react";
 
 // How fast the page catches up with the wheel: the same feel as Lenis (lenis.dev) with lerp 0.1,
@@ -18,6 +21,41 @@ import { useEffect } from "react";
 const EASE = 6;
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+// ---- stepped blocks ----
+// A block with data-scroll-stops="N" is N stops: the page positions where its top is at the top of
+// the screen, then one step further each time (the block's extra height split into N-1 equal steps).
+const STEP_HOLD = 1000; // ms: a step always takes at least this long (the stage plays) before the next one
+const STEP_QUIET = 280; // ms: ...and the wheel must have been still this long (one gesture = one step)
+export function stopsOf(el: HTMLElement): number[] {
+  const n = Math.max(2, Number(el.dataset.scrollStops) || 2);
+  const top = el.getBoundingClientRect().top + window.scrollY;
+  const span = Math.max(0, el.offsetHeight - window.innerHeight);
+  return Array.from({ length: n }, (_, i) => Math.round(top + (span * i) / (n - 1)));
+}
+// Where one scroll from `from` (direction dir) should go, if a stepped block catches it.
+// Returns null when no block is involved (normal scrolling).
+export function stepTarget(groups: number[][], from: number, proposed: number, dir: 1 | -1): number | null {
+  for (const stops of groups) {
+    const first = stops[0];
+    const lastStop = stops[stops.length - 1];
+    // parked on (or between) the stops: move to the next one in that direction, unless leaving
+    if (from >= first - 2 && from <= lastStop + 2) {
+      const i = stops.findIndex((p) => Math.abs(p - from) <= 2);
+      if (i >= 0) {
+        const next = i + dir;
+        if (next < 0 || next >= stops.length) continue; // leaving the block: normal scrolling
+        return stops[next];
+      }
+      // between two stops (after a resize or a keyboard jump): the next one in that direction
+      return dir > 0 ? stops.find((p) => p > from)! : [...stops].reverse().find((p) => p < from)!;
+    }
+    // arriving from above / below: park on the first / last stop instead of flying through
+    if (dir > 0 && from < first && proposed >= first) return first;
+    if (dir < 0 && from > lastStop && proposed <= lastStop) return lastStop;
+  }
+  return null;
+}
 
 function canScrollInside(start: EventTarget | null, deltaY: number): boolean {
   let el = start instanceof HTMLElement ? start : null;
@@ -55,6 +93,18 @@ export default function SmoothScroll() {
     let moving = false;
     let raf = 0;
     let last = 0;
+    let stepAt = 0; // when the last step started
+    let lastWheel = 0;
+    const groups = () => [...document.querySelectorAll<HTMLElement>("[data-scroll-stops]")].map(stopsOf);
+    // One step: glide to `to`, and hold further wheel input until the gesture has stopped.
+    const step = (to: number) => {
+      if (!moving) target = current = window.scrollY;
+      target = clamp(to, 0, maxScroll());
+      stepAt = performance.now();
+      go();
+    };
+    // Held = the step is still playing, or the wheel hasn't paused since (you have to stop to go on).
+    const stepping = (now: number) => now - stepAt < STEP_HOLD || (stepAt > 0 && now - lastWheel < STEP_QUIET);
 
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -81,9 +131,19 @@ export default function SmoothScroll() {
       if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       if (canScrollInside(e.target, e.deltaY)) return;
       e.preventDefault();
+      const now = performance.now();
+      const held = stepping(now);
+      lastWheel = now;
+      if (held) return; // still the same gesture as the last step: ignore it
       if (!moving) target = current = window.scrollY;
       const unit = e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? window.innerHeight : 1;
-      target = clamp(target + e.deltaY * unit, 0, maxScroll());
+      const proposed = clamp(target + e.deltaY * unit, 0, maxScroll());
+      if (e.deltaY !== 0) {
+        const stop = stepTarget(groups(), moving ? target : window.scrollY, proposed, e.deltaY > 0 ? 1 : -1);
+        if (stop !== null) return step(stop);
+      }
+      stepAt = 0;
+      target = proposed;
       go();
     };
     // Something else scrolled the page (keyboard, scrollbar, find-in-page): follow it.
@@ -117,7 +177,34 @@ export default function SmoothScroll() {
       root.style.scrollBehavior = before;
     };
     const SCROLL_KEYS = ["PageDown", "PageUp", "Home", "End", "ArrowDown", "ArrowUp", " ", "Spacebar"];
-    const onKey = (e: KeyboardEvent) => SCROLL_KEYS.includes(e.key) && stop();
+    const DOWN_KEYS = ["PageDown", "ArrowDown", " ", "Spacebar"];
+    const UP_KEYS = ["PageUp", "ArrowUp"];
+    const onKey = (e: KeyboardEvent) => {
+      if (!SCROLL_KEYS.includes(e.key)) return;
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || (t.tagName === "BUTTON" && e.key === " "));
+      // inside a stepped block, the keyboard steps too (Space / Page Down / arrows)
+      if (!typing && !root.dataset.calm && !e.altKey && !e.metaKey && !e.ctrlKey) {
+        const down = DOWN_KEYS.includes(e.key) && !(e.key === " " && e.shiftKey);
+        const up = UP_KEYS.includes(e.key) || (e.key === " " && e.shiftKey);
+        if (down || up) {
+          const from = moving ? target : window.scrollY;
+          const stop = stepTarget(groups(), from, from + (down ? 1 : -1) * window.innerHeight * 0.8, down ? 1 : -1);
+          if (stop !== null) {
+            e.preventDefault();
+            if (!stepping(performance.now())) step(stop);
+            return;
+          }
+        }
+      }
+      stop();
+    };
+    // a stepped block's own buttons ("2/4") ask for a step this way
+    const onStepTo = (e: Event) => {
+      const y = (e as CustomEvent<number>).detail;
+      if (typeof y === "number") step(y);
+    };
+    window.addEventListener("crawler:step-to", onStepTo);
 
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -130,6 +217,7 @@ export default function SmoothScroll() {
       window.removeEventListener("keydown", onKey, { capture: true });
       window.removeEventListener("pointerdown", stop);
       document.removeEventListener("click", onClick);
+      window.removeEventListener("crawler:step-to", onStepTo);
       cancelAnimationFrame(raf);
       root.style.scrollBehavior = before;
     };

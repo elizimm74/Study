@@ -174,7 +174,7 @@ const record = (r) => {
     await p.getByRole("button", { name: /^Mobile app/ }).first().click();
     await p.getByRole("heading", { name: /Testing a mobile app/ }).waitFor();
   });
-  await flow("home: one goal: URL box + sample report in the hero, compact simulation, 3 steps, sample report, free test first", async () => {
+  await flow("home: one goal: URL box + sample report in the hero, stepped simulation (4 stops), 3 steps, sample report, free test first", async () => {
     await p.goto(BASE + "/", { waitUntil: "networkidle" });
     await p.locator(".wordmark21").first().waitFor({ timeout: 5000 });
     await p.locator("#hero-url").waitFor({ timeout: 3000 });
@@ -182,7 +182,10 @@ const record = (r) => {
     if (!heroLinks.some((t) => /See a sample report/.test(t))) throw new Error("no sample report button next to the URL box");
     await p.locator(".hero27 .launch-pill").first().waitFor({ timeout: 3000 });
     const sim = await p.locator("#simulation").boundingBox();
-    if (!sim || sim.height > 900) throw new Error(`simulation block is ${sim && Math.round(sim.height)}px tall (should be one compact block)`);
+    if (!sim) throw new Error("no simulation block");
+    const stops = await p.locator("#simulation [data-scroll-stops]").getAttribute("data-scroll-stops").catch(() => null);
+    const pills = await p.locator("#simulation .lab-step").count();
+    if (stops !== "4" || pills !== 4) throw new Error(`simulation should stop 4 times with 4 stage pills (stops=${stops}, pills=${pills})`);
     if (await p.locator("#patterns").count()) throw new Error("the second long animation is still on the page");
     const steps = await p.locator(".step27").allInnerTexts();
     if (steps.length !== 3 || steps.some((t) => t.split(/\s+/).length < 20)) throw new Error(`steps = ${steps.length}, words = ${steps.map((t) => t.split(/\s+/).length)}`);

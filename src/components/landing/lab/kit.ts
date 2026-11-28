@@ -8,7 +8,7 @@ export const INK = "#111a10"; // deep moss (v30: from the hero photo) behind bot
 export const WHITE = "#f4f6fb";
 export const COBALT = "#8e8e8a"; // mid gray: "hesitate" dots, the sketch's button (monochrome since 2026-11-25)
 export const COBALT_SOFT = "#c8c8c4"; // light gray for thin lines and small labels on black
-export const LIME = "#8d9ac4"; // washed denim (light, so it reads on black): "buy" and highlights (v23)
+export const LIME = "#b9d6a6"; // light moss (v31: matches the site's moss "buy" colour; light so it reads on the dark panel)
 export const GREY = "#4f4f4c"; // dark gray: "leave"
 export const FONT = '"Space Grotesk", Geist, ui-sans-serif, system-ui, sans-serif';
 

@@ -3775,3 +3775,64 @@ main p a:not(.btn):hover, main li a:not(.btn):hover { text-decoration-color: var
 /* the compact simulation panel: deep moss instead of plain black */
 .lab27 .lab-pin, .lab27 .lab-stage, .lab27 canvas { background-color: #141c12; }
 .lab27 { --lab-bg: #141c12; }
+
+/* =====================================================================================
+   v31 STEPPED DIAGRAM IN GLASS (2026-11-28, founder: "make it fluid and matching the glass; when you
+   get to the diagram you should have to stop, and scrolling goes to the next 1/4, 2/4").
+   LabSequence `steps`: a track 4 stops long; a sticky full-screen layer centres a frosted-glass frame
+   holding the dark animation + glass stage pills. SmoothScroll parks the page on each stop (desktop);
+   on touch screens the .lab-snap markers + scroll-snap do it. --lab-step = scroll distance per stage.
+   ===================================================================================== */
+.lab-seq.is-steps { --lab-step: 85vh; width: min(88rem, calc(100% - 2rem)); margin: clamp(1rem, 4vh, 2.5rem) auto 0; }
+.is-steps .lab-track { height: calc(100vh + 3 * var(--lab-step)); height: calc(100svh + 3 * var(--lab-step)); }
+.lab-snap { position: absolute; left: 0; width: 1px; height: 1px; top: calc(var(--k) * var(--lab-step)); scroll-snap-align: start; scroll-snap-stop: always; pointer-events: none; }
+@media (hover: none) { html:has(.lab-snap) { scroll-snap-type: y proximity; } }
+.lab-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; justify-content: center; padding: 5rem 0 1.25rem; }
+.lab-glass {
+  width: 100%;
+  padding: 10px 10px 8px;
+  border-radius: 34px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.72), rgb(255 255 255 / 0.5));
+  border: 1px solid var(--glass-line, rgb(0 0 0 / 0.07));
+  box-shadow: var(--glass-shadow), 0 40px 90px -50px rgb(39 52 32 / 0.45);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  /* settles in as it arrives (the stage value --s is set on the dark panel, so use a scroll-free fade) */
+  transition: transform 0.9s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)), box-shadow 0.9s ease;
+}
+.is-steps .lab-pin { position: relative; top: auto; height: clamp(400px, calc(100svh - 14rem), 640px); border-radius: 26px; overflow: hidden; }
+.is-steps .lab-head { top: clamp(1.25rem, 3vh, 2rem); }
+.is-steps .lab-foot { bottom: 1.1rem; }
+.lab-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 4px 2px; }
+.lab-step {
+  display: inline-flex; align-items: center; gap: 0.55rem; min-height: 40px; padding: 0.4rem 0.95rem 0.4rem 0.5rem;
+  border-radius: 999px; border: 1px solid rgb(0 0 0 / 0.07); background: rgb(255 255 255 / 0.6);
+  font-size: 0.8125rem; font-weight: 600; color: var(--fg-muted);
+  transition: background-color 0.45s ease, color 0.45s ease, border-color 0.45s ease, transform 0.2s ease;
+}
+.lab-step:hover { background: rgb(255 255 255 / 0.9); color: var(--fg); }
+.lab-step:active { transform: scale(0.97); }
+.lab-step-n { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem; height: 28px; padding: 0 0.5rem; border-radius: 999px; background: rgb(0 0 0 / 0.05); font-variant-numeric: tabular-nums; font-size: 0.75rem; font-weight: 700; transition: inherit; }
+.lab-step[data-done] .lab-step-n { background: #eef4ec; color: #273420; }
+.lab-step[aria-current] { background: #273420; border-color: #273420; color: #ffffff; }
+.lab-step[aria-current] .lab-step-n { background: rgb(255 255 255 / 0.16); color: #ffffff; }
+.lab-step-hint { margin-left: auto; padding-right: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--fg-faint); display: inline-flex; align-items: center; gap: 0.4rem; }
+.lab-step-hint::after { content: ""; width: 1px; height: 14px; background: currentColor; animation: lab-drop 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite; transform-origin: top; }
+@media (max-width: 759px) {
+  .lab-seq.is-steps { --lab-step: 75vh; width: calc(100% - 1rem); }
+  .lab-sticky { padding: 4.5rem 0 6rem; } /* clear the phone's "Run simulation · free" bar */
+  .lab-glass { padding: 6px 6px 6px; border-radius: 26px; }
+  .is-steps .lab-pin { height: calc(100svh - 17.5rem); min-height: 340px; border-radius: 21px; }
+  .lab-steps { flex-wrap: nowrap; gap: 6px; padding: 6px 2px 0; }
+  .lab-step { flex: 1 1 0; justify-content: center; padding: 0.35rem; min-height: 40px; }
+  .lab-step .lab-step-t { display: none; }
+  .lab-step-n { min-width: 0; height: 26px; }
+  .lab-step-hint { display: none; }
+}
+/* still version (reduced motion / Calmer motion): no pin, no stops, the finished picture */
+.lab-seq.is-steps.is-still .lab-track, html[data-calm] .is-steps .lab-track { height: auto; }
+.lab-seq.is-steps.is-still .lab-sticky, html[data-calm] .is-steps .lab-sticky { position: relative; height: auto; padding: 0; }
+html[data-calm] .lab-snap { display: none; }
+@media (prefers-reduced-motion: reduce) { .is-steps .lab-track { height: auto; } .lab-sticky { position: relative; height: auto; padding: 0; } .lab-snap { display: none; } }
+@media (prefers-reduced-motion: reduce) { .lab-step, .lab-glass { transition: none; } .lab-step-hint::after { animation: none; } }
+@media print { .is-steps .lab-track { height: auto; } .lab-sticky { position: relative; height: auto; } .lab-steps { display: none; } }

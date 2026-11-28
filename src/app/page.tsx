@@ -2,7 +2,7 @@
 // free simulation. Every section either pushes toward that or builds the trust needed to do it:
 //   1. Hero: the promise, the URL box ("Run simulation") + "See a sample report", what's free,
 //      the launch offer and (once there's enough) real proof numbers; the example customer card.
-//   2. A compact, self-playing simulation (one block, not a long pinned scroll).
+//   2. The simulation diagram: the page stops on it and each scroll shows the next stage (1/4 ... 4/4).
 //   3. How it works: 3 steps, full sentences, 3 columns on desktop.
 //   4. The interactive sample report (the strongest trust asset) + the full sample report link.
 //   5. Pricing, with the free test as the highlighted default.
@@ -87,7 +87,7 @@ export default async function Home() {
       {/* ================= 2. ONE COMPACT SIMULATION ================= */}
       <section className="night18 lab lab27" aria-label="A simulation, illustrated">
         <LabSequence
-          compact
+          steps
           id="simulation"
           index="Live"
           name="How a simulation runs"
