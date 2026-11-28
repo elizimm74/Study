@@ -4,6 +4,7 @@
 //
 //   npm run worker:dev      (on your computer, reads .env.local)
 //   npm run worker          (in production, e.g. the Docker image)
+import { anthropic, apiKeyHint } from "../lib/ai";
 import os from "os";
 import { checkWorkerEnv } from "../lib/env";
 import { supabaseAdmin } from "../lib/supabase/admin";
@@ -105,6 +106,12 @@ for (const signal of ["SIGTERM", "SIGINT"] as const) {
   });
 }
 
-ctx.log("worker started", { concurrency, pollMs });
+ctx.log("worker started", { concurrency, pollMs, anthropicKey: apiKeyHint() });
+// Check the Anthropic key once at start (a free call, no AI tokens used), so a wrong key shows up
+// in the Railway logs right away instead of as a failed test.
+anthropic.models
+  .list({ limit: 1 })
+  .then(() => ctx.log("anthropic key OK"))
+  .catch((err: Error) => ctx.log("ANTHROPIC KEY REJECTED: paste a new key into ANTHROPIC_API_KEY and redeploy", { key: apiKeyHint(), error: err.message.slice(0, 200) }));
 startPulse(db, ctx.log); // Slack alerts + daily report for the founder (only if SLACK_WEBHOOK_URL is set)
 for (let i = 0; i < concurrency; i++) void slot();
